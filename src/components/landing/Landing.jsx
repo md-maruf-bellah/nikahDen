@@ -4,19 +4,20 @@ import HowItWorks from "./HowItWorks";
 import SearchBar from "./SearchBar";
 import ProfileSections from "./ProfileSections";
 import Testimonials from "./Testimonials";
-import MembershipPlans from "./MembershipPlans";
-import Footer from "./Footer";
+
+import PricingSection from "./MembershipPlans";
+import ExportBoth from "./MembershipPlans";
+import TestimonialSection from "./Testimonials";
 
 const Landing = () => {
   return (
     <div>
       <HeroSection />
-      <SearchBar />
-      <MembershipPlans />
+      <ExportBoth />
       <ProfileSections />
       <HowItWorks />
-      <Testimonials />
-      <Footer />
+      {/* <Testimonials /> */}
+      <TestimonialSection />
     </div>
   );
 };

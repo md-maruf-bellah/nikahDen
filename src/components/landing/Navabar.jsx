@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, X, Globe, ArrowRight } from "lucide-react";
+import { Menu, X, Globe, ArrowRight, UserRound } from "lucide-react";
 import ThemeSwitcher from "../ThemeSwitcher";
 import logoImage from "./../../../assets/navbar/logo.png";
 import Image from "next/image";
+import { GrNotification } from "react-icons/gr";
+
+import LanguageSelect from "../LanguageSelect";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -40,15 +43,18 @@ export default function Navbar() {
                 <ThemeSwitcher />
               </div>
               {/* Language */}
-              <div className="flex items-center gap-1 cursor-pointer text-sm">
-                <Globe size={16} />
-                বাংলা
+              <div className="flex items-center gap-1 cursor-pointer text-md">
+                {/* <Globe size={16} /> */}
+
+                <LanguageSelect />
+              </div>
+              <div>
+                <GrNotification size={22} />
               </div>
 
-              {/* Register Button */}
-              {/* <button className="btn btn-link">
-                রেজিস্ট্রেশন করুন <ArrowRight size={16} />
-              </button> */}
+              <div>
+                <UserRound />
+              </div>
             </div>
 
             {/* Mobile Menu Button */}
@@ -98,9 +104,11 @@ export default function Navbar() {
           ))}
         </div>
         {/* Language */}
-        <div className="px-4 py-3 flex  items-center gap-2 text-xl">
-          <Globe size={16} />
-          বাংলা
+        <div className="">
+          {/* <Globe size={16} />
+          বাংলা */}
+
+          <LanguageSelect />
         </div>
 
         {/* Button */}

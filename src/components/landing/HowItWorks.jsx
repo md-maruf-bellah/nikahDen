@@ -47,50 +47,57 @@ const steps = [
     title: "বিবাহ সম্পন্ন করুন",
     desc: "সুন্দর জীবন শুরু করুন আমাদের সাথে",
   },
-  {
-    icon: Star,
-    title: "রিভিউ দিন",
-    desc: "আপনার সফল বিবাহের গল্প শেয়ার করুন",
-  },
+  // {
+  //   icon: Star,
+  //   title: "রিভিউ দিন",
+  //   desc: "আপনার সফল বিবাহের গল্প শেয়ার করুন",
+  // },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-16 bg-primary text-[#fd6969]-content">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="py-16 bg-[#f45f5f] text-[#fd6969]-content">
+      <div className="max-w-7xl mx-auto px-4 lg:px-22">
         {/* Header */}
         <div className="text-center mb-10">
-          <p className="text-sm opacity-80 font-semibold">প্রক্রিয়া</p>
-          <h2 className="text-3xl font-bold mt-1">আমরা যেভাবে কাজ করি</h2>
-          <p className="text-sm opacity-70 mt-2">
+          <p className="text-lg font-semibold text-white">প্রক্রিয়া</p>
+          <h2 className="text-4xl font-bold mt-1">আমরা যেভাবে কাজ করি</h2>
+          <p className="text-sm  mt-2 text-white">
             সহজ কয়েকটি ধাপে আপনার জীবনসঙ্গী খুঁজুন
           </p>
         </div>
 
         {/* Steps */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 items-center md:grid-cols-4 gap-5">
           {steps.map((step, i) => {
             const Icon = step.icon;
 
             return (
               <div
                 key={i}
-                className="card bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm"
+                className="  hover:bg-white/20 transition-all backdrop-blur-sm"
               >
                 <div className="card-body items-center text-center p-5">
-                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-3">
-                    <Icon size={22} />
+                  <div className="w-16 h-16 rounded bg-white  flex items-center font-extrabold justify-center mb-3">
+                    <Icon size={32} />
                   </div>
 
-                  <h4 className="font-bold text-sm">{step.title}</h4>
+                  <h4 className="font-bold text-sm lg:text-xl text-white">
+                    {step.title}
+                  </h4>
 
-                  <p className="text-xs opacity-80 mt-1 leading-relaxed">
+                  <p className="text-sm lg:text-lg opacity-80 mt-1 leading-relaxed text-white">
                     {step.desc}
                   </p>
                 </div>
               </div>
             );
           })}
+          <div>
+            <button className="btn btn-outline text-white text-lg">
+              রেজিস্ট্রেশন করুন
+            </button>
+          </div>
         </div>
       </div>
     </section>

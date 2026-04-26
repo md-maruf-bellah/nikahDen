@@ -32,9 +32,9 @@ const selectFields = [
 
 export default function SearchBar() {
   return (
-    <section className="bg-base-100 py-8 shadow px-4">
+    <section className=" p-4">
       {/* STATS */}
-      <div className="w-full lg:max-w-3xl mx-auto my-10 grid grid-cols-2 md:grid-cols-4 gap-7">
+      <div className="w-full lg:max-w-3xl mx-auto my-10 grid grid-cols-2 md:grid-cols-4 gap-7 ">
         {[
           { num: "১২৫", label: "একাউন্ট" },
           { num: "২৬", label: "পাত্রের বায়োডাটা" },
@@ -50,7 +50,7 @@ export default function SearchBar() {
         ))}
       </div>
 
-      <div className="w-full lg:max-w-4xl mx-auto bg-base-200 py-6 px-4">
+      <div className="w-full lg:max-w-4xl mx-auto bg-base-200 py-6 px-4  ">
         <div className="max-w-5xl mx-auto">
           {/* Top Labels (Hidden on mobile) */}
           <div className="hidden md:grid grid-cols-5 text-center mb-2 text-gray-600 font-medium text-lg">

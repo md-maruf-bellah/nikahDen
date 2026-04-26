@@ -59,7 +59,7 @@ export default function ThemeSwitcher() {
 
   return (
     <select
-      className="select select-bordered w-2 select-sm"
+      className="select select-bordered w-2 select-xs"
       value={theme}
       onChange={handleChange}
     >
