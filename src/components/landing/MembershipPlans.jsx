@@ -56,7 +56,7 @@ export default function MembershipPlans() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="divider"></div>
-          <p className="text-sm text-primary font-semibold">সদস্যপদ</p>
+          <p className="text-sm text-[#fd6969] font-semibold">সদস্যপদ</p>
           <h2 className="text-2xl font-bold mt-1">চ্যাম্পিয়ন প্ল্যান</h2>
           <p className="text-sm opacity-70 mt-1">
             সাশ্রয়ী মূল্যে সেরা সেবা উপভোগ করুন
@@ -86,7 +86,7 @@ export default function MembershipPlans() {
                 <h3 className="text-lg font-bold text-center">{plan.name}</h3>
 
                 {/* Price */}
-                <div className="text-3xl font-extrabold text-center text-primary">
+                <div className="text-3xl font-extrabold text-center text-[#fd6969]">
                   {plan.price}
                 </div>
 
@@ -96,7 +96,7 @@ export default function MembershipPlans() {
                 <ul className="mt-4 space-y-2 text-sm">
                   {plan.features.map((f, j) => (
                     <li key={j} className="flex items-start gap-2">
-                      <Check size={16} className="text-primary mt-0.5" />
+                      <Check size={16} className="text-[#fd6969] mt-0.5" />
                       <span>{f}</span>
                     </li>
                   ))}

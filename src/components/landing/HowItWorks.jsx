@@ -56,7 +56,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-16 bg-primary text-primary-content">
+    <section className="py-16 bg-primary text-[#fd6969]-content">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-10">

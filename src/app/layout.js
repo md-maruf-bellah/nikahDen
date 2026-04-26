@@ -1,10 +1,17 @@
-import { Noto_Sans_Bengali } from "next/font/google";
+import { Noto_Sans_Bengali, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/landing/Navabar";
 
 const notoSansBengali = Noto_Sans_Bengali({
   subsets: ["bengali", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-noto",
+});
+
+const hind_siliguri = Hind_Siliguri({
+  subsets: ["bengali", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   variable: "--font-noto",
 });
@@ -19,7 +26,7 @@ export default function RootLayout({ children }) {
     <html
       lang="bn"
       data-theme="cupcake"
-      className={`${notoSansBengali.variable} h-full antialiased`}
+      className={`${hind_siliguri.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">
         <Navbar />

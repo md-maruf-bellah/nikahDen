@@ -32,7 +32,7 @@ const themes = [
   //   "dim",
   //   "nord",
   //   "sunset",
-  //   "black",
+  "black",
   "business",
   "wireframe",
 ];

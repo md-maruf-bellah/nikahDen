@@ -35,9 +35,9 @@ export default function Footer() {
           {/* Brand */}
           <aside className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-1 mb-3">
-              <Heart className="text-primary fill-primary" size={22} />
+              <Heart className="text-[#fd6969] fill-primary" size={22} />
               <span className="text-xl font-bold text-white">বিবাহ</span>
-              <span className="text-xl font-bold text-primary">ডিল</span>
+              <span className="text-xl font-bold text-[#fd6969]">ডিল</span>
             </div>
 
             <p className="text-sm opacity-70 leading-relaxed">
@@ -75,17 +75,17 @@ export default function Footer() {
             <h6 className="footer-title text-white">যোগাযোগ</h6>
 
             <div className="flex items-center gap-2 text-sm opacity-70 mb-2">
-              <Phone size={14} className="text-primary" />
+              <Phone size={14} className="text-[#fd6969]" />
               <span>+880 1700-000000</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm opacity-70 mb-2">
-              <Mail size={14} className="text-primary" />
+              <Mail size={14} className="text-[#fd6969]" />
               <span>info@bibahdeal.com</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm opacity-70">
-              <MapPin size={14} className="text-primary" />
+              <MapPin size={14} className="text-[#fd6969]" />
               <span>ঢাকা, বাংলাদেশ</span>
             </div>
           </nav>

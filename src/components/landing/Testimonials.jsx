@@ -38,7 +38,7 @@ export default function Testimonials() {
         {/* Header */}
         <div className="text-center mb-10">
           <div className="divider"></div>
-          <p className="text-sm text-primary font-semibold">সাফল্যের গল্প</p>
+          <p className="text-sm text-[#fd6969] font-semibold">সাফল্যের গল্প</p>
           <h2 className="text-2xl font-bold mt-1">বিবাহিত দম্পতিদের কথা</h2>
           <p className="text-sm opacity-70 mt-1">
             আমাদের সফল সদস্যদের অভিজ্ঞতা
@@ -58,7 +58,7 @@ export default function Testimonials() {
 
                 <h3 className="font-bold text-sm">{t.name}</h3>
 
-                <p className="text-xs text-primary">{t.date}</p>
+                <p className="text-xs text-[#fd6969]">{t.date}</p>
 
                 <p className="text-sm opacity-80 mt-2 leading-relaxed">
                   "{t.text}"
