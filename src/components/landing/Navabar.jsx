@@ -104,11 +104,10 @@ export default function Navbar() {
           ))}
         </div>
         {/* Language */}
-        <div className="">
-          {/* <Globe size={16} />
-          বাংলা */}
-
-          <LanguageSelect />
+        <div className="flex gap-2 p-4 items-center">
+          <Globe size={16} />
+          বাংলা
+          {/* <LanguageSelect /> */}
         </div>
 
         {/* Button */}

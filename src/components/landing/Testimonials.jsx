@@ -133,10 +133,10 @@ export default function TestimonialSection() {
             {/* Controls */}
             <div className="flex justify-between">
               <div className="flex items-center gap-4 mt-6">
-                <button className="btn btn-sm bg-white border border-gray-400 text-gray-700 hover:bg-gray-100">
+                <button className="btn btn-md btn-square bg-white border border-gray-400 text-gray-700 hover:bg-gray-100">
                   <ChevronLeft size={18} />
                 </button>
-                <button className="btn btn-sm bg-white border border-gray-400 text-gray-700 hover:bg-gray-100">
+                <button className="btn btn-md btn-square bg-white border border-gray-400 text-gray-700 hover:bg-gray-100">
                   <ChevronRight size={18} />
                 </button>
               </div>
