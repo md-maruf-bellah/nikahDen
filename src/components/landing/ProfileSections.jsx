@@ -1,7 +1,8 @@
 "use client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import man from "./../../../assets/member/man.png";
-import womane from "./../../../assets/member/woman.png";
+import man from "./../../../assets/member/alem.png";
+import womane from "./../../../assets/member/alema.png";
+
 import Image from "next/image";
 
 // Dummy profile data
@@ -86,7 +87,7 @@ const maleProfiles = [
 function ProfileCard({ profile, isFemale }) {
   return (
     <div className="card bg-base-100 shadow hover:shadow-lg transition-all">
-      <Image src={profile.img} className="w-full" />
+      <Image src={profile.img} alt={profile.name} className="w-full " />
 
       <div className="card-body items-center text-center p-4">
         <h2 className="font-bold text-lg">{profile.name}</h2>

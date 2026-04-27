@@ -37,9 +37,9 @@ export default function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand */}
           <aside className="sm:col-span-2 md:col-span-1">
-            <div className="flex flex-wrap items-center gap-2 mb-8">
-              <Image src={logo} />{" "}
-              <p className="text-3xl text-white font-extrabold">
+            <div className="flex flex-wrap items-center gap-2 mb-1 lg:mb-8">
+              <Image src={logo} className="w-10 h-auto" />{" "}
+              <p className="text-xl lg:text-3xl text-white font-extrabold">
                 নিকাহ্ <span className="text-[#FD6969]">দ্বীন</span>
               </p>
             </div>
