@@ -114,7 +114,7 @@ function ProfileCard({ profile, isFemale }) {
 function ProfileSection({ title, profiles, isFemale }) {
   return (
     <section className="py-32">
-      <div className="max-w-7xl mx-auto px-4 lg:px-22">
+      <div className="max-w-7xl mx-auto px-4 lg:px-18">
         {/* Title */}
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold py-5">{title}</h2>
@@ -123,7 +123,7 @@ function ProfileSection({ title, profiles, isFemale }) {
         {/* Carousel-like Grid */}
         <div className="relative">
           {/* Left Button */}
-          <button className="btn btn-square btn-md absolute bg-gray-700 text-white left-[-45] top-1/3 -translate-y-1/2 z-10 hidden md:flex">
+          <button className="btn btn-square btn-md absolute bg-gray-700 text-white left-[-45] top-1/2 -translate-y-1/2 z-10 hidden md:flex">
             <ChevronLeft size={18} />
           </button>
 
@@ -135,7 +135,7 @@ function ProfileSection({ title, profiles, isFemale }) {
           </div>
 
           {/* Right Button */}
-          <button className="btn btn-square btn-md absolute  bg-gray-700 text-white right-0 lg:right-[-45] top-1/3 -translate-y-1/2 z-10 hidden md:flex">
+          <button className="btn btn-square btn-md absolute  bg-gray-700 text-white right-0 lg:right-[-45] top-1/2 -translate-y-1/2 z-10 hidden md:flex">
             <ChevronRight size={18} />
           </button>
         </div>

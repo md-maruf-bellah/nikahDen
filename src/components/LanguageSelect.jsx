@@ -12,17 +12,17 @@ export default function LanguageSelect() {
       {/* Button */}
       <label
         tabIndex={0}
-        className="btn btn-ghost btn-sm flex items-center gap-2"
+        className="btn  btn-ghost  flex items-center justify-around gap-2"
       >
         <IoLanguage className="text-[#FD6969]" size={18} />
         {language}
-        <SlArrowDown />
+        <SlArrowDown size={12} />
       </label>
 
       {/* Dropdown menu */}
       <ul
         tabIndex={0}
-        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-40"
+        className="dropdown-content menu text-md p-2 shadow bg-base-100 rounded-box w-40"
       >
         <li>
           <a

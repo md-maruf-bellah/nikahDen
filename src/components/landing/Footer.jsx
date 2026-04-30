@@ -2,10 +2,11 @@
 
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 
-import { Heart, Mail, Phone, MapPin } from "lucide-react";
+import { Heart, Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 
 import logo from "./../../../assets/navbar/logo.png";
 import Image from "next/image";
+// import { ArrowRight } from "lucide";
 
 const footerLinks = {
   "দ্রুত লিংক": [
@@ -14,14 +15,12 @@ const footerLinks = {
     "পাত্রী খুঁজুন",
     "সদস্যপদ",
     "সফলতার গল্প",
-  ],
-  সাহায্য: [
     "সাধারণ প্রশ্ন",
     "গোপনীয়তা নীতি",
-    "ব্যবহারের শর্ত",
-    "রিফান্ড নীতি",
   ],
   "আমাদের সেবা": [
+    "ব্যবহারের শর্ত",
+    "রিফান্ড নীতি",
     "বায়োডাটা তৈরি",
     "ম্যাচমেকিং",
     "কাউন্সেলিং",
@@ -36,7 +35,7 @@ export default function Footer() {
         {/* GRID SECTION */}
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-10">
           {/* Brand */}
-          <aside className="sm:col-span-2 md:col-span-1">
+          <aside className="sm:col-span-1 md:col-span-2">
             <div className="flex flex-wrap items-center gap-2 mb-1 lg:mb-8">
               <Image src={logo} className="w-10 h-auto" />{" "}
               <p className="text-xl lg:text-3xl text-white font-extrabold">
@@ -46,7 +45,10 @@ export default function Footer() {
 
             <p className="text-md text-white  leading-relaxed">
               বাংলাদেশের সবচেয়ে বিশ্বস্ত মুসলিম ম্যাট্রিমনি প্ল্যাটফর্ম।
-              লক্ষাধিক মুসলিম পরিবারের বিশ্বাসের ঠিকানা।
+              লক্ষাধিক মুসলিম পরিবারের বিশ্বাসের ঠিকানা। বাংলাদেশের সবচেয়ে
+              বিশ্বস্ত মুসলিম ম্যাট্রিমনি প্ল্যাটফর্ম। লক্ষাধিক মুসলিম পরিবারের
+              বিশ্বাসের ঠিকানা। বাংলাদেশের সবচেয়ে বিশ্বস্ত মুসলিম ম্যাট্রিমনি
+              প্ল্যাটফর্ম। লক্ষাধিক মুসলিম পরিবারের বিশ্বাসের ঠিকানা।
             </p>
           </aside>
 
@@ -56,8 +58,11 @@ export default function Footer() {
               <h6 className="text-xl font-bold text-white">{heading}</h6>
 
               {links.map((link, j) => (
-                <a key={j} className="link link-hover text-md text-white">
-                  {link}
+                <a
+                  key={j}
+                  className="link link-hover flex items-center gap-3 text-md text-white"
+                >
+                  <ArrowRight size={18} /> {link}
                 </a>
               ))}
             </nav>

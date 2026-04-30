@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { Menu, X, Globe, ArrowRight, UserRound } from "lucide-react";
-import ThemeSwitcher from "../ThemeSwitcher";
-import logoImage from "./../../../assets/navbar/logo.png";
 import Image from "next/image";
 import { GrNotification } from "react-icons/gr";
 
+import ThemeSwitcher from "../ThemeSwitcher";
 import LanguageSelect from "../LanguageSelect";
+import logoImage from "./../../../assets/navbar/logo.png";
+import { FaArrowRightToBracket } from "react-icons/fa6";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -16,188 +17,109 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Navbar */}
-      <div className="bg-base-100  shadow-sm w-full px-4 lg:px-22">
-        <div className="max-w-7xl mx-auto  py-5">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
+      {/* ================= NAVBAR ================= */}
+      <header className="sticky top-0 z-50 bg-base-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+          <div className="flex items-center justify-between h-20">
+            {/* ===== Logo ===== */}
             <div className="flex items-center gap-2">
-              <Image src={logoImage} />{" "}
-              <p className="text-3xl font-extrabold">
-                নিকাহ্ <span className="text-[#FD6969]">দ্বীন</span>
-              </p>
+              <Image src={logoImage} alt="logo" width={40} height={40} />
+              <h1 className="text-2xl font-extrabold">
+                নিকাহ্<span className="text-[#FD6969]">দ্বীন</span>
+              </h1>
             </div>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8 text-lg">
+            {/* ===== Desktop Menu ===== */}
+            <nav className="hidden md:flex items-center gap-8 text-base font-medium">
               {navLinks.map((item) => (
-                <a key={item} className="hover:text-[#fd6969] cursor-pointer">
+                <a
+                  key={item}
+                  className="relative cursor-pointer hover:text-[#fd6969] transition"
+                >
                   {item}
                 </a>
               ))}
-            </div>
+            </nav>
 
-            {/* Right Side */}
+            {/* ===== Right Actions ===== */}
             <div className="hidden md:flex items-center gap-4">
-              <div>
-                <ThemeSwitcher />
-              </div>
-              {/* Language */}
-              <div className="flex items-center gap-1 cursor-pointer text-md">
-                {/* <Globe size={16} /> */}
+              {/* <ThemeSwitcher /> */}
 
-                <LanguageSelect />
-              </div>
-              <div>
-                <GrNotification size={22} />
-              </div>
+              <LanguageSelect />
 
-              <div>
-                <UserRound />
-              </div>
+              <button className="btn  btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white text-sm px-5">
+                রেজিস্ট্রেশন <FaArrowRightToBracket />
+              </button>
+
+              {/* <GrNotification size={20} className="cursor-pointer" />
+
+              <UserRound className="cursor-pointer" /> */}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button className="md:hidden" onClick={() => setOpen(true)}>
+            {/* ===== Mobile Button ===== */}
+            <button
+              onClick={() => setOpen(true)}
+              className="md:hidden btn btn-ghost"
+            >
               <Menu />
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile Drawer */}
+      {/* ================= BACKDROP ================= */}
       <div
-        className={`fixed inset-0 z-50 bg-black/30 transition ${
-          open ? "visible opacity-100" : "invisible opacity-0"
-        }`}
         onClick={() => setOpen(false)}
+        className={`fixed inset-0 bg-black/40 z-40 transition ${
+          open ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
       />
 
-      <div
-        className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-base-100 z-50 transform transition ${
+      {/* ================= MOBILE DRAWER ================= */}
+      <aside
+        className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-base-100 z-50 shadow-xl transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Drawer Header */}
-        <div className="flex items-center justify-between p-4 ">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b">
           <div className="flex items-center gap-2">
-            <Image src={logoImage} />{" "}
-            <p className="text-3xl font-extrabold">
+            <Image src={logoImage} alt="logo" width={36} height={36} />
+            <span className="text-xl font-bold">
               নিকাহ্ <span className="text-[#FD6969]">দ্বীন</span>
-            </p>
+            </span>
           </div>
 
-          <button onClick={() => setOpen(false)}>
+          <button onClick={() => setOpen(false)} className="btn btn-ghost">
             <X />
           </button>
         </div>
 
-        {/* Menu Items */}
-        <div className="px-4 py-2 space-y-2">
+        {/* Links */}
+        <div className="p-5 space-y-4">
           {navLinks.map((item) => (
             <div
               key={item}
-              className="py-3 text-xl cursor-pointer hover:text-[#fd6969]"
+              className="text-lg font-medium cursor-pointer hover:text-[#fd6969] transition"
             >
               {item}
             </div>
           ))}
         </div>
+
         {/* Language */}
-        <div className="flex gap-2 p-4 items-center">
+        <div className="px-5 flex items-center gap-2 text-sm opacity-80">
           <Globe size={16} />
           বাংলা
-          {/* <LanguageSelect /> */}
         </div>
 
-        {/* Button */}
-        <div className="p-0">
-          <button className="btn btn-link text-lg  text-[#fd6969]">
+        {/* CTA Button */}
+        <div className="p-5">
+          <button className="btn w-full bg-[#fd6969] text-white hover:bg-[#e85a5a] flex items-center justify-center gap-2">
             রেজিস্ট্রেশন করুন <ArrowRight size={16} />
           </button>
         </div>
-      </div>
+      </aside>
     </>
   );
 }
-
-// "use client";
-// import { useState } from "react";
-// import { Heart, Bell, User, Menu, X } from "lucide-react";
-// import ThemeSwitcher from "../ThemeSwitcher";
-
-// export default function Navbar() {
-//   const [menuOpen, setMenuOpen] = useState(false);
-
-//   return (
-//     <nav className="navbar bg-base-100 shadow-sm sticky top-0 z-50">
-//       <div className="max-w-7xl w-full mx-auto px-4 flex justify-between items-center">
-//         {/* Left: Logo */}
-//         <div className="flex items-center gap-1">
-//           <Heart className="text-[#fd6969] fill-primary" size={22} />
-//           <span className="text-xl font-bold text-[#fd6969]">বিবাহ</span>
-//           <span className="text-xl font-bold text-base-content">ডিল</span>
-//         </div>
-
-//         {/* Center: Desktop Menu */}
-//         <div className="hidden md:flex gap-6 text-sm font-medium">
-//           <a className="link link-hover" href="#">
-//             পাত্র-পাত্রী
-//           </a>
-//           <a className="link link-hover" href="#">
-//             পরিচিতি বিজ্ঞাপন
-//           </a>
-//           <a className="link link-hover" href="#">
-//             সদস্যপদ
-//           </a>
-//         </div>
-
-//         {/* Right: Actions */}
-//         <div className="hidden md:flex items-center gap-3">
-//           <button className="btn btn-ghost btn-circle">
-//             <Bell size={18} />
-//           </button>
-
-//           <button className="btn btn-ghost btn-circle">
-//             <User size={18} />
-//           </button>
-
-//           <ThemeSwitcher />
-
-//           <button className="btn btn-primary btn-sm">লগইন</button>
-//           <button className="btn btn-outline btn-sm">রেজিস্ট্রেশন</button>
-//         </div>
-
-//         {/* Mobile Button */}
-//         <button
-//           className="btn btn-ghost md:hidden"
-//           onClick={() => setMenuOpen(!menuOpen)}
-//         >
-//           {menuOpen ? <X size={22} /> : <Menu size={22} />}
-//         </button>
-//       </div>
-
-//       {/* Mobile Menu */}
-//       {menuOpen && (
-//         <div className="md:hidden bg-base-100 border-t px-4 py-4 flex flex-col gap-3 text-sm">
-//           <a className="link link-hover" href="#">
-//             পাত্র-পাত্রী
-//           </a>
-//           <a className="link link-hover" href="#">
-//             পরিচিতি বিজ্ঞাপন
-//           </a>
-//           <a className="link link-hover" href="#">
-//             সদস্যপদ
-//           </a>
-
-//           <div className="flex gap-2 mt-2">
-//             <button className="btn btn-primary btn-sm flex-1">লগইন</button>
-//             <button className="btn btn-outline btn-sm flex-1">
-//               রেজিস্ট্রেশন
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </nav>
-//   );
-// }

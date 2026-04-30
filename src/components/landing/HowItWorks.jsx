@@ -57,7 +57,7 @@ const steps = [
 export default function HowItWorks() {
   return (
     <section className="py-16 bg-[#f45f5f] text-[#fd6969]-content">
-      <div className="max-w-7xl mx-auto px-4 lg:px-22">
+      <div className="max-w-7xl mx-auto px-4 lg:px-10">
         {/* Header */}
         <div className="text-center mb-10">
           <p className="text-lg font-semibold text-white">প্রক্রিয়া</p>
