@@ -5,8 +5,6 @@ export default function Home() {
   const handtleThem = () => {};
   return (
     <div className="py-8">
-      {/* <ThemeSwitcher /> */}
-
       <Landing />
     </div>
   );

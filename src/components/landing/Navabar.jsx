@@ -9,6 +9,7 @@ import ThemeSwitcher from "../ThemeSwitcher";
 import LanguageSelect from "../LanguageSelect";
 import logoImage from "./../../../assets/navbar/logo.png";
 import { FaArrowRightToBracket } from "react-icons/fa6";
+import Link from "next/link";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -22,12 +23,12 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between h-20">
             {/* ===== Logo ===== */}
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <Image src={logoImage} alt="logo" width={40} height={40} />
               <h1 className="text-2xl font-extrabold">
                 নিকাহ্<span className="text-[#FD6969]">দ্বীন</span>
               </h1>
-            </div>
+            </Link>
 
             {/* ===== Desktop Menu ===== */}
             <nav className="hidden md:flex items-center gap-8 text-base font-medium">
@@ -47,9 +48,12 @@ export default function Navbar() {
 
               <LanguageSelect />
 
-              <button className="btn  btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white text-sm px-5">
+              <Link
+                href={"/register"}
+                className="btn  btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white text-sm px-5"
+              >
                 রেজিস্ট্রেশন <FaArrowRightToBracket />
-              </button>
+              </Link>
 
               {/* <GrNotification size={20} className="cursor-pointer" />
 
