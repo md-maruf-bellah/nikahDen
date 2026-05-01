@@ -1,3 +1,4 @@
+import Link from "next/link";
 import SearchBar from "./SearchBar";
 
 function PricingSection() {
@@ -77,9 +78,9 @@ function PricingSection() {
       </div>
 
       <div className="text-center mt-32">
-        <button className="btn btn-outline btn-gray-100 text-lg">
+        <Link href={"/member"} className="btn btn-outline btn-gray-100 text-lg">
           আরও প্লান দেখুন
-        </button>
+        </Link>
       </div>
     </div>
   );

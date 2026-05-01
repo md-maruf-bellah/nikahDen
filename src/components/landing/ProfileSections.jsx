@@ -4,6 +4,7 @@ import man from "./../../../assets/member/alem.png";
 import womane from "./../../../assets/member/alema.png";
 
 import Image from "next/image";
+import Link from "next/link";
 
 // Dummy profile data
 const femaleProfiles = [
@@ -103,9 +104,12 @@ function ProfileCard({ profile, isFemale }) {
           খুব সহজেই বিনামূল্যে দ্বীনি বিয়ে বায়োডাটা তৈরি করতে পারবেন।
         </p>
 
-        <button className="btn btn-outline text-xs md:text-lg w-5/6 p-4">
+        <Link
+          href={"/details"}
+          className="btn btn-outline text-xs md:text-lg w-5/6 p-4"
+        >
           বায়োডাটা দেখুন
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -142,7 +146,9 @@ function ProfileSection({ title, profiles, isFemale }) {
 
         {/* Footer Button */}
         <div className="text-center mt-10">
-          <button className="btn btn-outline text-xl">আরো দেখুন</button>
+          <Link href={"/list"} className="btn btn-outline text-xl">
+            আরো দেখুন
+          </Link>
         </div>
       </div>
     </section>
