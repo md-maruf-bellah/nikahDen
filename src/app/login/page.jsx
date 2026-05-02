@@ -1,104 +1,130 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
+import { FaFacebook } from "react-icons/fa";
+import Image from "next/image";
+import Link from "next/link";
+import logo from "./../../../assets/navbar/logo.png";
+import contact from "./../../../assets/contact/img.png";
 
-const Login = () => {
+const Register = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <div className="max-w-5xl m-auto">
-      <div className="hero bg-base-100 min-h-screen">
-        <div className="hero-content flex-col lg:flex-row">
-          <div className="text-center lg:text-left">
-            <h1 className="text-5xl font-bold">Login now!</h1>
-            <p className="py-6">
-              Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda
-              excepturi exercitationem quasi. In deleniti eaque aut repudiandae
-              et a id nisi.
-            </p>
-          </div>
-          <div className=" bg-base-100 w-full max-w-sm shrink-0 ">
-            <div className="">
-              <fieldset className="fieldset">
-                <label className="label">Email</label>
-                <input
-                  type="email"
-                  className="input w-full"
-                  placeholder="Email"
-                />
-                <label className="label">Password</label>
-                <input
-                  type="password"
-                  className="input w-full"
-                  placeholder="Password"
-                />
-                <div>
-                  <a className="link link-hover">Forgot password?</a>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="checkbox checkbox-xs"
-                  />
-                  <span>
-                    আমি আপনাদের সকল ট্রামস্ এন্ড কন্ডিশন এর সাথে সহমত পোষন
-                    করতেছি।
-                  </span>
-                </div>
-                <button className="btn bg-[#FD6969] mt-4 ">Login</button>
-                <div className="divider">OR</div>
-                {/* Google */}
-                <button className="btn bg-white text-black border-[#e5e5e5]">
-                  <svg
-                    aria-label="Google logo"
-                    width="16"
-                    height="16"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 512 512"
-                  >
-                    <g>
-                      <path d="m0 0H512V512H0" fill="#fff"></path>
-                      <path
-                        fill="#34a853"
-                        d="M153 292c30 82 118 95 171 60h62v48A192 192 0 0190 341"
-                      ></path>
-                      <path
-                        fill="#4285f4"
-                        d="m386 400a140 175 0 0053-179H260v74h102q-7 37-38 57"
-                      ></path>
-                      <path
-                        fill="#fbbc02"
-                        d="m90 341a208 200 0 010-171l63 49q-12 37 0 73"
-                      ></path>
-                      <path
-                        fill="#ea4335"
-                        d="m153 219c22-69 116-109 179-50l55-54c-78-75-230-72-297 55"
-                      ></path>
-                    </g>
-                  </svg>
-                  Login with Google
-                </button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="max-w-6xl w-full bg-white rounded-lg shadow overflow-hidden flex flex-col lg:flex-row">
+        {/* Left Side - Image with Overlay */}
+        <div className="lg:w-1/2 relative min-h-[300px] lg:min-h-full">
+          <Image
+            src={contact}
+            alt="Couple"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-red-400/40 mix-blend-multiply"></div>
+        </div>
 
-                {/* Facebook */}
-                <button className="btn bg-[#1A77F2] text-white border-[#005fd8]">
-                  <svg
-                    aria-label="Facebook logo"
-                    width="16"
-                    height="16"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 32 32"
-                  >
-                    <path
-                      fill="white"
-                      d="M8 12h5V8c0-6 4-7 11-6v5c-4 0-5 0-5 3v2h5l-1 6h-4v12h-6V18H8z"
-                    ></path>
-                  </svg>
-                  Login with Facebook
-                </button>
-              </fieldset>
-            </div>
+        {/* Right Side - Form */}
+        <div className="lg:w-1/2 p-8 md:p-12 lg:p-16">
+          {/* Logo */}
+          <div className="flex items-center gap-2 mb-8">
+            <Image src={logo} alt="logo" width={40} height={40} />
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              নিকাহ্<span className="text-[#FD6969]">দ্বীন</span>
+            </h1>
           </div>
+
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">
+            একাউন্ট তৈরি করুন
+          </h2>
+
+          <form className="space-y-5">
+            {/* Name Fields */}
+
+            {/* Email Field */}
+            <div className="relative">
+              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+                ই-মেইল
+              </label>
+              <input
+                type="email"
+                placeholder="xxx@example.com"
+                className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div className="relative">
+              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+                পাসওয়ার্ড
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="***********"
+                  className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-start gap-2 py-2">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-sm checkbox-error mt-1"
+                id="terms"
+              />
+              <label
+                htmlFor="terms"
+                className="text-sm text-gray-600 cursor-pointer"
+              >
+                আমি আপনাদের সকল{" "}
+                <span className="text-red-500 underline">
+                  ট্রামস্ এন্ড কন্ডিশন
+                </span>{" "}
+                এর সাথে সহমত পোষন করতেছি।
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold rounded-xl">
+              কন্টিনিউ করুন
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="divider text-gray-400 text-sm my-8">or</div>
+
+          {/* Social Logins */}
+          <div className="space-y-4">
+            <button className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12 rounded-xl flex items-center justify-center gap-2 normal-case font-semibold">
+              <FcGoogle size={22} />
+              Sign up with Google
+            </button>
+            <button className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12 rounded-xl flex items-center justify-center gap-2 normal-case font-semibold">
+              <FaFacebook size={22} />
+              Sign up with Facebook
+            </button>
+          </div>
+
+          {/* Footer Link */}
+          <p className="text-center mt-8 text-sm text-gray-600 font-medium">
+            আমার একাউন্ট রয়েছে{" "}
+            <Link href="/login" className="text-red-500 underline font-bold">
+              লগইন করুন
+            </Link>
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Register;

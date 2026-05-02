@@ -1,3 +1,280 @@
+// "use client";
+// import React, { useState, useEffect, useRef } from "react";
+// import { Search, MoveRight, ArrowLeft } from "lucide-react";
+
+// const MessagingApp = () => {
+//   // ডামি ইউজার ডাটা
+//   const [users] = useState([
+//     {
+//       id: 1,
+//       name: "Robert Brown",
+//       role: "Head of Development",
+//       time: "35 mins",
+//       unread: 2,
+//       color: "bg-[#FF7F5C]",
+//       img: "https://i.pravatar.cc/150?u=1",
+//       active: true,
+//     },
+//     {
+//       id: 2,
+//       name: "Jane Cooper",
+//       role: "UI/UX Designer",
+//       time: "12 mins",
+//       unread: 4,
+//       color: "bg-[#01D9D9]",
+//       img: "https://i.pravatar.cc/150?u=2",
+//       active: false,
+//     },
+//     {
+//       id: 3,
+//       name: "Wade Warren",
+//       role: "CTO",
+//       time: "1 hour",
+//       unread: 1,
+//       color: "bg-[#4632B5]",
+//       img: "https://i.pravatar.cc/150?u=3",
+//       active: true,
+//     },
+//     {
+//       id: 4,
+//       name: "Esther Howard",
+//       role: "DevOps",
+//       time: "2 days",
+//       unread: 0,
+//       color: "",
+//       img: "https://i.pravatar.cc/150?u=4",
+//       active: false,
+//     },
+//   ]);
+
+//   const [activeChat, setActiveChat] = useState(users[0]);
+//   const [messages, setMessages] = useState([
+//     {
+//       id: 1,
+//       text: "How likely are you to recommend our company to your friends and family?",
+//       time: "35 mins",
+//       isMe: false,
+//     },
+//     {
+//       id: 2,
+//       text: "How likely are you to recommend our company to your friends and family?",
+//       time: "32 mins",
+//       isMe: true,
+//     },
+//     { id: 3, text: "Ok, Understood!", time: "30 mins", isMe: false },
+//   ]);
+//   const [inputText, setInputText] = useState("");
+//   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+//   const scrollRef = useRef(null);
+
+//   // অটো স্ক্রল টু বটম
+//   useEffect(() => {
+//     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+//   }, [messages]);
+
+//   const handleSendMessage = (e) => {
+//     e.preventDefault();
+//     if (!inputText.trim()) return;
+
+//     const newMessage = {
+//       id: Date.now(),
+//       text: inputText,
+//       time: "Just now",
+//       isMe: true,
+//     };
+
+//     setMessages([...messages, newMessage]);
+//     setInputText("");
+//   };
+
+//   return (
+//     <div className="flex h-screen w-full  p-0  font-sans text-[#111111]">
+//       <div className="mx-auto flex border border-red-200 rounded-xl w-full max-w-[1300px] gap-0 md:gap-8 overflow-hidden relative">
+//         {/* --- Left Sidebar (Chat List) --- */}
+//         <div
+//           className={`w-full md:w-[380px] bg-white p-6 md:p-8 md:rounded-[20px] shadow-sm flex flex-col h-full transition-all duration-300 ${isMobileChatOpen ? "-translate-x-full md:translate-x-0 absolute md:relative" : "translate-x-0 relative"}`}
+//         >
+//           <div className="mb-8">
+//             <h1 className="text-2xl font-bold mb-6 md:hidden">Messages</h1>
+//             <div className="relative">
+//               <Search
+//                 className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"
+//                 size={20}
+//               />
+//               <input
+//                 type="text"
+//                 placeholder="Search"
+//                 className="w-full rounded-xl bg-[#F1F3F5] py-4 pl-14 pr-5 text-lg outline-none"
+//               />
+//             </div>
+//           </div>
+
+//           <div className="flex-1 space-y-6 overflow-y-auto custom-scrollbar">
+//             {users.map((user) => (
+//               <div
+//                 key={user.id}
+//                 onClick={() => {
+//                   setActiveChat(user);
+//                   setIsMobileChatOpen(true);
+//                 }}
+//                 className={`flex cursor-pointer items-center gap-4 p-2 rounded-xl transition-all ${activeChat.id === user.id ? "bg-gray-50" : "hover:bg-gray-50"}`}
+//               >
+//                 <div className="relative shrink-0">
+//                   <img
+//                     src={user.img}
+//                     alt="avatar"
+//                     className="h-14 w-14 rounded-full object-cover"
+//                   />
+//                 </div>
+//                 <div className="flex-1 min-w-0">
+//                   <div className="flex items-center justify-between">
+//                     <h4 className="text-[17px] font-semibold truncate">
+//                       {user.name}
+//                     </h4>
+//                     <span className="text-sm text-gray-400 shrink-0">
+//                       {user.time}
+//                     </span>
+//                   </div>
+//                   <div className="flex items-center justify-between mt-1">
+//                     <p className="text-[14px] text-gray-400 truncate">
+//                       {user.role}
+//                     </p>
+//                     {user.unread > 0 && (
+//                       <span
+//                         className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shrink-0 ${user.color}`}
+//                       >
+//                         {user.unread}
+//                       </span>
+//                     )}
+//                   </div>
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+
+//         {/* --- Right Side (Chat Window) --- */}
+//         <div
+//           className={`flex flex-col flex-1 bg-white md:rounded-[20px] shadow-sm overflow-hidden h-full z-10 transition-all duration-300 ${isMobileChatOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"} fixed inset-0 md:relative`}
+//         >
+//           {/* Header */}
+//           <div className="px-6 py-6 md:px-10 md:pt-10">
+//             <div className="flex items-center justify-between">
+//               <div className="flex items-center gap-4">
+//                 <button
+//                   onClick={() => setIsMobileChatOpen(false)}
+//                   className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full"
+//                 >
+//                   <ArrowLeft size={24} />
+//                 </button>
+//                 <img
+//                   src={activeChat.img}
+//                   alt="active-user"
+//                   className="h-12 w-12 md:h-[60px] md:w-[60px] rounded-full object-cover"
+//                 />
+//                 <div>
+//                   <h3 className="text-lg md:text-xl font-bold">
+//                     {activeChat.name}
+//                   </h3>
+//                   <div className="flex items-center gap-2">
+//                     <span className="text-[14px] text-gray-400">Active</span>
+//                     <span className="h-2 w-2 rounded-full bg-[#44CE55]"></span>
+//                   </div>
+//                 </div>
+//               </div>
+//               <button className="text-sm md:text-[15px] font-medium underline underline-offset-4 hidden sm:block">
+//                 Delete Conversation
+//               </button>
+//             </div>
+//             <div className="mt-6 md:mt-8 h-[1px] w-full bg-[#EAEAEA]"></div>
+//           </div>
+
+//           {/* Chat Messages */}
+//           <div className="flex-1 space-y-8 overflow-y-auto px-6 md:px-10 py-4 custom-scrollbar">
+//             {messages.map((msg) => (
+//               <div
+//                 key={msg.id}
+//                 className={`flex flex-col ${msg.isMe ? "items-end" : "items-start"} gap-3`}
+//               >
+//                 <div
+//                   className={`flex items-center gap-3 ${msg.isMe ? "flex-row-reverse" : "flex-row"}`}
+//                 >
+//                   <img
+//                     src={
+//                       msg.isMe
+//                         ? "https://i.pravatar.cc/150?u=me"
+//                         : activeChat.img
+//                     }
+//                     className="h-12 w-12 md:h-14 md:w-14 rounded-full"
+//                     alt=""
+//                   />
+//                   <div className={msg.isMe ? "text-right" : "text-left"}>
+//                     <p className="font-bold text-md md:text-lg">
+//                       {msg.isMe ? "You" : activeChat.name}
+//                     </p>
+//                     <p className="text-xs text-gray-400">{msg.time}</p>
+//                   </div>
+//                 </div>
+//                 <div
+//                   className={`max-w-[85%] md:max-w-[70%] px-6 py-4 rounded-2xl text-[15px] md:text-[16px] leading-relaxed shadow-sm ${
+//                     msg.isMe
+//                       ? "bg-[#FFF4F2] rounded-tr-none text-right"
+//                       : "bg-[#F1F3F5] rounded-tl-none text-left"
+//                   }`}
+//                 >
+//                   {msg.text}
+//                 </div>
+//               </div>
+//             ))}
+//             <div ref={scrollRef} />
+//           </div>
+
+//           {/* Footer Input */}
+//           <div className="px-6 pb-6 md:px-10 md:pb-10">
+//             <div className="mb-6 md:mb-8 h-[1px] w-full bg-[#EAEAEA]"></div>
+//             <form
+//               onSubmit={handleSendMessage}
+//               className="flex items-center justify-between gap-4"
+//             >
+//               <input
+//                 type="text"
+//                 value={inputText}
+//                 onChange={(e) => setInputText(e.target.value)}
+//                 placeholder="Type a Message"
+//                 className="flex-1 bg-transparent text-md md:text-lg outline-none placeholder:text-gray-400"
+//               />
+//               <button
+//                 type="submit"
+//                 className="flex items-center gap-2 rounded-xl bg-[#FD7E71] px-5 py-3 md:px-8 md:py-4 font-bold text-white shadow-lg shadow-red-100 hover:bg-[#fc6a5b] transition-all shrink-0"
+//               >
+//                 <span className="hidden sm:inline">Send Message</span>
+//                 <MoveRight size={20} />
+//               </button>
+//             </form>
+//           </div>
+//         </div>
+//       </div>
+
+//       <style jsx>{`
+//         .custom-scrollbar::-webkit-scrollbar {
+//           width: 4px;
+//         }
+//         .custom-scrollbar::-webkit-scrollbar-thumb {
+//           background: #e5e7eb;
+//           border-radius: 10px;
+//         }
+//         @media (max-width: 768px) {
+//           .custom-scrollbar::-webkit-scrollbar {
+//             display: none;
+//           }
+//         }
+//       `}</style>
+//     </div>
+//   );
+// };
+
+// export default MessagingApp;
+
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Send, ArrowLeft, MoreVertical } from "lucide-react";

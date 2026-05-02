@@ -16,6 +16,12 @@ import {
 import Image from "next/image";
 import profile from "./../../../assets/member/alem.png";
 import MessagingPage from "./message/MessagingPage";
+import ProfileData from "./biodata/page";
+import LikeList from "./likeList/page";
+import MemberShip from "./memberShip/page";
+import NotificationList from "./notification/page";
+import MembershipDashboard from "./memberAndPackage/page";
+import LogoutForm from "./logout/page";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
@@ -36,49 +42,38 @@ const Dashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "ড্যাশবোর্ড":
-        return <MainDashboardView />;
+        return <MembershipDashboard />;
       case "বায়োডাটা":
         return (
-          <div className="p-10 bg-white rounded-lg border">
-            বায়োডাটা কন্টেন্ট এখানে হবে...
+          <div className="border border-rose-200 rounded-lg">
+            <ProfileData />
+          </div>
+        );
+      case "পছন্দের তালিকা":
+        return (
+          <div className="border border-rose-200 rounded-lg">
+            <LikeList />
+          </div>
+        );
+      case "আপনাকে যারা পছন্দ করেছেন":
+        return (
+          <div className="border border-rose-200 rounded-lg">
+            <LikeList />
           </div>
         );
       case "মেম্বারশিপ":
         return (
-          <div className="p-10 bg-white rounded-lg border">
-            মেম্বারশিপ প্ল্যান এখানে হবে...
+          <div className="border border-rose-200 rounded-lg">
+            <MemberShip />
           </div>
         );
-      case "বায়োডাটা":
+      case "নোটিফিকেশন":
         return (
-          <div className="p-10 bg-white rounded-lg border">
-            বায়োডাটা কন্টেন্ট এখানে হবে...
+          <div className="border border-rose-200 rounded-lg">
+            <NotificationList />
           </div>
         );
-      case "মেম্বারশিপ":
-        return (
-          <div className="p-10 bg-white rounded-lg border">
-            মেম্বারশিপ প্ল্যান এখানে হবে...
-          </div>
-        );
-      case "বায়োডাটা":
-        return (
-          <div className="p-10 bg-white rounded-lg border">
-            বায়োডাটা কন্টেন্ট এখানে হবে...
-          </div>
-        );
-      case "মেম্বারশিপ":
-        return (
-          <div className="p-10 bg-white rounded-lg border">
-            মেম্বারশিপ প্ল্যান এখানে হবে...
-          </div>
-        );
-      case "বায়োডাটা":
-        return (
-          <div className="p-10 bg-white rounded-lg border">
-            বায়োডাটা কন্টেন্ট এখানে হবে...
-          </div>
-        );
+
       case "মেসেজিং":
         return (
           <div className="">
@@ -87,8 +82,8 @@ const Dashboard = () => {
         );
       default:
         return (
-          <div className="p-10 bg-white rounded-lg border">
-            {activeTab} সেকশনটি শীঘ্রই আসছে...
+          <div>
+            <LogoutForm />
           </div>
         );
     }
