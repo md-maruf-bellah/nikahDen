@@ -1,7 +1,7 @@
 import { Noto_Sans_Bengali, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/landing/Navabar";
-import Footer from "@/components/landing/Footer";
+// import Navbar from "@/components/landing/Navabar";
+// import Footer from "@/components/landing/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 
 const notoSansBengali = Noto_Sans_Bengali({
@@ -31,10 +31,8 @@ export default function RootLayout({ children }) {
       className={`${hind_siliguri.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">
-        <Navbar />
         <main className="flex-1">{children}</main>
         <ScrollToTop />
-        <Footer />
       </body>
     </html>
   );

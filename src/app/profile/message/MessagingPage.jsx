@@ -376,7 +376,7 @@ const MessagingApp = () => {
                 setActiveChat(user);
                 setShowChatWindow(true);
               }}
-              className={`flex items-center gap-3 p-4 cursor-pointer transition-all ${activeChat.id === user.id ? "bg-red-50/50 border-r-4 border-red-400" : "hover:bg-gray-50"}`}
+              className={`flex items-center gap-3 p-2 cursor-pointer transition-all ${activeChat.id === user.id ? "bg-red-100 border-r-4 border-red-400" : "hover:bg-gray-50"}`}
             >
               <div className="relative">
                 <img
