@@ -27,6 +27,7 @@ import MemberShip from "../profile/memberShip/page";
 import NotificationList from "../profile/notification/page";
 import LogoutForm from "../profile/logout/page";
 import MessagingPage from "../message/page";
+import UserManagement from "./table/page";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
@@ -59,7 +60,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "ড্যাশবোর্ড":
-        return <MembershipDashboard />;
+        return <UserManagement />;
       case "বায়োডাটা":
         return <ProfileData />;
       case "পছন্দের তালিকা":
@@ -81,7 +82,7 @@ const AdminDashboard = () => {
 
   return (
     // h-screen and overflow-hidden ensures the main page doesn't scroll
-    <div className="h-screen w-full bg-gray-50 flex overflow-hidden">
+    <div className="h-screen w-full  flex overflow-hidden">
       {/* --- Fixed Sidebar --- */}
       <aside
         className={`
@@ -222,7 +223,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* --- Scrollable Content Area --- */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 min-h-full">
             {renderContent()}
           </div>

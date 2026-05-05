@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
     "add": "^2.0.6",
     "card": "^2.5.4",
     "daisyui": "^5.5.19",
