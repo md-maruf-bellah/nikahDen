@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Palette, Check } from "lucide-react"; // আইকন ব্যবহারের জন্য
 
 const themes = [
   "light",
@@ -37,10 +38,9 @@ const themes = [
   "wireframe",
 ];
 
-// simple color map (preview)
 const themeColors = {
   light: "bg-white",
-  dark: "bg-black",
+  dark: "bg-neutral-focus",
   cupcake: "bg-pink-300",
   bumblebee: "bg-yellow-400",
   emerald: "bg-emerald-500",
@@ -74,14 +74,12 @@ const themeColors = {
 };
 
 export default function ThemeSwitcher() {
-  const [theme, setTheme] = useState("cupcake");
+  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.setAttribute("data-theme", saved);
-    }
+    const saved = localStorage.getItem("theme") || "light";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
   }, []);
 
   const changeTheme = (t) => {
@@ -92,47 +90,63 @@ export default function ThemeSwitcher() {
 
   return (
     <div className="dropdown dropdown-end">
-      {/* button */}
-      {/* <label tabIndex={0} className="btn btn-sm btn-ghost">
-        Theme: {theme}
-      </label> */}
-
+      {/* ===== Styled Button ===== */}
       <label
         tabIndex={0}
-        className="btn btn-sm gap-2 rounded-xl border border-base-300 
-             bg-base-100 hover:bg-base-200 
-             shadow-sm hover:shadow-md 
-             transition-all duration-200 ease-in-out
-             active:scale-95"
+        className="btn  btn-ghost  flex items-center justify-around gap-2"
       >
-        {/* small dot indicator */}
-        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-
-        <span className="font-medium">Theme: {theme}</span>
+        <Palette size={16} className="text-primary" />
+        <span className="font-bold text-xs uppercase tracking-wider hidden sm:inline">
+          Theme: <span className="text-primary">{theme}</span>
+        </span>
+        <div
+          className={`w-3 h-3 rounded-full shadow-inner border border-black/5 ${themeColors[theme]}`}
+        ></div>
       </label>
 
-      {/* menu */}
+      {/* ===== Improved Dropdown Menu ===== */}
       <ul
         tabIndex={0}
-        className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-56 max-h-80 overflow-y-auto"
+        className="dropdown-content z-[100] mt-3 p-2 shadow-2xl bg-base-100 border border-base-300 
+                   rounded-2xl w-60 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300"
       >
-        {themes.map((t) => (
-          <li key={t}>
-            <button
-              onClick={() => changeTheme(t)}
-              className="flex items-center gap-3"
-            >
-              {/* color preview box */}
-              <span
-                className={`w-4 h-4 rounded-full border ${
-                  themeColors[t] || "bg-gray-400"
-                }`}
-              ></span>
+        <div className="px-4 py-2 mb-2 border-b border-base-200">
+          <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
+            Select Theme
+          </span>
+        </div>
 
-              {t}
-            </button>
-          </li>
-        ))}
+        <div className="grid grid-cols-1 gap-1">
+          {themes.map((t) => (
+            <li key={t}>
+              <button
+                onClick={() => changeTheme(t)}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 
+                  ${
+                    theme === t
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
+                  }`}
+              >
+                <div className="flex items-center gap-3">
+                  {/* Color Indicator Box */}
+                  <div className="grid grid-cols-2 gap-0.5 w-6 h-6 rounded-md overflow-hidden border border-base-300 shadow-sm">
+                    <div className={`${themeColors[t]} h-full w-full`}></div>
+                    <div className="bg-base-100 h-full w-full"></div>
+                  </div>
+                  <span className="capitalize text-sm">{t}</span>
+                </div>
+
+                {theme === t && (
+                  <Check
+                    size={14}
+                    className="text-primary animate-in zoom-in duration-300"
+                  />
+                )}
+              </button>
+            </li>
+          ))}
+        </div>
       </ul>
     </div>
   );

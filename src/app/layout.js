@@ -31,6 +31,8 @@ export default function RootLayout({ children }) {
       className={`${hind_siliguri.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">
+        {/* <Navbar />
+        <Footer /> */}
         <main className="flex-1">{children}</main>
         <ScrollToTop />
       </body>

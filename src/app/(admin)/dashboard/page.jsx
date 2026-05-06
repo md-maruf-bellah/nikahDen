@@ -19,14 +19,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
-import profile from "./../../../assets/member/alem.png";
-import MembershipDashboard from "../profile/memberAndPackage/page";
-import ProfileData from "../profile/biodata/page";
-import LikeList from "../profile/likeList/page";
-import MemberShip from "../profile/memberShip/page";
-import NotificationList from "../profile/notification/page";
-import LogoutForm from "../profile/logout/page";
-import MessagingPage from "../message/page";
+import profile from "./../../../../assets/member/alem.png";
+import MembershipDashboard from "../../profile/memberAndPackage/page";
+import ProfileData from "../../profile/biodata/page";
+import LikeList from "../../profile/likeList/page";
+import MemberShip from "../../profile/memberShip/page";
+import NotificationList from "../../profile/notification/page";
+import LogoutForm from "../../profile/logout/page";
+import MessagingPage from "../../message/page";
 import UserManagement from "./table/page";
 
 const AdminDashboard = () => {

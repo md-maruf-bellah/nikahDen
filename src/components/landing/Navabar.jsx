@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import LanguageSelect from "../LanguageSelect";
 import logoImage from "./../../../assets/navbar/logo.png";
+import ThemeSwitcher from "../ThemeSwitcher";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -50,6 +51,7 @@ export default function Navbar() {
 
             {/* ===== Right Actions ===== */}
             <div className="hidden md:flex items-center gap-4">
+              <ThemeSwitcher />
               <LanguageSelect />
 
               <Link
