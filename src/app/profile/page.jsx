@@ -22,6 +22,7 @@ import MemberShip from "./memberShip/page";
 import NotificationList from "./notification/page";
 import MembershipDashboard from "./memberAndPackage/page";
 import LogoutForm from "./logout/page";
+import Navbar from "@/components/landing/Navabar";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
@@ -90,79 +91,82 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      {/* Mobile Toggle Button */}
-      <div className="lg:hidden flex justify-between items-center mb-4 bg-white p-3 rounded-lg border border-red-200">
-        <h2 className="font-bold text-red-500">{activeTab}</h2>
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 bg-red-50 text-red-500 rounded-md"
-        >
-          {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
+    <div>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+        {/* Mobile Toggle Button */}
+        <div className="lg:hidden flex justify-between items-center mb-4 bg-white p-3 rounded-lg border border-red-200">
+          <h2 className="font-bold text-red-500">{activeTab}</h2>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 bg-red-50 text-red-500 rounded-md"
+          >
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
-        {/* Sidebar */}
-        <div
-          className={`
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
+          {/* Sidebar */}
+          <div
+            className={`
           lg:col-span-3 bg-white rounded-lg border border-red-200 overflow-hidden h-fit 
           fixed lg:relative z-50 lg:z-0 top-0 left-0 w-64 lg:w-full h-full lg:h-auto
           transition-transform duration-300 ease-in-out
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
-        >
-          <div className="p-6 text-center border-b border-gray-100 relative">
-            <div className="relative inline-block">
-              <Image
-                src={profile}
-                alt="Profile"
-                className="w-24 h-24 rounded-full border-2 border-gray-200 mx-auto"
-              />
-              <button className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-md border border-gray-100">
-                <Edit3 size={14} className="text-gray-500" />
-              </button>
+          >
+            <div className="p-6 text-center border-b border-gray-100 relative">
+              <div className="relative inline-block">
+                <Image
+                  src={profile}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full border-2 border-gray-200 mx-auto"
+                />
+                <button className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-md border border-gray-100">
+                  <Edit3 size={14} className="text-gray-500" />
+                </button>
+              </div>
+              <h3 className="mt-4 font-bold text-gray-800 text-lg">
+                মেরাজ আকন্দ
+              </h3>
+              <p className="text-xs text-gray-500">ঢাকা, বাংলাদেশ</p>
             </div>
-            <h3 className="mt-4 font-bold text-gray-800 text-lg">
-              মেরাজ আকন্দ
-            </h3>
-            <p className="text-xs text-gray-500">ঢাকা, বাংলাদেশ</p>
+
+            <nav className="py-4">
+              <h4 className="px-6 text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">
+                ড্যাশবোর্ড
+              </h4>
+              {menuItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setActiveTab(item.label);
+                    setIsSidebarOpen(false); // মোবাইল মেনু বন্ধ করার জন্য
+                  }}
+                  className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
+                    activeTab === item.label
+                      ? "bg-red-50 text-red-500 border-r-4 border-red-500 font-bold"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-red-500 cursor-pointer"
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </nav>
           </div>
 
-          <nav className="py-4">
-            <h4 className="px-6 text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">
-              ড্যাশবোর্ড
-            </h4>
-            {menuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setActiveTab(item.label);
-                  setIsSidebarOpen(false); // মোবাইল মেনু বন্ধ করার জন্য
-                }}
-                className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
-                  activeTab === item.label
-                    ? "bg-red-50 text-red-500 border-r-4 border-red-500 font-bold"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-red-500"
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
+          {/* Overlay for Mobile Sidebar */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/20 z-40 lg:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            ></div>
+          )}
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-9">{renderContent()}</div>
         </div>
-
-        {/* Overlay for Mobile Sidebar */}
-        {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 z-40 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          ></div>
-        )}
-
-        {/* Main Content Area */}
-        <div className="lg:col-span-9">{renderContent()}</div>
       </div>
     </div>
   );

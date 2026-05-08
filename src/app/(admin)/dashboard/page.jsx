@@ -28,6 +28,10 @@ import NotificationList from "../../profile/notification/page";
 import LogoutForm from "../../profile/logout/page";
 import MessagingPage from "../../message/page";
 import UserManagement from "./table/page";
+import Commnent from "./comment/page";
+import Invoice from "./invoice/page";
+import Support from "./support/page";
+import UserPage from "./user/page";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
@@ -48,10 +52,10 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: "ড্যাশবোর্ড" },
-    { icon: <FileText size={20} />, label: "বায়োডাটা" },
-    { icon: <Heart size={20} />, label: "পছন্দের তালিকা" },
-    { icon: <Users size={20} />, label: "আপনাকে যারা পছন্দ করেছেন" },
-    { icon: <CreditCard size={20} />, label: "মেম্বারশিপ" },
+    { icon: <CreditCard size={20} />, label: "User" },
+    { icon: <FileText size={20} />, label: "Commnent" },
+    { icon: <Heart size={20} />, label: "Invoice" },
+    { icon: <Users size={20} />, label: "Support" },
     { icon: <Bell size={20} />, label: "নোটিফিকেশন" },
     { icon: <MessageSquare size={20} />, label: "মেসেজিং" },
     { icon: <LogOut size={20} />, label: "লগ আউট" },
@@ -61,22 +65,17 @@ const AdminDashboard = () => {
     switch (activeTab) {
       case "ড্যাশবোর্ড":
         return <UserManagement />;
-      case "বায়োডাটা":
-        return <ProfileData />;
-      case "পছন্দের তালিকা":
-        return <LikeList />;
-      case "আপনাকে যারা পছন্দ করেছেন":
-        return <LikeList />;
-      case "মেম্বারশিপ":
-        return <MemberShip />;
-      case "নোটিফিকেশন":
-        return <NotificationList />;
-      case "মেসেজিং":
-        return <MessagingPage />;
-      case "লগ আউট":
-        return <LogoutForm />;
+      case "Commnent":
+        return <Commnent />;
+      case "Invoice":
+        return <Invoice />;
+      case "Support":
+        return <Support />;
+      case "User":
+        return <UserPage />;
+
       default:
-        return <MembershipDashboard />;
+        return <UserManagement />;
     }
   };
 
@@ -133,7 +132,7 @@ const AdminDashboard = () => {
                   className={`
                     w-full flex items-center transition-all duration-200
                     ${isCollapsed ? "justify-center px-0 py-4" : "px-6 py-3.5 gap-3"}
-                    ${activeTab === item.label ? "bg-red-50 text-red-500 border-r-4 border-red-500" : "text-gray-500 hover:bg-gray-50 hover:text-red-500"}
+                    ${activeTab === item.label ? "bg-red-50 text-red-500 border-r-4 border-red-500" : "text-gray-500 hover:bg-gray-50 hover:text-red-500 cursor-pointer"}
                   `}
                 >
                   <span className="shrink-0">{item.icon}</span>
@@ -224,7 +223,7 @@ const AdminDashboard = () => {
 
         {/* --- Scrollable Content Area --- */}
         <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-          <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 min-h-full">
+          <div className="w-full mx-auto  border border-gray-200 rounded min-h-full cursor-pointer">
             {renderContent()}
           </div>
         </main>
