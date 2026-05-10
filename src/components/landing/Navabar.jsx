@@ -133,17 +133,16 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div>
+          <div className="flex gap-2">
+            <Link
+              href="/register"
+              onClick={() => setOpen(false)}
+              className="btn w bg-[#fd6969] border-none text-white hover:bg-[#e85a5a] shadow-lg shadow-red-200 flex items-center justify-center gap-2 rounded py-4"
+            >
+              রেজিস্ট্রেশন করুন <ArrowRight size={18} />
+            </Link>
             <LanguageSelect />
           </div>
-
-          <Link
-            href="/register"
-            onClick={() => setOpen(false)}
-            className="btn w-full bg-[#fd6969] border-none text-white hover:bg-[#e85a5a] shadow-lg shadow-red-200 flex items-center justify-center gap-2 rounded-xl py-4"
-          >
-            রেজিস্ট্রেশন করুন <ArrowRight size={18} />
-          </Link>
         </div>
       </aside>
     </>
