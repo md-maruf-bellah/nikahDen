@@ -22,8 +22,8 @@ export default function Navbar() {
   return (
     <>
       {/* ================= NAVBAR ================= */}
-      <header className="sticky top-0 z-50 bg-base-100 shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6">
+      <header className="sticky top-0 z-50 bg-base-100 shadow-sm px-4 lg:px-2 ">
+        <div className="max-w-7xl mx-auto ">
           <div className="flex items-center justify-between h-20">
             {/* ===== Logo ===== */}
             <Link
@@ -42,7 +42,7 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="relative cursor-pointer text-gray-700 hover:text-[#fd6969] transition-colors"
+                  className="relative cursor-pointer  hover:text-[#fd6969] transition-colors"
                 >
                   {link.name}
                 </Link>
@@ -112,7 +112,7 @@ export default function Navbar() {
               key={link.name}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="text-lg font-semibold text-gray-800 hover:text-[#fd6969] py-2 transition-colors border-b border-gray-50"
+              className="text-lg font-semibold  hover:text-[#fd6969] py-2 transition-colors border-b border-gray-50"
             >
               {link.name}
             </Link>
@@ -121,9 +121,20 @@ export default function Navbar() {
 
         {/* Mobile Extra Actions */}
         <div className="mt-auto p-6 space-y-6">
-          <div className="flex items-center gap-3 text-gray-600 font-medium bg-gray-50 p-3 rounded-lg">
-            <Globe size={20} className="text-[#fd6969]" />
-            <span>ভাষা: বাংলা</span>
+          <nav className="hidden md:flex items-center gap-8 text-base font-semibold">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="relative cursor-pointer  hover:text-[#fd6969] transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+
+          <div>
+            <LanguageSelect />
           </div>
 
           <Link

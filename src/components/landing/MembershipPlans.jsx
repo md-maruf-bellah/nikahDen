@@ -3,12 +3,12 @@ import SearchBar from "./SearchBar";
 
 function PricingSection() {
   return (
-    <div className="w-full  bg-[#f45f5f] py-32 px-4  ">
+    <div className=" w-full  bg-[#f45f5f] py-32 px-4  ">
       <div className="pt-12 pb-32 text-center">
         <p className="text-xl font-semibold text-white mb-4">কার্যপদ্ধতি</p>
         <h1 className="text-4xl font-bold">মেম্বারশিপ প্লান</h1>
       </div>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 px-0 lg:px-8 gap-4 lg:gap-0 items-center">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3  gap-4 lg:gap-0 items-center">
         {/* LEFT CARD */}
         <div className="bg-[#efefef] p-8 text-left rounded-sm">
           <h3 className="text-[#f45f5f] text-xl font-semibold mb-2">মাসিক</h3>

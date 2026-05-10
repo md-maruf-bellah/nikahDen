@@ -109,7 +109,7 @@ export default function BiodataForm() {
         </div>
 
         {/* ================= RIGHT FORM ================= */}
-        <div className="md:col-span-2 bg-white p-6 md:p-8 rounded-md ">
+        <div className="md:col-span-2 border border-gray-100 p-6 md:p-8 rounded-md ">
           {/* TITLE */}
           <h2 className="text-lg font-semibold text-gray-700 pb-2 mb-6 relative">
             ধর্মীয় তথ্য

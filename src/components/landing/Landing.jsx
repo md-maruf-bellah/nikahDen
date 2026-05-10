@@ -16,7 +16,6 @@ const Landing = () => {
       <ExportBoth />
       <ProfileSections />
       <HowItWorks />
-      {/* <Testimonials /> */}
       <TestimonialSection />
     </div>
   );

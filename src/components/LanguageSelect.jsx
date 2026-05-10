@@ -12,7 +12,7 @@ export default function LanguageSelect() {
       {/* Button */}
       <label
         tabIndex={0}
-        className="btn  btn-ghost  flex items-center justify-around gap-2"
+        className="btn w-full btn-ghost  flex items-center justify-around gap-2"
       >
         <IoLanguage className="text-[#FD6969]" size={18} />
         {language}

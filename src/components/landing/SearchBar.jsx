@@ -50,10 +50,10 @@ export default function SearchBar() {
         ))}
       </div>
 
-      <div className="w-full lg:max-w-4xl mx-auto bg-base-200 py-6 px-4  ">
-        <div className="max-w-5xl mx-auto">
+      <div className=" w-full lg:max-w-5xl rounded border border-primary/0 mx-auto bg-base-200 py-6 px-4  ">
+        <div className="max-w-6xl mx-auto">
           {/* Top Labels (Hidden on mobile) */}
-          <div className="hidden md:grid grid-cols-5 text-center mb-2 text-gray-600 font-medium text-lg">
+          <div className="hidden md:grid grid-cols-5 text-center mb-2 font-medium text-lg">
             <p>আমি খুঁজছি</p>
             <p>বৈবাহিক অবস্থা</p>
             <p>বয়স</p>

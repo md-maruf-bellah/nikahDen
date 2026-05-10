@@ -57,7 +57,7 @@ const steps = [
 export default function HowItWorks() {
   return (
     <section className="py-16 bg-[#f45f5f] text-[#fd6969]-content">
-      <div className="max-w-7xl mx-auto px-4 lg:px-10">
+      <div className="max-w-7xl mx-auto px-4 ">
         {/* Header */}
         <div className="text-center mb-10">
           <p className="text-lg font-semibold text-white">প্রক্রিয়া</p>
@@ -78,7 +78,7 @@ export default function HowItWorks() {
                 className="  hover:bg-white/20 transition-all backdrop-blur-sm"
               >
                 <div className="card-body items-center text-center p-5">
-                  <div className="w-16 h-16 rounded bg-white  flex items-center font-extrabold justify-center mb-3">
+                  <div className="w-16 h-16 rounded bg-white text-gray-800  flex items-center font-extrabold justify-center mb-3">
                     <Icon size={32} />
                   </div>
 

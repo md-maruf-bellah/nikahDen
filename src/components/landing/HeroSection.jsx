@@ -4,7 +4,7 @@ import heroImage from "./../../../assets/hero/hero.png";
 
 export default function HeroSection() {
   return (
-    <section className="bg-base-100 pb-16 pt-5 px-4 lg:px-22">
+    <section className="bg-base-100 pb-16 pt-5 px-4 ">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 items-center-safe justify-around gap-3">
         {/* TEXT SECTION */}
         <div>

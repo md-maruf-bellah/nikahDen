@@ -87,19 +87,11 @@ const maleProfiles = [
 
 function ProfileCard({ profile, isFemale }) {
   return (
-    <div className="card bg-base-100 shadow hover:shadow-lg transition-all">
-      <Image src={profile.img} alt={profile.name} className="w-full " />
+    <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
+      <Image src={profile.img} alt={profile.name} className="w-full border " />
 
       <div className="card-body items-center text-center p-4">
         <h2 className="font-bold text-lg">{profile.name}</h2>
-        {/* 
-        <p className="text-xs opacity-70">
-          বয়স: {profile.age} | {profile.location}
-        </p>
-
-        <p className="text-xs opacity-70">
-          {profile.profession} | উচ্চতা: {profile.height}
-        </p> */}
         <p className="text-sm md:text-md">
           খুব সহজেই বিনামূল্যে দ্বীনি বিয়ে বায়োডাটা তৈরি করতে পারবেন।
         </p>
@@ -118,10 +110,10 @@ function ProfileCard({ profile, isFemale }) {
 function ProfileSection({ title, profiles, isFemale }) {
   return (
     <section className="py-32">
-      <div className="max-w-7xl mx-auto px-4 lg:px-18">
+      <div className="max-w-7xl mx-auto px-4 lg:px-16">
         {/* Title */}
         <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold py-5">{title}</h2>
+          <h2 className="text-4xl text-gray-400 font-bold py-5">{title}</h2>
         </div>
 
         {/* Carousel-like Grid */}
@@ -146,9 +138,16 @@ function ProfileSection({ title, profiles, isFemale }) {
 
         {/* Footer Button */}
         <div className="text-center mt-10">
-          <Link href={"/list"} className="btn btn-outline text-xl">
+          <Link
+            href={"/list"}
+            className="btn bg-[#fd6969] text-lg px-7 text-white"
+          >
             আরো দেখুন
           </Link>
+
+          {/* <button className="btn bg-[#fd6969] text-lg px-7 text-white">
+            পাত্র-পাত্রী খুঁজুন
+          </button> */}
         </div>
       </div>
     </section>
