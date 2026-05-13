@@ -1,7 +1,7 @@
 "use client";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import man from "./../../../assets/member/alem.png";
-import womane from "./../../../assets/member/alema.png";
+import man from "./../../../assets/member/alem1.png";
+import womane from "./../../../assets/member/alema1.png";
 
 import Image from "next/image";
 import Link from "next/link";
