@@ -1,224 +1,220 @@
 "use client";
-
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useFormData, FormProvider } from "./../../utility/FormDataContext";
 
-export default function BiodataForm() {
-  const [activeStep, setActiveStep] = useState(2);
+import {
+  PersonalInfo,
+  ReligiousInfo,
+  ProfessionalInfo,
+  AgreementInfo,
+  ContactInfo,
+  EducationalInfo,
+  FamilyInfo,
+} from "./AllComponent";
+
+const validationSchema = yup.object().shape({
+  // স্টেপ ১: ব্যক্তিগত তথ্য
+  name: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("পুরো নাম আবশ্যক"),
+  }),
+  birthDate: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("জন্ম তারিখ আবশ্যক"),
+  }),
+  gender: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("লিঙ্গ নির্বাচন করুন"),
+  }),
+
+  // স্টেপ ২: ধর্মীয় তথ্য
+  religion: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্ম নির্বাচন করুন"),
+  }),
+  prayerStatus: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("এটি জানানো আবশ্যক"),
+  }),
+
+  // স্টেপ ৩: শিক্ষাগত যোগ্যতা
+  lastDegree: yup.string().when("$activeStep", {
+    is: 3,
+    then: (schema) => schema.required("শিক্ষাগত যোগ্যতা আবশ্যক"),
+  }),
+
+  // স্টেপ ৪: পেশাগত তথ্য
+  occupation: yup.string().when("$activeStep", {
+    is: 4,
+    then: (schema) => schema.required("আপনার পেশা লিখুন"),
+  }),
+
+  // স্টেপ ৬: যোগাযোগ (স্টেপ ৫ স্কিপ করা হয়েছে বা অপশনাল রাখা যায়)
+  mobile: yup.string().when("$activeStep", {
+    is: 6,
+    then: (schema) =>
+      schema
+        .required("মোবাইল নম্বর আবশ্যক")
+        .matches(/^[0-9]+$/, "সঠিক নম্বর দিন"),
+  }),
+
+  // স্টেপ ৭: অঙ্গীকারনামা
+  agreed: yup.boolean().when("$activeStep", {
+    is: 7,
+    then: (schema) => schema.oneOf([true], "আপনাকে অবশ্যই অঙ্গীকার করতে হবে"),
+  }),
+});
+
+function FormContent() {
+  const [activeStep, setActiveStep] = useState(1);
+  const { formData, updateFormData } = useFormData();
 
   const steps = [
-    "ব্যক্তিগত তথ্য",
-    "ধর্মীয় তথ্য",
-    "শিক্ষাগত যোগ্যতা",
-    "পেশাগত তথ্য",
-    "পারিবারিক তথ্য",
-    "যোগাযোগ ও ঠিকানা",
-    "অঙ্গীকারনামা",
+    "ব্যক্তিগত",
+    "ধর্মীয়",
+    "শিক্ষাগত",
+    "পেশাগত",
+    "পারিবারিক",
+    "যোগাযোগ",
+    "অঙ্গীকার",
   ];
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    trigger, // এটি ব্যবহার করে আমরা ম্যানুয়ালি চেক করতে পারব
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    defaultValues: formData,
+    context: { activeStep: activeStep }, // Yup এই activeStep ব্যবহার করবে
+    mode: "onChange", // টাইপ করার সাথে সাথে এরর দেখাবে
+  });
+
+  const onNext = (data) => {
+    // ১. প্রথমে গ্লোবাল কনটেক্সট আপডেট করুন
+    updateFormData(data);
+
+    // ২. বর্তমান ডাটা কনসোলে দেখুন
+    console.log(`Step ${activeStep} Data:`, data);
+
+    if (activeStep < steps.length) {
+      // ৩. পরবর্তী স্টেপে যান
+      setActiveStep((prev) => prev + 1);
+      // নেক্সট পেজে যাওয়ার পর স্ক্রল উপরে নিয়ে আসা
+      window.scrollTo(0, 0);
+    } else {
+      // শেষ ধাপে ডাটা অ্যারে অফ অবজেক্ট হিসেবে কনভার্ট করা
+      const finalArray = Object.entries({ ...formData, ...data }).map(
+        ([key, value]) => ({
+          field: key,
+          value: value,
+        }),
+      );
+      console.log("Final Submitted Data (Array Format):", finalArray);
+      //   alert("বায়োডাটা সফলভাবে তৈরি হয়েছে!");
+    }
+  };
+
+  // এরর হ্যান্ডলিং দেখার জন্য (যদি নেক্সট না কাজ করে কনসোলে এরর দেখাবে)
+  const onError = (errors) => {
+    console.log("Validation Errors:", errors);
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-[#f15b5b] text-white text-center py-10">
-        <h1 className="text-2xl font-semibold">বায়োডাটা তৈরি করুন</h1>
-        <p className="text-sm mt-1 opacity-90">হোম / বায়োডাটা তৈরি করুন</p>
-      </div>
-
-      {/* MAIN GRID */}
-      <div className="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* ================= LEFT STEPPER ================= */}
-        <div className="md:col-span-1">
-          {/* ================= MOBILE (Horizontal) ================= */}
-          <div className="md:hidden overflow-x-auto pb-4">
-            <div className="flex items-center min-w-max px-2">
-              {steps.map((item, index) => {
-                const stepNumber = index + 1;
-                const isActive = stepNumber === activeStep;
-                const isDone = stepNumber < activeStep;
-
-                return (
-                  <div key={index} className="flex items-center">
-                    {/* Circle */}
-                    <div
-                      className={`w-7 h-7 flex items-center justify-center rounded-full text-white text-xs
-              ${
-                isDone
-                  ? "bg-green-500"
-                  : isActive
-                    ? "bg-red-500"
-                    : "bg-gray-400"
-              }`}
-                    >
-                      {stepNumber}
-                    </div>
-
-                    {/* Line */}
-                    {index !== steps.length - 1 && (
-                      <div className="w-10 h-[2px] bg-gray-300"></div>
-                    )}
-                  </div>
-                );
-              })}
+    <div className="max-w-5xl mx-auto p-4 md:py-10">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Stepper (Left) */}
+        <div className="md:col-span-1 space-y-4">
+          {steps.map((label, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs transition-colors duration-300 ${
+                  activeStep > index + 1
+                    ? "bg-green-500"
+                    : activeStep === index + 1
+                      ? "bg-red-500"
+                      : "bg-gray-300"
+                }`}
+              >
+                {activeStep > index + 1 ? "✓" : index + 1}
+              </div>
+              <span
+                className={`text-sm ${
+                  activeStep === index + 1
+                    ? "font-bold text-red-500"
+                    : "text-gray-500"
+                }`}
+              >
+                {label}
+              </span>
             </div>
-
-            {/* Labels */}
-            <div className="flex justify-between mt-2 text-xs px-1 min-w-max">
-              {steps.map((item, index) => (
-                <span key={index} className="w-16 text-center text-gray-600">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* ================= DESKTOP (Vertical) ================= */}
-          <div className="hidden md:block relative pr-8">
-            {/* Vertical Line */}
-            <div className="absolute right-3 top-0 h-full w-[2px] bg-gray-300"></div>
-
-            {steps.map((item, index) => {
-              const stepNumber = index + 1;
-              const isActive = stepNumber === activeStep;
-              const isDone = stepNumber < activeStep;
-
-              return (
-                <div key={index} className="relative mb-14 flex items-center">
-                  {/* TEXT */}
-                  <div className="flex-1 text-right pr-6">
-                    <p
-                      className={`text-lg ${
-                        isActive ? "text-red-500 font-medium" : "text-gray-700"
-                      }`}
-                    >
-                      {item}
-                    </p>
-                  </div>
-
-                  {/* CIRCLE */}
-                  <div
-                    className={`absolute right-[-18] translate-x-1/2 w-7 h-7 flex items-center justify-center rounded-full text-white text-xs shadow
-            ${
-              isDone ? "bg-green-500" : isActive ? "bg-red-500" : "bg-gray-400"
-            }`}
-                  >
-                    {stepNumber}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          ))}
         </div>
 
-        {/* ================= RIGHT FORM ================= */}
-        <div className="md:col-span-2 border border-gray-100 p-6 md:p-8 rounded-md ">
-          {/* TITLE */}
-          <h2 className="text-lg font-semibold text-gray-700 pb-2 mb-6 relative">
-            ধর্মীয় তথ্য
-            <span className="absolute left-0 -bottom-[2px] w-12 h-[3px] bg-red-500"></span>
-          </h2>
+        {/* Form Body (Right) */}
+        <div className="md:col-span-3 border p-6 rounded-lg shadow-sm bg-white min-h-[400px]">
+          <form onSubmit={handleSubmit(onNext, onError)}>
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4 border-b-2 border-red-500 inline-block uppercase tracking-wide">
+                {steps[activeStep - 1]} তথ্য
+              </h2>
 
-          {/* FORM */}
-          <div>
-            {/* NAME */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="text-sm text-gray-600">
-                  নামের প্রথম অংশ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-600">
-                  নামের শেষ অংশ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
-              </div>
-            </div>
-
-            {/* 4 GRID */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-5">
-              <div>
-                <label className="text-sm text-gray-600">
-                  জন্ম সাল <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-600">
-                  জন্ম মাস <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-600">
-                  উচ্চতা <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-600">
-                  ওজন <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered w-full mt-1 h-10 rounded-sm"
-                />
+              <div className="mt-4">
+                {activeStep === 1 && (
+                  <PersonalInfo register={register} errors={errors} />
+                )}
+                {activeStep === 2 && (
+                  <ReligiousInfo register={register} errors={errors} />
+                )}
+                {activeStep === 3 && (
+                  <EducationalInfo register={register} errors={errors} />
+                )}
+                {activeStep === 4 && (
+                  <ProfessionalInfo register={register} errors={errors} />
+                )}
+                {activeStep === 5 && (
+                  <FamilyInfo register={register} errors={errors} />
+                )}
+                {activeStep === 6 && (
+                  <ContactInfo register={register} errors={errors} />
+                )}
+                {activeStep === 7 && (
+                  <AgreementInfo register={register} errors={errors} />
+                )}
               </div>
             </div>
 
-            {/* ADDRESS */}
-            <div className="mt-5">
-              <label className="text-sm text-gray-600">
-                ঠিকানা <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full mt-1 h-10 rounded-sm"
-              />
+            <div className="flex justify-between border-t pt-4 mt-10">
+              <button
+                type="button"
+                disabled={activeStep === 1}
+                onClick={() => setActiveStep(activeStep - 1)}
+                className="px-6 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 transition"
+              >
+                পিছনে
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition font-medium shadow-md"
+              >
+                {activeStep === steps.length ? "সাবমিট করুন" : "পরবর্তী ধাপ"}
+              </button>
             </div>
-
-            {/* PROFESSION */}
-            <div className="mt-5">
-              <label className="text-sm text-gray-600">
-                বর্তমান পেশা <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full mt-1 h-10 rounded-sm"
-              />
-            </div>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex justify-between mt-8">
-            <button className="bg-red-500 text-white px-6 py-2 rounded-sm text-sm hover:bg-red-600 transition">
-              পূর্বে ফিরে যান
-            </button>
-
-            <button className="bg-red-500 text-white px-6 py-2 rounded-sm text-sm hover:bg-red-600 transition">
-              পরবর্তী ধাপে যান
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BiodataApp() {
+  return (
+    <FormProvider>
+      <FormContent />
+    </FormProvider>
   );
 }

@@ -93,9 +93,9 @@ const Dashboard = () => {
   return (
     <div>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="min-h-screen p-4 md:p-8">
         {/* Mobile Toggle Button */}
-        <div className="lg:hidden flex justify-between items-center mb-4 bg-white p-3 rounded-lg border border-red-200">
+        <div className="lg:hidden flex justify-between items-center mb-4 bg-base-100 p-3 rounded-lg border border-red-200">
           <h2 className="font-bold text-red-500">{activeTab}</h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -109,7 +109,7 @@ const Dashboard = () => {
           {/* Sidebar */}
           <div
             className={`
-          lg:col-span-3 bg-white rounded-lg border border-red-200 overflow-hidden h-fit 
+          lg:col-span-3 bg-base-100 rounded-lg border  border-primary/15 overflow-hidden h-fit 
           fixed lg:relative z-50 lg:z-0 top-0 left-0 w-64 lg:w-full h-full lg:h-auto
           transition-transform duration-300 ease-in-out
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
@@ -123,17 +123,15 @@ const Dashboard = () => {
                   className="w-24 h-24 rounded-full border-2 border-gray-200 mx-auto"
                 />
                 <button className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-md border border-gray-100">
-                  <Edit3 size={14} className="text-gray-500" />
+                  <Edit3 size={14} className="" />
                 </button>
               </div>
-              <h3 className="mt-4 font-bold text-gray-800 text-lg">
-                মেরাজ আকন্দ
-              </h3>
-              <p className="text-xs text-gray-500">ঢাকা, বাংলাদেশ</p>
+              <h3 className="mt-4 font-bold text-lg">মেরাজ আকন্দ</h3>
+              <p className="text-xs ">ঢাকা, বাংলাদেশ</p>
             </div>
 
             <nav className="py-4">
-              <h4 className="px-6 text-sm font-bold text-gray-800 mb-4 uppercase tracking-wider">
+              <h4 className="px-6 text-sm font-bold mb-4 uppercase tracking-wider">
                 ড্যাশবোর্ড
               </h4>
               {menuItems.map((item, index) => (
@@ -146,7 +144,7 @@ const Dashboard = () => {
                   className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
                     activeTab === item.label
                       ? "bg-red-50 text-red-500 border-r-4 border-red-500 font-bold"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-red-500 cursor-pointer"
+                      : " hover:bg-gray-50 hover:text-red-500 cursor-pointer"
                   }`}
                 >
                   {item.icon}
@@ -176,25 +174,19 @@ const Dashboard = () => {
 const MainDashboardView = () => (
   <div className="space-y-8">
     <section>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">
-        মেম্বারশীপ এবং প্যাকেজ
-      </h2>
-      <div className="bg-white rounded-lg border border-red-100 shadow-sm overflow-hidden">
+      <h2 className="text-lg font-bold mb-4">মেম্বারশীপ এবং প্যাকেজ</h2>
+      <div className="">
         <div className="p-6 border-b border-gray-100">
-          <p className="text-sm text-gray-500 font-medium mb-1">
-            বর্তমান প্যাকেজ
-          </p>
+          <p className="text-sm  font-medium mb-1">বর্তমান প্যাকেজ</p>
           <h3 className="text-xl font-bold text-red-400 mb-4">মান্থলি</h3>
           <button className="btn btn-outline btn-error btn-sm rounded-md px-6 font-normal">
             প্যাকেজ পরিবর্তন করুন
           </button>
         </div>
         <div className="p-6">
-          <p className="text-sm text-gray-500 font-medium mb-1">
-            কানেক্ট অবশিষ্ট রয়েছে
-          </p>
+          <p className="text-sm  font-medium mb-1">কানেক্ট অবশিষ্ট রয়েছে</p>
           <h3 className="text-3xl font-bold text-red-400 mb-2">১০০</h3>
-          <p className="text-xs text-gray-500 mb-4 italic">
+          <p className="text-xs  mb-4 italic">
             প্রতিটি বায়োডাটা দেখতে ১ টি করে কানেক্ট ব্যবহার হবে।
           </p>
           <button className="btn btn-outline btn-error btn-sm rounded-md px-6 font-normal">
@@ -206,7 +198,7 @@ const MainDashboardView = () => (
 
     <section>
       <h2 className="text-lg font-bold text-gray-800 mb-4">বায়োডাটা স্টেট</h2>
-      <div className="bg-white rounded-lg border border-red-100 shadow-sm divide-y">
+      <div className=" rounded-lg border border-red-100 shadow-sm divide-y">
         {[
           "বায়োডাটা ভিজিট সংখ্যা",
           "আপনার পছন্দকৃত বায়োডাটা সংখ্যা",
@@ -217,7 +209,7 @@ const MainDashboardView = () => (
             className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
           >
             <div>
-              <p className="text-gray-600 font-medium">{title}</p>
+              <p className=" font-medium">{title}</p>
               <p className="text-2xl font-bold text-red-400 mt-2">
                 {i === 0 ? "১০" : "৫"}
               </p>
