@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import photoImage from "./../../../assets/member/alem.png";
+import photoImage from "./../../../assets/member/alem1.png";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
