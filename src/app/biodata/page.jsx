@@ -13,6 +13,7 @@ import {
   ContactInfo,
   EducationalInfo,
   FamilyInfo,
+  GeneralInfo,
 } from "./AllComponent";
 
 const validationSchema = yup.object().shape({
@@ -66,6 +67,14 @@ const validationSchema = yup.object().shape({
     is: 7,
     then: (schema) => schema.oneOf([true], "আপনাকে অবশ্যই অঙ্গীকার করতে হবে"),
   }),
+
+  mobile: yup.string().when("$activeStep", {
+    is: 8,
+    then: (schema) =>
+      schema
+        .required("মোবাইল নম্বর আবশ্যক")
+        .matches(/^[0-9]+$/, "সঠিক নম্বর দিন"),
+  }),
 });
 
 function FormContent() {
@@ -80,6 +89,7 @@ function FormContent() {
     "পারিবারিক",
     "যোগাযোগ",
     "অঙ্গীকার",
+    "সাধারণ",
   ];
 
   const {
@@ -101,10 +111,10 @@ function FormContent() {
     // ২. বর্তমান ডাটা কনসোলে দেখুন
     console.log(`Step ${activeStep} Data:`, data);
 
-    if (activeStep < steps.length) {
+    if (activeStep <= steps.length) {
       // ৩. পরবর্তী স্টেপে যান
       setActiveStep((prev) => prev + 1);
-      // নেক্সট পেজে যাওয়ার পর স্ক্রল উপরে নিয়ে আসা
+      // নেক্সট পেজে যাওয়ার পর স্ক্রল উপরে নিয়ে আসা
       window.scrollTo(0, 0);
     } else {
       // শেষ ধাপে ডাটা অ্যারে অফ অবজেক্ট হিসেবে কনভার্ট করা
@@ -128,7 +138,7 @@ function FormContent() {
     <div className="max-w-5xl mx-auto p-4 md:py-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Stepper (Left) */}
-        <div className="md:col-span-1 space-y-4">
+        {/* <div className="md:col-span-1 space-y-4">
           {steps.map((label, index) => (
             <div key={index} className="flex items-center gap-3">
               <div
@@ -153,6 +163,44 @@ function FormContent() {
               </span>
             </div>
           ))}
+        </div> */}
+        {/* LEFT STEPPER (Desktop & Mobile) */}
+        <div className="md:col-span-1">
+          {/* Desktop Vertical Stepper */}
+          <div className="hidden md:block relative pr-8">
+            <div className="absolute right-3 top-0 h-full w-[2px] bg-gray-300"></div>
+            {steps.map((item, index) => {
+              const stepNumber = index + 1;
+              const isActive = stepNumber === activeStep;
+              const isDone = stepNumber < activeStep;
+              const isLast = index === steps.length - 1;
+              return (
+                <div key={index} className="relative mb-14 flex items-center">
+                  <div className="flex-1 text-right pr-6">
+                    <p
+                      className={`text-lg transition-all ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : "text-gray-500"}`}
+                    >
+                      {item}
+                    </p>
+                  </div>
+                  <div
+                    className={`absolute right-[-18px] translate-x-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full text-white text-xs shadow-md transition-all duration-500 ${isDone ? "bg-green-500 scale-110" : isActive ? "bg-red-500" : "bg-gray-400"}`}
+                  >
+                    {isDone ? "✓" : stepNumber}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {/* Mobile Horizontal Stepper */}
+          <div className="md:hidden flex items-center justify-center space-x-2 mb-8">
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 w-full rounded-full ${index + 1 <= activeStep ? "bg-red-500" : "bg-gray-300"}`}
+              ></div>
+            ))}
+          </div>
         </div>
 
         {/* Form Body (Right) */}
@@ -163,7 +211,7 @@ function FormContent() {
                 {steps[activeStep - 1]} তথ্য
               </h2>
 
-              <div className="mt-4">
+              <div className="mt-2">
                 {activeStep === 1 && (
                   <PersonalInfo register={register} errors={errors} />
                 )}
@@ -184,6 +232,10 @@ function FormContent() {
                 )}
                 {activeStep === 7 && (
                   <AgreementInfo register={register} errors={errors} />
+                )}
+
+                {activeStep === 8 && (
+                  <GeneralInfo register={register} errors={errors} />
                 )}
               </div>
             </div>

@@ -168,3 +168,23 @@ export const AgreementInfo = ({ register, errors }) => (
     </label>
   </div>
 );
+
+export const GeneralInfo = ({ register, errors }) => (
+  <div className="space-y-4">
+    <input
+      {...register("mobile")}
+      placeholder="মোবাইল নম্বর"
+      className="input input-bordered w-full"
+    />
+    <textarea
+      {...register("presentAddress")}
+      placeholder="বর্তমান ঠিকানা"
+      className="textarea textarea-bordered w-full"
+    />
+    <textarea
+      {...register("permanentAddress")}
+      placeholder="স্থায়ী ঠিকানা"
+      className="textarea textarea-bordered w-full"
+    />
+  </div>
+);
