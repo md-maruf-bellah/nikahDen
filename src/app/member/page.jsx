@@ -30,7 +30,7 @@ const MembershipPlan = () => {
   ];
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className=" min-h-screen">
       {/* Header Section */}
       <div className="bg-[#ff6b6b] py-16 text-center text-white">
         <h1 className="text-3xl font-bold mb-2">মেম্বারশিপ প্ল্যান</h1>
@@ -40,10 +40,10 @@ const MembershipPlan = () => {
       {/* Table Section */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="overflow-x-auto">
-          <table className="table w-full border-separate border-spacing-y-2">
+          <table className="table w-full border-separate ">
             {/* Table Head */}
             <thead>
-              <tr className="text-gray-800 text-lg border-none">
+              <tr className=" text-lg border-none">
                 <th className="bg-transparent">অফার লিস্ট</th>
                 {plans.map((plan) => (
                   <th key={plan.id} className="text-center bg-transparent">
@@ -58,31 +58,12 @@ const MembershipPlan = () => {
               {features.map((feature, index) => (
                 <tr
                   key={index}
-                  className={
-                    index % 2 === 0 ? "bg-[#FEF2F2]" : "bg-transparent"
-                  }
+                  className="hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200 cursor-pointer"
                 >
-                  <td className="font-medium text-gray-700 py-4">
-                    {feature.title}
-                  </td>
-                  {/* {feature.values.map((val, i) => (
-                    <td key={i} className="text-center py-4">
-                      {val === "check" ? (
-                        <div className="text-green-500 text-xl text-center font-bold">
-                          <Check />
-                        </div>
-                      ) : val === "cross" ? (
-                        <div className="text-red-500 text-xl font-bold">✕</div>
-                      ) : (
-                        <span className="text-gray-600 font-semibold">
-                          {val}
-                        </span>
-                      )}
-                    </td>
-                  ))} */}
+                  <td className="font-medium py-5">{feature.title}</td>
 
                   {feature.values.map((val, i) => (
-                    <td key={i} className="py-4">
+                    <td key={i} className="py-5">
                       {val === "check" ? (
                         <div className="flex justify-center items-center">
                           <span className="bg-green-100 text-green-600 p-2 rounded-full">
@@ -96,7 +77,7 @@ const MembershipPlan = () => {
                           </span>
                         </div>
                       ) : (
-                        <div className="flex justify-center items-center font-semibold text-gray-600">
+                        <div className="flex justify-center items-center font-semibold ">
                           {val}
                         </div>
                       )}
@@ -109,15 +90,13 @@ const MembershipPlan = () => {
             {/* Footer Row (Prices & Buttons) */}
             <tfoot>
               <tr>
-                <td className="text-2xl font-bold text-gray-800 py-8">
+                <td className="text-2xl font-bold  py-8">
                   প্ল্যান সিলেক্ট করুন
                 </td>
                 {plans.map((plan) => (
                   <td key={plan.id} className="text-center py-8">
-                    <div className="text-2xl font-bold text-gray-800 mb-4">
-                      {plan.price}
-                    </div>
-                    <button className="btn btn-outline btn-error hover:text-white rounded-md px-8">
+                    <div className="text-2xl font-bold  mb-4">{plan.price}</div>
+                    <button className="btn btn-outline bg-[#FF6B6B] text-white hover:text-white rounded-md px-8">
                       এপ্লাই করুন
                     </button>
                   </td>

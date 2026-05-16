@@ -2,18 +2,105 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import photoImage from "./../../../assets/member/alem.png";
+import man from "./../../../assets/member/alem1.png";
+import Link from "next/link";
+import { TfiLayoutGrid3Alt } from "react-icons/tfi";
+import { MdTableRows } from "react-icons/md";
+import { FcLikePlaceholder } from "react-icons/fc";
+import { FcLike } from "react-icons/fc";
 
-const profiles = Array(9).fill({
-  name: "মোহাম্মদ আহমদ",
-  info: "২৮ বছর • ঢাকা • ইঞ্জিনিয়ার",
-  img: photoImage,
-});
+const maleProfiles = [
+  {
+    name: "আবদুল করিম",
+    age: 28,
+    location: "ঢাকা",
+    profession: "ইঞ্জিনিয়ার",
+    height: "৫'৮\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "মোহাম্মদ রাফি",
+    age: 30,
+    location: "চট্টগ্রাম",
+    profession: "ডাক্তার",
+    height: "৫'১০\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "আরিফুল ইসলাম",
+    age: 26,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: "৫'৯\"",
+    color: "উজ্জ্বল ফর্সা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "আবদুল করিম",
+    age: 28,
+    location: "ঢাকা",
+    profession: "ইঞ্জিনিয়ার",
+    height: "৫'৮\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "মোহাম্মদ রাফি",
+    age: 30,
+    location: "চট্টগ্রাম",
+    profession: "ডাক্তার",
+    height: "৫'১০\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "আরিফুল ইসলাম",
+    age: 26,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: "৫'৯\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "শ্যামলা",
+    img: man,
+  },
+];
 
 export default function BiodataGrid() {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState("grid"); // grid | table
+  const [like, setLike] = useState(false);
 
+  const handleLike = () => {
+    setLike((prev) => !prev);
+  };
   return (
     <div className="bg-base-200 min-h-screen">
       {/* Header */}
@@ -33,7 +120,7 @@ export default function BiodataGrid() {
       <div className="max-w-7xl mx-auto flex gap-6 p-4 md:p-6">
         {/* Sidebar Desktop */}
         <div className="hidden md:block w-72 bg-base-100 p-5 shadow h-screen sticky top-0 overflow-y-auto">
-          <h2 className="font-semibold mb-4">ফিল্টার করুন</h2>
+          <h2 className="font-semibold mb-4">আপনি কি খঁজতে চান?</h2>
 
           <div className="mb-3">
             <div className="flex gap-3 mb-2">
@@ -47,31 +134,48 @@ export default function BiodataGrid() {
           </div>
 
           <select className="select select-bordered w-full mb-3">
-            <option>লিঙ্গ</option>
+            <option>গোত্র</option>
           </select>
 
           <select className="select select-bordered w-full mb-3">
             <option>বৈবাহিক অবস্থা</option>
           </select>
 
-          <select className="select select-bordered w-full mb-3">
-            <option>বিভাগ</option>
-          </select>
-
-          <select className="select select-bordered w-full mb-3">
-            <option>জেলা</option>
-          </select>
-
+          <label className="text-sm font-medium  mb-1 block">বয়স</label>
           <input
             type="range"
             min={18}
             max={60}
-            className="range range-primary range-xs mb-4"
+            className="range  range-xs mb-4"
           />
 
+          <select className="select select-bordered w-full mb-3">
+            <option>উচ্চতা</option>
+          </select>
+
+          <select className="select select-bordered w-full mb-3">
+            <option>গায়ের রং</option>
+          </select>
+
+          <select className="select select-bordered w-full mb-3">
+            <option>জেলা শহর</option>
+          </select>
+
+          <select className="select select-bordered w-full mb-3">
+            <option>শিক্ষাগত যোগ্যতা</option>
+          </select>
+
+          <select className="select select-bordered w-full mb-3">
+            <option>পেশা</option>
+          </select>
+
           <div className="flex gap-2">
-            <button className="btn btn-primary btn-sm flex-1">সার্চ</button>
-            <button className="btn btn-outline btn-sm flex-1">রিসেট</button>
+            <button className="btn btn-outline btn-red-400 py-5 btn-sm flex-1">
+              বায়োডাটা মুছুন{" "}
+            </button>
+            <button className="btn bg-[#ff6b6b] text-white py-5 btn-sm flex-1">
+              বায়োডাটা খুজুন{" "}
+            </button>
           </div>
         </div>
 
@@ -87,7 +191,7 @@ export default function BiodataGrid() {
               </button>
 
               {/* same filters */}
-              <h2 className="font-semibold mb-4">ফিল্টার করুন</h2>
+              <h2 className="font-semibold mb-4">আপনি কি খঁজতে চান?</h2>
 
               <div className="mb-3">
                 <div className="flex gap-3 mb-2">
@@ -101,31 +205,48 @@ export default function BiodataGrid() {
               </div>
 
               <select className="select select-bordered w-full mb-3">
-                <option>লিঙ্গ</option>
+                <option>গোত্র</option>
               </select>
 
               <select className="select select-bordered w-full mb-3">
                 <option>বৈবাহিক অবস্থা</option>
               </select>
 
-              <select className="select select-bordered w-full mb-3">
-                <option>বিভাগ</option>
-              </select>
-
-              <select className="select select-bordered w-full mb-3">
-                <option>জেলা</option>
-              </select>
-
+              <label className="text-sm font-medium  mb-1 block">বয়স</label>
               <input
                 type="range"
                 min={18}
                 max={60}
-                className="range range-primary range-xs mb-4"
+                className="range  range-xs mb-4"
               />
 
+              <select className="select select-bordered w-full mb-3">
+                <option>উচ্চতা</option>
+              </select>
+
+              <select className="select select-bordered w-full mb-3">
+                <option>গায়ের রং</option>
+              </select>
+
+              <select className="select select-bordered w-full mb-3">
+                <option>জেলা শহর</option>
+              </select>
+
+              <select className="select select-bordered w-full mb-3">
+                <option>শিক্ষাগত যোগ্যতা</option>
+              </select>
+
+              <select className="select select-bordered w-full mb-3">
+                <option>পেশা</option>
+              </select>
+
               <div className="flex gap-2">
-                <button className="btn btn-primary btn-sm flex-1">সার্চ</button>
-                <button className="btn btn-outline btn-sm flex-1">রিসেট</button>
+                <button className="btn btn-outline-red-500 btn-sm flex-1">
+                  বায়োডাটা মুছুন{" "}
+                </button>
+                <button className="btn bg-[#ff6b6b] btn-sm flex-1">
+                  বায়োডাটা খুজুন{" "}
+                </button>
               </div>
             </div>
           </div>
@@ -141,18 +262,19 @@ export default function BiodataGrid() {
                 onClick={() => setView("grid")}
                 className={`btn btn-sm ${
                   view === "grid" ? "btn-primary" : "btn-outline"
-                }`}
+                } text-sm flex items-center gap-1`}
               >
-                Grid
+                <TfiLayoutGrid3Alt size={13} />
+                বক্স
               </button>
 
               <button
                 onClick={() => setView("table")}
                 className={`btn btn-sm ${
                   view === "table" ? "btn-primary" : "btn-outline"
-                }`}
+                } text-sm  items-center gap-1 hidden lg:flex`}
               >
-                Table
+                <MdTableRows size={18} /> টেবিল
               </button>
             </div>
 
@@ -172,60 +294,126 @@ export default function BiodataGrid() {
 
           {/* GRID VIEW */}
           {view === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {profiles.map((item, i) => (
-                <div key={i} className="card bg-base-100">
-                  <figure className="pt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {maleProfiles.map((item, i) => (
+                <div key={i} className="relative">
+                  <div className="absolute right-2 top-2 z-5">
+                    {like ? (
+                      <FcLike
+                        size={24}
+                        className="cursor-pointer"
+                        onClick={handleLike}
+                      />
+                    ) : (
+                      <FcLikePlaceholder
+                        size={24}
+                        className="cursor-pointer"
+                        onClick={handleLike}
+                      />
+                    )}
+                  </div>
+                  <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
                     <Image
                       src={item.img}
-                      width={140}
-                      height={140}
-                      alt="profile"
-                      className="rounded"
+                      alt={item.name}
+                      className="w-full border"
                     />
-                  </figure>
 
-                  <div className="card-body items-center text-center p-4">
-                    <h2 className="card-title text-sm">{item.name}</h2>
-                    <p className="text-xs text-gray-500">{item.info}</p>
+                    <div className="card-body items-center text-center p-4">
+                      {/* <h2 className="font-bold text-lg">{item.name}</h2> */}
 
-                    <button className="btn btn-sm btn-outline mt-2">
-                      বিস্তারিত দেখুন
-                    </button>
+                      <div className="text-line-through ">
+                        <div className="flex  justify-around items-center gap-3">
+                          <p>বয়স - {item.age}</p>
+                          <p>লোকেশান - {item.location} </p>
+                        </div>
+                        <div className="flex  justify-around items-center gap-3">
+                          <p>উচ্চতা - {item.height} </p>
+                          <p>গাত্রবর্ণ - {item.color}</p>
+                        </div>
+                      </div>
+                      <Link
+                        href={"/details"}
+                        className="btn btn-outline text-xs md:text-lg w-5/6 p-4"
+                      >
+                        বায়োডাটা দেখুন
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             /* TABLE VIEW */
-            <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
-                <thead>
+            <div className="w-full  overflow-x-auto rounded shadow-sm">
+              <table className="table table-zebra  w-full">
+                <thead className="">
                   <tr>
-                    <th>ছবি</th>
-                    <th>নাম</th>
-                    <th>তথ্য</th>
-                    <th>অ্যাকশন</th>
+                    <th className="whitespace-nowrap">ছবি</th>
+                    <th className="whitespace-nowrap">নাম</th>
+                    <th className="whitespace-nowrap">বয়স</th>
+                    <th className="whitespace-nowrap">লোকেশন</th>
+                    <th className="whitespace-nowrap">উচ্চতা</th>
+                    <th className="whitespace-nowrap">গাত্রবর্ণ</th>
+                    <th className="whitespace-nowrap">অ্যাকশন</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {profiles.map((item, i) => (
-                    <tr key={i}>
+                  {maleProfiles.map((item, i) => (
+                    <tr
+                      key={i}
+                      className="hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
+                    >
                       <td>
                         <Image
                           src={item.img}
                           width={50}
                           height={50}
                           alt="profile"
-                          className="rounded"
+                          className="rounded-md object-cover border"
                         />
                       </td>
-                      <td>{item.name}</td>
-                      <td className="text-sm text-gray-500">{item.info}</td>
-                      <td>
-                        <button className="btn btn-xs btn-outline">
-                          দেখুন
-                        </button>
+
+                      <td className="whitespace-nowrap font-medium">
+                        {item.name}
+                      </td>
+
+                      <td className="whitespace-nowrap text-sm">
+                        {item.age} বছর
+                      </td>
+
+                      <td className="whitespace-nowrap">{item.location}</td>
+
+                      <td className="whitespace-nowrap">{item.height}</td>
+
+                      <td className="whitespace-nowrap">{item.color}</td>
+
+                      <td className="whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            {like ? (
+                              <FcLike
+                                size={18}
+                                className="cursor-pointer"
+                                onClick={handleLike}
+                              />
+                            ) : (
+                              <FcLikePlaceholder
+                                size={18}
+                                className="cursor-pointer"
+                                onClick={handleLike}
+                              />
+                            )}
+                          </div>
+
+                          <Link
+                            href="/details"
+                            className="btn btn-outline btn-xs"
+                          >
+                            দেখুন
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -2,9 +2,12 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import man from "./../../../assets/member/alem1.png";
 import womane from "./../../../assets/member/alema1.png";
+import { FcLikePlaceholder } from "react-icons/fc";
+import { FcLike } from "react-icons/fc";
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 // Dummy profile data
 const femaleProfiles = [
@@ -14,7 +17,7 @@ const femaleProfiles = [
     location: "ঢাকা",
     profession: "শিক্ষার্থী",
     height: "৫'৪\"",
-    color: "#f8c8b4",
+    color: "উজ্জ্বল ফর্সা",
     img: womane,
   },
   {
@@ -23,7 +26,7 @@ const femaleProfiles = [
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
     height: "৫'৩\"",
-    color: "#d4a8c7",
+    color: "উজ্জ্বল শ্যামলা",
     img: womane,
   },
   {
@@ -32,7 +35,7 @@ const femaleProfiles = [
     location: "সিলেট",
     profession: "শিক্ষক",
     height: "৫'5\"",
-    color: "#a8c4d4",
+    color: "ফর্সা",
     img: womane,
   },
   {
@@ -41,7 +44,7 @@ const femaleProfiles = [
     location: "রাজশাহী",
     profession: "ইঞ্জিনিয়ার",
     height: "৫'৪\"",
-    color: "#c4d4a8",
+    color: "শ্যামলা",
     img: womane,
   },
 ];
@@ -53,7 +56,7 @@ const maleProfiles = [
     location: "ঢাকা",
     profession: "ইঞ্জিনিয়ার",
     height: "৫'৮\"",
-    color: "#b4c8f8",
+    color: "উজ্জ্বল ফর্সা",
     img: man,
   },
   {
@@ -62,7 +65,7 @@ const maleProfiles = [
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
     height: "৫'১০\"",
-    color: "#a8d4c4",
+    color: "উজ্জ্বল শ্যামলা",
     img: man,
   },
   {
@@ -71,7 +74,7 @@ const maleProfiles = [
     location: "খুলনা",
     profession: "ব্যবসায়ী",
     height: "৫'৯\"",
-    color: "#d4c4a8",
+    color: "উজ্জ্বল ফর্সা",
     img: man,
   },
   {
@@ -80,21 +83,45 @@ const maleProfiles = [
     location: "রংপুর",
     profession: "শিক্ষক",
     height: "৫'৭\"",
-    color: "#c4a8d4",
+    color: "উজ্জ্বল শ্যামলা",
     img: man,
   },
 ];
 
 function ProfileCard({ profile, isFemale }) {
+  const [like, setLike] = useState(false);
+
+  const handleLike = () => {
+    setLike((prev) => !prev);
+  };
+
   return (
-    <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
+    <div className="card relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
+      <div className="absolute right-2 top-2 z-5">
+        {like ? (
+          <FcLike size={24} className="cursor-pointer" onClick={handleLike} />
+        ) : (
+          <FcLikePlaceholder
+            size={24}
+            className="cursor-pointer"
+            onClick={handleLike}
+          />
+        )}
+      </div>
       <Image src={profile.img} alt={profile.name} className="w-full border " />
 
       <div className="card-body items-center text-center p-4">
-        <h2 className="font-bold text-lg">{profile.name}</h2>
-        <p className="text-sm md:text-md">
-          খুব সহজেই বিনামূল্যে দ্বীনি বিয়ে বায়োডাটা তৈরি করতে পারবেন।
-        </p>
+        {/* <h2 className="font-bold text-lg">{profile.name}</h2> */}
+        <div className="text-line-through ">
+          <div className="flex  justify-around items-center gap-3">
+            <p>বয়স - {profile.age}</p>
+            <p>লোকেশান - {profile.location} </p>
+          </div>
+          <div className="flex  justify-around items-center gap-3">
+            <p>উচ্চতা - {profile.height} </p>
+            <p>গাত্রবর্ণ - {profile.color}</p>
+          </div>
+        </div>
 
         <Link
           href={"/details"}
