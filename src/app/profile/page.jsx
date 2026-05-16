@@ -46,7 +46,7 @@ const Dashboard = () => {
         return <MembershipDashboard />;
       case "বায়োডাটা":
         return (
-          <div className="border border-rose-200 rounded-lg">
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
             <ProfileData />
           </div>
         );
@@ -95,7 +95,7 @@ const Dashboard = () => {
       <Navbar />
       <div className="min-h-screen p-4 md:p-8">
         {/* Mobile Toggle Button */}
-        <div className="lg:hidden flex justify-between items-center mb-4 bg-base-100 p-3 rounded-lg border border-red-200">
+        <div className="lg:hidden flex justify-between items-center mb-4  p-3 rounded-lg border border-red-200">
           <h2 className="font-bold text-red-500">{activeTab}</h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -122,7 +122,7 @@ const Dashboard = () => {
                   alt="Profile"
                   className="w-24 h-24 rounded-full border-2 border-gray-200 mx-auto"
                 />
-                <button className="absolute bottom-0 right-0 bg-white p-1 rounded-full shadow-md border border-gray-100">
+                <button className="absolute bottom-0 right-0  p-1 rounded-full shadow-md border border-gray-100">
                   <Edit3 size={14} className="" />
                 </button>
               </div>
@@ -169,60 +169,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-// মূল ড্যাশবোর্ড ভিউ (আলাদা কম্পোনেন্ট হিসেবে)
-const MainDashboardView = () => (
-  <div className="space-y-8">
-    <section>
-      <h2 className="text-lg font-bold mb-4">মেম্বারশীপ এবং প্যাকেজ</h2>
-      <div className="">
-        <div className="p-6 border-b border-gray-100">
-          <p className="text-sm  font-medium mb-1">বর্তমান প্যাকেজ</p>
-          <h3 className="text-xl font-bold text-red-400 mb-4">মান্থলি</h3>
-          <button className="btn btn-outline btn-error btn-sm rounded-md px-6 font-normal">
-            প্যাকেজ পরিবর্তন করুন
-          </button>
-        </div>
-        <div className="p-6">
-          <p className="text-sm  font-medium mb-1">কানেক্ট অবশিষ্ট রয়েছে</p>
-          <h3 className="text-3xl font-bold text-red-400 mb-2">১০০</h3>
-          <p className="text-xs  mb-4 italic">
-            প্রতিটি বায়োডাটা দেখতে ১ টি করে কানেক্ট ব্যবহার হবে।
-          </p>
-          <button className="btn btn-outline btn-error btn-sm rounded-md px-6 font-normal">
-            কানেক্ট কিনুন
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">বায়োডাটা স্টেট</h2>
-      <div className=" rounded-lg border border-red-100 shadow-sm divide-y">
-        {[
-          "বায়োডাটা ভিজিট সংখ্যা",
-          "আপনার পছন্দকৃত বায়োডাটা সংখ্যা",
-          "আপনার বায়োডাটা যত জন পছন্দ করেছেন",
-        ].map((title, i) => (
-          <div
-            key={i}
-            className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
-          >
-            <div>
-              <p className=" font-medium">{title}</p>
-              <p className="text-2xl font-bold text-red-400 mt-2">
-                {i === 0 ? "১০" : "৫"}
-              </p>
-            </div>
-            <select className="select select-bordered select-sm w-full max-w-[150px] border-red-200 text-red-400">
-              <option>সর্বশেষ ৭ দিন</option>
-              <option>সর্বশেষ ৩০ দিন</option>
-            </select>
-          </div>
-        ))}
-      </div>
-    </section>
-  </div>
-);
 
 export default Dashboard;

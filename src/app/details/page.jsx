@@ -1,19 +1,106 @@
 "use client";
 
 import Image from "next/image";
-import photoImage from "./../../../assets/member/alem1.png";
+import man from "./../../../assets/member/alem1.png";
 import { Check } from "lucide-react";
 import Link from "next/link";
-
-const similarProfiles = Array(4).fill({
-  name: "মোহাম্মদ আহমদ",
-  info: "ঢাকা • ২৮ বছর",
-  img: photoImage,
-});
+import { useState } from "react";
+import { FcLikePlaceholder } from "react-icons/fc";
+import { FcLike } from "react-icons/fc";
+import SimilarBiodataSlider from "./SimilarBiodataSlider";
 
 const data = ["শিক্ষাগত যোগ্যতা", "পেশা", "ইনকাম", "ঠিকানা"];
 
+const maleProfiles = [
+  {
+    name: "আবদুল করিম",
+    age: 28,
+    location: "ঢাকা",
+    profession: "ইঞ্জিনিয়ার",
+    height: "৫'৮\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "মোহাম্মদ রাফি",
+    age: 30,
+    location: "চট্টগ্রাম",
+    profession: "ডাক্তার",
+    height: "৫'১০\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "আরিফুল ইসলাম",
+    age: 26,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: "৫'৯\"",
+    color: "উজ্জ্বল ফর্সা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "আবদুল করিম",
+    age: 28,
+    location: "ঢাকা",
+    profession: "ইঞ্জিনিয়ার",
+    height: "৫'৮\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "মোহাম্মদ রাফি",
+    age: 30,
+    location: "চট্টগ্রাম",
+    profession: "ডাক্তার",
+    height: "৫'১০\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "আরিফুল ইসলাম",
+    age: 26,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: "৫'৯\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "ফর্সা",
+    img: man,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "শ্যামলা",
+    img: man,
+  },
+];
+
 export default function BiodataDetails() {
+  const [like, setLike] = useState(false);
+
+  const handleLike = () => {
+    setLike((prev) => !prev);
+  };
   return (
     <div className="bg-base-200 min-h-screen">
       {/* Header */}
@@ -22,11 +109,11 @@ export default function BiodataDetails() {
         <p className="text-xs mt-1">পাত্র-পাত্রী বিস্তারিত তথ্য</p>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:px-32">
+      <div className="max-w-7xl mx-auto px-4 py-6 px-10">
         {/* Top Info */}
         <div className="flex flex-col lg:flex-row gap-4 items-center mb-6">
           <Image
-            src={photoImage}
+            src={man}
             width={180}
             height={180}
             alt="profile"
@@ -38,7 +125,9 @@ export default function BiodataDetails() {
               মোহাম্মদ আহমদ
             </h2>
             <p className="text-md mb-1">সফটওয়্যার ইঞ্জিনিয়ার</p>
-            <p className="text-sm text-gray-600">ঢাকা • ২৮ বছর • ইঞ্জিনিয়ার</p>
+            <p className="text-sm hidden lg:block">
+              ঢাকা • ২৮ বছর • ইঞ্জিনিয়ার
+            </p>
           </div>
         </div>
 
@@ -47,7 +136,7 @@ export default function BiodataDetails() {
           <h1 className="text-xl lg:text-2xl font-bold mb-2">
             নিজের সম্পর্কে কিছু কথা
           </h1>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p className="text-sm  leading-relaxed">
             হাদীস থেকে বর্ণিত, যিনি বিয়ে করলেন, তিনি তার অর্ধেক দ্বীন পূর্ণ
             করলেন এবং বাকী অর্ধেকের জন্য তিনি যেন আল্লাহকে ভয় করেন। আপনার অর্ধেক
             দ্বীন পূর্ণ করতে মুসলিম পাত্র-পাত্রী খুঁজুন এখন খুবই সহজে। হাদীস
@@ -74,6 +163,8 @@ export default function BiodataDetails() {
           </div>
         </div>
 
+        <div className="divider my-10"></div>
+
         {/* Sections */}
         {[
           {
@@ -84,20 +175,25 @@ export default function BiodataDetails() {
               ["উচ্চতা", "৫'৮\""],
               ["ওজন", "৬৫ কেজি"],
               ["বৈবাহিক অবস্থা", "অবিবাহিত"],
-              ["বয়স", "২৮ বছর"],
-              ["উচ্চতা", "৫'৮\""],
-              ["ওজন", "৬৫ কেজি"],
-              ["বৈবাহিক অবস্থা", "অবিবাহিত"],
+              ["ধর্ম", "ইসলাম"],
+              ["জাতীয়তা", "বাংলাদেশী"],
+              ["রক্তের গ্রুপ", "O+"],
+              ["ঠিকানা", "ঢাকা"],
+              ["ইমেইল", "mohammad.ahmad@example.com"],
+              ["ফোন", "01712345678"],
+              ["এনআইডি নম্বর:", "123456789"],
+              ["শারিরীক অবস্থা:", "স্বাস্থ্যবান"],
             ],
           },
           {
             title: "শিক্ষাগত যোগ্যতা",
             data: [
               ["ডিগ্রি", "BSc in Engineering"],
-              ["প্রতিষ্ঠান", "ঢাকা বিশ্ববিদ্যালয়"],
+              ["প্রতিষ্ঠান", "ঢাকা বিশ্ববিদ্যালয়"],
               ["বিভাগ", "CSE"],
               ["ডিগ্রি", "BSc in Engineering"],
               ["প্রতিষ্ঠান", "ঢাকা বিশ্ববিদ্যালয়"],
+              ["সিজিপিএ", "৩.৮/৪.০"],
               ["বিভাগ", "CSE"],
             ],
           },
@@ -115,69 +211,66 @@ export default function BiodataDetails() {
           {
             title: "পেশাগত তথ্য",
             data: [
-              ["পেশা", "ইঞ্জিনিয়ার"],
-              ["কর্মস্থল", "ABC Ltd"],
-              ["মাসিক আয়", "৫০,০০০ টাকা"],
-              ["পেশা", "ইঞ্জিনিয়ার"],
-              ["কর্মস্থল", "ABC Ltd"],
-              ["মাসিক আয়", "৫০,০০০ টাকা"],
+              ["পেশা", "সফটওয়্যার ইঞ্জিনিয়ার"],
+              ["কোম্পানি", "টেক কোম্পানি"],
+              ["অভিজ্ঞতা", "৫ বছর"],
+              ["বেতন", "৮০,০০০ টাকা/মাস"],
+              ["পেশা", "সফটওয়্যার ইঞ্জিনিয়ার"],
+              ["কোম্পানি", "টেক কোম্পানি"],
+              ["অভিজ্ঞতা", "৫ বছর"],
+              ["বেতন", "৮০,০০০ টাকা/মাস"],
+            ],
+          },
+          {
+            title: "অতিরিক্ত তথ্য",
+            data: [
+              ["শখ", "ভ্রমণ, রান্না, বই পড়া"],
+              ["ভাষা", "বাংলা, ইংরেজি"],
+              ["ব্যক্তিত্ব", "বন্ধুত্বপূর্ণ, দায়িত্বশীল"],
+              ["শখ", "ভ্রমণ, রান্না, বই পড়া"],
+              ["ভাষা", "বাংলা, ইংরেজি"],
+              ["ব্যক্তিত্ব", "বন্ধুত্বপূর্ণ, দায়িত্বশীল"],
+            ],
+          },
+          {
+            title: "যোগাযোগের তথ্য",
+            data: [
+              ["ইমেইল", "mohammad.ahmad@example.com"],
+              ["ফোন", "01712345678"],
+              ["ঠিকানা", "ঢাকা"],
+              ["পিতার মোবাইল নম্বর:", "01712345678"],
+              ["স্থায়ী ঠিকানা:", "ঢাকা"],
+              ["বর্তমান ঠিকানা:", "ঢাকা"],
             ],
           },
         ].map((section, i) => (
-          <div key={i} className="mb-6 mt-6">
-            {/* Title */}
-            <h2 className="text-lg lg:text-xl font-bold text-gray-700 relative pb-1">
-              {section.title}
-              <span className="absolute left-0 bottom-0 w-10 h-[2px] bg-red-500"></span>
-            </h2>
+          <div key={i} className="mb-6 mt-6 ">
+            <div>
+              <h2 className="text-lg lg:text-xl font-bold lg:block relative pb-1">
+                {section.title}
+                <span className="absolute left-0 bottom-0 w-10 h-[2px] bg-red-500"></span>
+              </h2>
 
-            {/* Data */}
-            <div className="mt-3 space-y-1 text-sm">
-              {section.data.map((row, idx) => (
-                <div key={idx} className="flex flex-col lg:flex-row lg:gap-2">
-                  <span className="lg:w-60 font-semibold">{row[0]} :</span>
-                  <span>{row[1]}</span>
-                </div>
-              ))}
+              {/* Data */}
+              <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm">
+                {section.data.map((row, idx) => (
+                  <div key={idx} className="flex flex-col sm:flex-row sm:gap-2">
+                    <span className="font-semibold sm:min-w-[180px]">
+                      {row[0]} :
+                    </span>
+                    <span className="">{row[1]}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ))}
 
+        <div className="divider my-10"></div>
+
         {/* Similar */}
         <div className="mt-10">
-          <h3 className="text-center text-sm font-semibold mb-4">
-            অনুরূপ বায়োডাটা সমূহ
-          </h3>
-
-          <div className="flex items-center gap-2">
-            <button className="btn btn-xs">❮</button>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 flex-1">
-              {similarProfiles.map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-white border rounded p-2 text-center"
-                >
-                  <Image
-                    src={item.img}
-                    width={140}
-                    height={140}
-                    alt="profile"
-                    className="mx-auto rounded"
-                  />
-
-                  <p className="text-xs mt-1">{item.name}</p>
-                  <p className="text-[10px] text-gray-500">{item.info}</p>
-
-                  <Link href={"/profile"} className="btn btn-xs mt-1">
-                    বিস্তারিত
-                  </Link>
-                </div>
-              ))}
-            </div>
-
-            <button className="btn btn-xs">❯</button>
-          </div>
+          <SimilarBiodataSlider profiles={maleProfiles} />
         </div>
       </div>
     </div>

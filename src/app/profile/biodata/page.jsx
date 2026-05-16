@@ -79,14 +79,12 @@ const ProfileData = () => {
             {/* Section Header */}
             <div className="flex justify-between items-center mb-6">
               <div className="relative">
-                <h3 className="text-xl font-bold text-gray-800">
-                  {section.title}
-                </h3>
+                <h3 className="text-xl font-bold ">{section.title}</h3>
                 <div className="w-10 h-1 bg-red-500 mt-1 rounded-full"></div>
               </div>
               <button
                 onClick={() => openEditModal(section.title)}
-                className="text-gray-400 hover:text-primary transition-colors p-2"
+                className=" hover:text-primary transition-colors p-2"
               >
                 <Pencil size={18} />
               </button>
@@ -99,10 +97,10 @@ const ProfileData = () => {
                   key={idx}
                   className="flex flex-col sm:flex-row sm:justify-start gap-1 sm:gap-4"
                 >
-                  <span className="text-gray-600 font-medium sm:w-40 shrink-0">
+                  <span className=" font-medium sm:w-40 shrink-0">
                     {item.label}
                   </span>
-                  <span className="text-gray-800">{item.value}</span>
+                  <span className="">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -111,10 +109,10 @@ const ProfileData = () => {
 
         {/* Footer Declaration */}
         <div className="pt-10 border-t border-gray-100 relative">
-          <button className="absolute right-0 top-10 text-gray-400 hover:text-primary p-2">
+          <button className="absolute right-0 top-10  hover:text-primary p-2">
             <Pencil size={18} />
           </button>
-          <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
+          <p className="text-sm  leading-relaxed max-w-2xl">
             নিকাহ্ কুইন ওয়েবসাইটে প্রদানকৃত সকল তথ্য ১০০ ভাগ সত্য ও সঠিক, এর
             একটি তথ্য মিথ্যা প্রমাণিত হইলে আমার মেম্বারশিপ বাতিল করিতে পারিবেন।
           </p>

@@ -4,36 +4,36 @@ import { useEffect, useState } from "react";
 import { Palette, Check } from "lucide-react"; // আইকন ব্যবহারের জন্য
 
 const themes = [
-  // "light",
-  // "dark",
-  // "cupcake",
-  // "bumblebee",
-  // "emerald",
-  // "corporate",
-  // "synthwave",
-  // "retro",
-  // "cyberpunk",
-  // "valentine",
-  // "halloween",
-  // "garden",
-  // "forest",
-  // "aqua",
-  // "lofi",
-  // "pastel",
-  // "fantasy",
-  // "luxury",
-  // "dracula",
-  // "cmyk",
-  // "autumn",
-  // "acid",
-  // "lemonade",
-  // "night",
-  // "coffee",
-  // "winter",
-  // "dim",
-  // "nord",
-  // "sunset",
-  // "black",
+  "light",
+  "dark",
+  "cupcake",
+  "bumblebee",
+  "emerald",
+  "corporate",
+  "synthwave",
+  "retro",
+  "cyberpunk",
+  "valentine",
+  "halloween",
+  "garden",
+  "forest",
+  "aqua",
+  "lofi",
+  "pastel",
+  "fantasy",
+  "luxury",
+  "dracula",
+  "cmyk",
+  "autumn",
+  "acid",
+  "lemonade",
+  "night",
+  "coffee",
+  "winter",
+  "dim",
+  "nord",
+  "sunset",
+  "black",
   "business",
   "wireframe",
 ];
@@ -74,10 +74,10 @@ const themeColors = {
 };
 
 export default function ThemeSwitcher() {
-  const [theme, setTheme] = useState("wireframe");
+  const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") || "wireframe";
+    const saved = localStorage.getItem("theme") || "light";
     setTheme(saved);
     document.documentElement.setAttribute("data-theme", saved);
   }, []);

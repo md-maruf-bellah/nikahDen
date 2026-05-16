@@ -12,17 +12,15 @@ const MembershipDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 ">
+    <div className="min-h-screenp-4 ">
       <div className="max-w-7xl mx-auto space-y-10">
         {/* --- Membership & Package Section --- */}
         <section>
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            মেম্বারশীপ এবং প্যাকেজ
-          </h2>
-          <div className="bg-white rounded border border-red-100 overflow-hidden">
+          <h2 className="text-xl font-bold  mb-4">মেম্বারশীপ এবং প্যাকেজ</h2>
+          <div className="rounded border  border-primary/15 overflow-hidden">
             {/* Current Package */}
             <div className="p-6 border-b border-red-50">
-              <p className="text-gray-500 mb-2">বর্তমান প্যাকেজ</p>
+              <p className=" mb-2">বর্তমান প্যাকেজ</p>
               <p className="text-red-500 font-bold text-lg mb-4">মান্থলি</p>
               <button
                 onClick={() => setActiveModal("package")}
@@ -34,9 +32,9 @@ const MembershipDashboard = () => {
 
             {/* Connection Status */}
             <div className="p-6">
-              <p className="text-gray-500 mb-2">কানেক্ট অবশিষ্ট রয়েছে</p>
+              <p className=" mb-2">কানেক্ট অবশিষ্ট রয়েছে</p>
               <p className="text-red-500 font-bold text-2xl mb-4">১০০</p>
-              <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              <p className="text-sm mb-6 leading-relaxed">
                 প্রতিটি বায়োডাটা দেখতে ১ টি করে কানেক্টে ব্যবহার হবে।
                 <span className="text-red-400 cursor-pointer hover:underline ml-1">
                   বিস্তারিত দেখুন
@@ -55,16 +53,12 @@ const MembershipDashboard = () => {
 
         {/* --- Biodata Stats Section --- */}
         <section>
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            বায়োডাটা স্টেট্
-          </h2>
-          <div className="bg-white rounded border border-red-100 divide-y divide-red-50">
+          <h2 className="text-xl font-bold  mb-4">বায়োডাটা স্টেট্</h2>
+          <div className="rounded border  border-primary/15 overflow-hidden divide-y divide-gray-400">
             {stats.map((item, index) => (
               <div key={index} className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <p className="text-gray-600 font-medium max-w-[60%]">
-                    {item.label}
-                  </p>
+                  <p className=" font-medium max-w-[60%]">{item.label}</p>
                   <div className="dropdown dropdown-end">
                     <label
                       tabIndex={0}
@@ -95,7 +89,7 @@ const MembershipDashboard = () => {
           <h3 className="font-bold text-lg flex items-center gap-2">
             <Zap className="text-red-500" /> প্যাকেজ পরিবর্তন করুন
           </h3>
-          <p className="py-4 text-gray-600">
+          <p className="py-4 ">
             আপনি কি আপনার বর্তমান 'মান্থলি' প্যাকেজটি পরিবর্তন করে অন্য কোনো
             প্যাকেজ নিতে চান?
           </p>
@@ -131,7 +125,7 @@ const MembershipDashboard = () => {
           <h3 className="font-bold text-lg flex items-center gap-2">
             <CreditCard className="text-red-500" /> নতুন কানেক্ট কিনুন
           </h3>
-          <p className="py-4 text-gray-600">
+          <p className="py-4 ">
             আপনার একাউন্টে নতুন কানেক্ট যোগ করতে নিচের বাটনে ক্লিক করুন।
           </p>
           <div className="modal-action">
