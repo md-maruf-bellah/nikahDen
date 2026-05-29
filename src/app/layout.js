@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="bn"
-      // data-theme="dark"
+      data-theme="light"
       className={`${notoSansBengali.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">

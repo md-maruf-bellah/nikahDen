@@ -2,7 +2,7 @@ import React from "react";
 
 const ThankYouPage = () => {
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen  pb-20">
       {/* Header Banner Section */}
       <div className="bg-[#ff6b6b] py-10 text-center text-white mb-24">
         <h1 className="text-3xl font-bold mb-1">Thank You</h1>
@@ -32,7 +32,7 @@ const ThankYouPage = () => {
         </div>
 
         {/* Success Message Headlines */}
-        <h2 className="text-2xl font-bold text-gray-800 mb-2 tracking-wide">
+        <h2 className="text-2xl font-bold  mb-2 tracking-wide">
           Payment Successfully Completed
         </h2>
         <p className="text-sm text-gray-500 font-medium">

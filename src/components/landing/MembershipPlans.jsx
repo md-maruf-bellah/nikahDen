@@ -10,7 +10,7 @@ function PricingSection() {
       </div>
       <div className="max-w-7xl px-0 md:px-10 mx-auto grid grid-cols-1 md:grid-cols-3  gap-4 lg:gap-0 items-center">
         {/* LEFT CARD */}
-        <div className="bg-[#efefef] p-8 text-left rounded-sm">
+        <div className="bg-[#efefef] p-8 text-left card">
           <h3 className="text-[#f45f5f] text-xl font-semibold mb-2">মাসিক</h3>
           <p className="text-2xl font-bold mb-4">৳৯৯৯</p>
 
@@ -24,20 +24,23 @@ function PricingSection() {
             </li>
           </ul>
 
-          <button className="mt-6 bg-[#f45f5f] text-white w-full py-3 rounded">
-            এগিয়ে করুন
-          </button>
+          <Link
+            href={"/checkout"}
+            className="btn mt-6 bg-[#f45f5f] text-white w-full py-3 shadow-none border-none"
+          >
+            এগিয়ে করুন
+          </Link>
         </div>
 
         {/* MIDDLE (FEATURED) */}
-        <div className=" bg-[#555555] text-white p-8 rounded-sm scale-100 md:scale-110 shadow-lg">
+        <div className="relative bg-[#555555] text-white p-8  scale-100 md:scale-110 shadow-lg card z-10">
           {/* Badge */}
-          <div className=" bg-[#efefef] text-gray-700 w-full py-2 text-lg font-medium text-center">
+          <div className="absolute top-5 left-0 mb-10 bg-[#efefef] text-gray-700 w-full py-2 text-lg font-medium text-center">
             পপুলার প্লান -{" "}
-            <span className="text-[#f45f5f] font-bold text-2xl">২০% </span> ছাড়
+            <span className="text-[#f45f5f] font-bold text-2xl">২০% </span> ছাড়
           </div>
 
-          <h3 className="text-xl font-semibold mb-2 mt-4">ত্রৈমাসিক</h3>
+          <h3 className="text-xl font-semibold mb-2 mt-16">ত্রৈমাসিক</h3>
           <div className="flex gap-3">
             <p className="text-lg line-through text-gray-300">৳১,২৫০</p>
             <p className="text-2xl font-bold mb-4">৳৯৯৯</p>
@@ -51,13 +54,16 @@ function PricingSection() {
             <li>✔ সরাসরি ১৫টি প্রস্তাব গ্রহণ করতে পারবেন</li>
           </ul>
 
-          <button className="mt-6 bg-[#efefef] text-gray-800 w-full py-3 rounded">
-            এগিয়ে করুন
-          </button>
+          <Link
+            href={"/checkout"}
+            className="btn mt-6 bg-[#efefef] text-gray-800 w-full py-3 shadow-none border-none"
+          >
+            এগিয়ে করুন
+          </Link>
         </div>
 
         {/* RIGHT CARD */}
-        <div className="bg-[#efefef] p-8 text-left rounded-sm">
+        <div className="bg-[#efefef] p-8 text-left card">
           <h3 className="text-[#f45f5f] text-xl font-semibold mb-2">
             ষান্মাসিক
           </h3>
@@ -71,9 +77,12 @@ function PricingSection() {
             <li>✔ অসংখ্য প্রস্তাব গ্রহণ করতে পারবেন</li>
           </ul>
 
-          <button className="mt-6 bg-[#f45f5f] text-white w-full py-3 rounded">
-            এগিয়ে করুন
-          </button>
+          <Link
+            href={"/checkout"}
+            className="btn mt-6 bg-[#f45f5f] text-white w-full py-3 shadow-none border-none"
+          >
+            এগিয়ে করুন
+          </Link>
         </div>
       </div>
 

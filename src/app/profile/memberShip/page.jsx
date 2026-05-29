@@ -39,7 +39,7 @@ const MemberShip = () => {
               <div className="flex justify-end min-w-[100px]">
                 {offer.status === "check" && (
                   <div className="flex justify-center items-center">
-                    <span className="bg-green-100 text-green-600 p-2 rounded-full">
+                    <span className="bg-green-100 font-thin text-green-600 p-2 rounded-full">
                       <Check size={18} />
                     </span>
                   </div>

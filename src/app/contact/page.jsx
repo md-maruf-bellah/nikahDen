@@ -8,7 +8,7 @@ export default function ContactSection() {
   return (
     <div className="bg-white min-h-screen ">
       {/* Top Header Section */}
-      <div className="bg-[#ff6b6b] text-white text-center py-20 px-4">
+      <div className="bg-[#ff6b6b] text-white text-center py-10 px-4">
         <h2 className="text-3xl font-bold mb-2">যোগাযোগ করুন</h2>
         <p className="text-sm opacity-90 flex justify-center gap-2 items-center">
           হোম <span className="opacity-60">/</span> যোগাযোগ
