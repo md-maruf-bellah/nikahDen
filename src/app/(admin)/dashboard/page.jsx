@@ -85,7 +85,7 @@ const AdminDashboard = () => {
       {/* --- Fixed Sidebar --- */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 
+          fixed inset-y-0 left-0 z-50 border-r border-gray-50 
           transition-all duration-300 ease-in-out
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
           ${isCollapsed ? "lg:w-20" : "lg:w-64 w-64"}
@@ -109,8 +109,8 @@ const AdminDashboard = () => {
                 Biye Sadi
               </h1>
             ) : (
-              <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold mx-auto">
-                BS
+              <div className="w-10 h-10 px-5 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold mx-auto">
+                NKD
               </div>
             )}
             <button
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
                   )}
                 </button>
                 {isCollapsed && (
-                  <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[100] whitespace-nowrap">
+                  <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-2  text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-[100] whitespace-nowrap">
                     {item.label}
                   </div>
                 )}
@@ -160,7 +160,7 @@ const AdminDashboard = () => {
         `}
       >
         {/* --- Fixed Navbar (Header) --- */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 border-b border-gray-200 flex items-center justify-between px-4 md:px-8 shrink-0">
           <div className="flex items-center gap-4">
             <button
               className="lg:hidden p-2 text-gray-600"
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+                <div className="absolute right-0 mt-3 w-56 rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-50 mb-1">
                     <p className="text-sm font-bold text-gray-700">
                       মেরাজ আকন্দ

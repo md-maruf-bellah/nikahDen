@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
     <html
       lang="bn"
       // data-theme="dark"
-      className={`${hind_siliguri.variable} h-full antialiased`}
+      className={`${notoSansBengali.variable} h-full antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">
         {/* <Navbar /> */}

@@ -310,7 +310,7 @@ const UserManagement = () => {
     <div>
       <div className="max-w-full">
         {/* Header Section */}
-        <div className="p-8 border-b border-gray-50 bg-gradient-to-br from-white to-red-50/20">
+        <div className="p-8 border-b border-gray-50 ">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
               <div className="flex items-center gap-3">
@@ -405,7 +405,7 @@ const UserManagement = () => {
         </div>
 
         {/* Pagination Section */}
-        <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-6 bg-white border-t border-gray-100">
+        <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100">
           <div className="flex items-center gap-8 w-full sm:w-auto">
             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
               মোট সদস্য: <span className="text-gray-800">{data.length}</span>
@@ -428,7 +428,7 @@ const UserManagement = () => {
             <button
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              className="btn btn-circle btn-sm bg-white border-gray-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:bg-gray-50 transition-all shadow-sm"
+              className="btn btn-circle btn-sm  border-gray-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:bg-gray-50 transition-all shadow-sm"
             >
               <ChevronLeft size={18} />
             </button>
@@ -452,7 +452,7 @@ const UserManagement = () => {
             <button
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              className="btn btn-circle btn-sm bg-white border-gray-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:bg-gray-50 transition-all shadow-sm"
+              className="btn btn-circle btn-sm  border-gray-200 hover:bg-red-50 hover:text-red-500 disabled:opacity-30 disabled:bg-gray-50 transition-all shadow-sm"
             >
               <ChevronRight size={18} />
             </button>
