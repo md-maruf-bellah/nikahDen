@@ -1,47 +1,48 @@
 import React from "react";
+import Link from "next/link";
 
 const PaymentPage = () => {
   return (
-    <div className="min-h-screen bg-[#f9fafb] pb-20">
-      {/* Header Section */}
-      <div className="bg-[#ff6b6b] py-20 text-center text-white">
-        <h1 className="text-4xl font-bold mb-2">Payment</h1>
-        <p className="text-sm tracking-wide">Home / Payment</p>
+    <div className="min-h-screen  pb-20">
+      {/* Header Section from image_c8e877.png */}
+      <div className="bg-[#ff6b6b] py-10 text-center text-white mb-12">
+        <h1 className="text-3xl font-bold mb-1">Payment</h1>
+        <p className="text-xs tracking-wide text-red-100">Home / Payment</p>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 mt-12">
-        {/* Billing Address Card */}
-        <div className="py-10 bg-base-200">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-xl font-bold text-gray-800">Billing Address</h2>
-            <button className="btn btn-outline btn-xs border-red-300 text-red-400 hover:bg-red-500 hover:border-red-500 rounded-sm px-4">
+      <div className="max-w-5xl mx-auto px-6">
+        {/* Billing Address Section */}
+        <div className="py-2">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">Billing Address</h2>
+            <button className="border border-red-300 text-red-400 hover:bg-red-50 hover:text-red-500 text-xs rounded px-4 py-1.5 transition-colors cursor-pointer">
               পুর্বে ফিরে যান
             </button>
           </div>
 
-          <form className="space-y-5">
+          <form className="space-y-4">
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     First Name
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full text-gray-500 h-10 px-3 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     Last Name
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full text-gray-500 h-10 px-3 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
             </div>
@@ -49,83 +50,83 @@ const PaymentPage = () => {
             {/* Contact Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     Phone
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full text-gray-500 h-10 px-3 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     E-mail
                   </span>
                 </label>
                 <input
                   type="email"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full h-10 px-3 text-gray-500 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
             </div>
 
             {/* Address Field */}
             <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-gray-700 font-medium">
+              <label className="label pb-1.5 pt-0 cursor-pointer">
+                <span className="text-xs text-gray-700 font-medium">
                   Address
                 </span>
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                className="w-full h-10 px-3 text-gray-500 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
               />
             </div>
 
             {/* City, State, Zip */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     Town / City
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full h-10 px-3 text-gray-500 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     State
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full h-10 px-3 text-gray-500 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
               <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-gray-700 font-medium">
+                <label className="label pb-1.5 pt-0 cursor-pointer">
+                  <span className="text-xs text-gray-700 font-medium">
                     Zip Code
                   </span>
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full h-10 rounded-md border-gray-300 focus:outline-red-400"
+                  className="w-full h-10 px-3 text-gray-500 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-sm"
                 />
               </div>
             </div>
 
             {/* Order Notes */}
-            <div className="form-control mt-4">
+            <div className="form-control pt-2">
               <textarea
-                className="textarea textarea-bordered w-full h-32 rounded-md border-gray-300 focus:outline-red-400"
+                className="w-full h-28 p-3 rounded-md border border-gray-300 focus:outline-none focus:border-red-400 text-xs text-gray-500 placeholder-gray-300 resize-none"
                 placeholder="Order notes (optional)"
               ></textarea>
             </div>
@@ -133,68 +134,94 @@ const PaymentPage = () => {
         </div>
 
         {/* Payment Methods Section */}
-        <div className="mt-12 px-2">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            Payment Methods
-          </h2>
+        <div className="mt-14">
+          <h2 className="text-xl font-bold  mb-6">Payment Methods</h2>
 
-          <div className="mb-8">
-            <p className="text-gray-800 font-bold text-lg mb-1">সর্বমোট</p>
-            <p className="text-3xl font-bold text-gray-800">৳ ৬৯৯</p>
+          <div className="mb-6">
+            <p className=" font-bold text-sm mb-0.5">সর্বমোট</p>
+            <p className="text-xl font-bold ">৳ ৬৯৯</p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Credit Card Option */}
             <div>
-              <label className="flex items-center gap-3 cursor-pointer group">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
                   name="payment"
-                  className="radio border-gray-400 checked:bg-red-500 checked:border-red-500"
+                  className="w-4 h-4 text-red-500 border-gray-300 focus:ring-red-500 cursor-pointer"
                 />
-                <span className="font-bold text-gray-700">Credit Card</span>
+                <span className="text-sm font-semibold text-gray-700">
+                  Credit Card
+                </span>
               </label>
-              <div className="flex gap-2 mt-3 ml-8 grayscale opacity-80">
-                {/* কার্ডের আইকনগুলো এখানে বসবে */}
+
+              {/* Card Icons */}
+              <div className="flex gap-1.5 mt-2 ml-7">
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
-                  alt="Visa"
-                  className="h-6 border p-1 rounded bg-white"
-                />
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                  src="https://img.icons8.com/color/48/mastercard.png"
                   alt="Mastercard"
-                  className="h-6 border p-1 rounded bg-white"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
                 />
                 <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
-                  alt="PayPal"
-                  className="h-6 border p-1 rounded bg-white"
+                  src="https://img.icons8.com/color/48/visa.png"
+                  alt="Visa"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
+                />
+                <img
+                  src="https://img.icons8.com/color/48/amex.png"
+                  alt="Amex"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
+                />
+                <img
+                  src="https://img.icons8.com/color/48/discover.png"
+                  alt="Discover"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
+                />
+                <img
+                  src="https://img.icons8.com/color/48/diners-club.png"
+                  alt="Diners"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
+                />
+                <img
+                  src="https://img.icons8.com/color/48/unionpay.png"
+                  alt="UnionPay"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
+                />
+                <img
+                  src="https://img.icons8.com/color/48/jcb.png"
+                  alt="JCB"
+                  className="h-7 w-auto object-contain border rounded p-0.5"
                 />
               </div>
             </div>
 
             {/* PayPal Option */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="payment"
-                className="radio border-gray-400 checked:bg-red-500 checked:border-red-500"
-                defaultChecked
-              />
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-700 italic">PayPal</span>
-              </div>
-            </label>
+            <div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="payment"
+                  defaultChecked
+                  className="w-4 h-4 text-red-500 border-gray-300 focus:ring-red-500 cursor-pointer"
+                />
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
+                  alt="PayPal"
+                  className="h-4 ml-0.5"
+                />
+              </label>
+            </div>
 
             {/* Terms Checkbox */}
-            <div className="pt-4">
+            <div className="pt-2">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  className="checkbox checkbox-error rounded-sm h-5 w-5"
+                  defaultChecked
+                  className="w-4 h-4 text-red-500 border-gray-300 rounded focus:ring-red-500 accent-red-500 cursor-pointer"
                 />
-                <span className="text-gray-600 text-sm font-medium">
+                <span className="text-gray-500 text-xs">
                   By placing an order, I agree to Gunob terms of sale
                 </span>
               </label>
@@ -202,9 +229,12 @@ const PaymentPage = () => {
           </div>
 
           {/* Place Order Button */}
-          <button className="btn w-full bg-[#ef4444] hover:bg-red-600 text-white border-none mt-10 rounded-md h-12 text-lg font-medium shadow-md">
+          <Link
+            href="/success"
+            className="block w-full bg-[#ff6b6b] hover:bg-red-600 text-white font-medium py-3 rounded-md mt-8 text-center text-sm transition-colors shadow-sm cursor-pointer"
+          >
             Place an Order
-          </button>
+          </Link>
         </div>
       </div>
     </div>
