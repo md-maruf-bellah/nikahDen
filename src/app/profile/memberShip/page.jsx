@@ -15,7 +15,7 @@ const MemberShip = () => {
 
   return (
     <div className="p-4  min-h-screen flex items-center justify-center ">
-      <div className="w-full max-w-2xl  overflow-hidden border border-gray-50">
+      <div className="w-full max-w-3xl  overflow-hidden ">
         {/* Table Header */}
         <div className="flex justify-between items-center mb-10 pb-4 border-b border-gray-100">
           <h2 className="text-xl md:text-xl font-bold text-[#111111]">
@@ -38,10 +38,18 @@ const MemberShip = () => {
               </span>
               <div className="flex justify-end min-w-[100px]">
                 {offer.status === "check" && (
-                  <Check className="text-success w-7 h-7" strokeWidth={3} />
+                  <div className="flex justify-center items-center">
+                    <span className="bg-green-100 text-green-600 p-2 rounded-full">
+                      <Check size={18} />
+                    </span>
+                  </div>
                 )}
                 {offer.status === "cross" && (
-                  <X className="text-error w-7 h-7" strokeWidth={3} />
+                  <div className="flex justify-center items-center">
+                    <span className="bg-red-100 text-red-500  p-2 rounded-full font-bold">
+                      <X size={18} />
+                    </span>
+                  </div>
                 )}
                 {offer.value && (
                   <span className="text-xl font-bold text-[#4B5563]">
@@ -55,12 +63,12 @@ const MemberShip = () => {
           {/* Pricing Row */}
           <div
             onClick={() => setIsModalOpen(true)}
-            className="flex justify-between items-center pt-8 border-t border-gray-100 mt-4 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-all"
+            className="flex justify-between items-start p-4 border-t border-gray-100 mt-4 cursor-pointer border hover:bg-[#e54843] bg-[#FE645F]  rounded-xl transition-all"
           >
-            <span className="text-xl md:text-2xl font-bold text-red-500">
+            <span className="text-xl md:text-2xl font-bold text-white">
               প্যাকেজ প্রাইজ
             </span>
-            <span className="text-xl md:text-2xl font-bold text-red-500">
+            <span className="text-xl md:text-2xl font-bold text-white">
               $15
             </span>
           </div>
