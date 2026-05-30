@@ -50,7 +50,7 @@ export default function SearchBar() {
         ))}
       </div>
 
-      <div className=" w-full lg:max-w-5xl rounded border border-primary/0 mx-auto bg-base-200 py-6 px-4  ">
+      <div className=" w-full lg:max-w-5xl  border border-primary/0 mx-auto bg-base-200 py-6 px-4 card block md:flex-row items-center gap-4">
         <div className="max-w-6xl mx-auto">
           {/* Top Labels (Hidden on mobile) */}
           <div className="hidden md:grid grid-cols-5 text-center mb-2 font-medium text-lg">
@@ -93,7 +93,7 @@ export default function SearchBar() {
             </div>
 
             {/* Desktop Layout */}
-            <div className="hidden md:flex items-center h-[60px]">
+            <div className="hidden md:flex items-center h-[60px] ">
               <div className="flex-1 px-4">
                 <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
                   <option>পাত্র</option>
@@ -136,7 +136,7 @@ export default function SearchBar() {
                 </select>
               </div>
 
-              <button className="w-[70px] h-full bg-[#5a5a5a] flex items-center justify-center hover:bg-[#444] transition">
+              <button className="w-[70px] h-full bg-[#5a5a5a] flex items-center justify-center hover:bg-[#444] transition cursor-pointer">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="w-5 h-5 text-white"

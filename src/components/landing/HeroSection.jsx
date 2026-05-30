@@ -94,7 +94,7 @@ export default function HeroSection() {
         {/* key={activeIndex} দেওয়ার কারণে স্লাইড পরিবর্তনের সাথে সাথে টেক্সট অ্যানিমেট হবে */}
         <div
           key={activeIndex}
-          className="order-2 md:order-1 text-center md:text-left animate-text-fade"
+          className="order-2 md:order-1 text-center md:text-left pl-0 lg:pl-8 animate-text-fade"
         >
           {/* ধর্মভিত্তিক ট্যাগ */}
           <span className="inline-block text-[#fd6969] bg-[#fd6969]/10 font-bold text-xs md:text-sm tracking-wide px-4 py-1.5 rounded-full mb-5 border border-[#fd6969]/20 shadow-sm">
