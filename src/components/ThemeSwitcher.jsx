@@ -76,18 +76,17 @@ const themeColors = {
 export default function ThemeSwitcher() {
   const [theme, setTheme] = useState("light");
 
-  useEffect(() => {
-    const saved = localStorage.getItem("theme") || "light";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-theme", saved);
-  }, []);
-
   const changeTheme = (t) => {
     setTheme(t);
     document.documentElement.setAttribute("data-theme", t);
     localStorage.setItem("theme", t);
   };
 
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "light";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, [theme]);
   return (
     <div className="dropdown dropdown-end">
       {/* ===== Styled Button ===== */}
@@ -99,16 +98,16 @@ export default function ThemeSwitcher() {
         <span className="font-bold text-xs uppercase tracking-wider hidden sm:inline">
           Theme: <span className="text-primary">{theme}</span>
         </span>
-        <div
+        {/* <div
           className={`w-3 h-3 rounded-full shadow-inner border border-black/5 ${themeColors[theme]}`}
-        ></div>
+        ></div> */}
       </label>
 
       {/* ===== Improved Dropdown Menu ===== */}
       <ul
         tabIndex={0}
         className="dropdown-content z-[100] mt-3 p-2 shadow-2xl bg-base-100 border border-base-300 
-                   rounded-2xl w-60 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300"
+                   rounded-2xl w-52 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300"
       >
         <div className="px-4 py-2 mb-2 border-b border-base-200">
           <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
@@ -121,14 +120,14 @@ export default function ThemeSwitcher() {
             <li key={t}>
               <button
                 onClick={() => changeTheme(t)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 
+                className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
                   ${
                     theme === t
                       ? "bg-primary/10 text-primary font-bold"
                       : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
                   }`}
               >
-                <div className="flex items-center gap-3">
+                <div className=" flex items-center gap-3">
                   {/* Color Indicator Box */}
                   <div className="grid grid-cols-2 gap-0.5 w-6 h-6 rounded-md overflow-hidden border border-base-300 shadow-sm">
                     <div className={`${themeColors[t]} h-full w-full`}></div>

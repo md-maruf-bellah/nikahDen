@@ -13,7 +13,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-6xl w-full bg-white rounded-lg shadow overflow-hidden flex flex-col lg:flex-row">
+      <div className="card max-w-6xl w-full bg-white  shadow overflow-hidden flex flex-col lg:flex-row">
         {/* Left Side - Image with Overlay */}
         <div className="lg:w-1/2 relative min-h-[300px] lg:min-h-full">
           <Image
@@ -116,7 +116,7 @@ const Register = () => {
             </div>
 
             {/* Submit Button */}
-            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold rounded-xl">
+            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold ">
               কন্টিনিউ করুন
             </button>
           </form>
@@ -126,11 +126,11 @@ const Register = () => {
 
           {/* Social Logins */}
           <div className="space-y-4">
-            <button className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12 rounded-xl flex items-center justify-center gap-2 normal-case font-semibold">
+            <button className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold">
               <FcGoogle size={22} />
               Sign up with Google
             </button>
-            <button className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12 rounded-xl flex items-center justify-center gap-2 normal-case font-semibold">
+            <button className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold">
               <FaFacebook size={22} />
               Sign up with Facebook
             </button>

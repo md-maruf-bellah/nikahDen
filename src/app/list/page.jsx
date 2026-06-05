@@ -119,7 +119,7 @@ export default function BiodataGrid() {
 
       <div className="max-w-7xl mx-auto flex gap-6 p-4 md:p-6">
         {/* Sidebar Desktop */}
-        <div className="hidden md:block w-72 bg-base-100 p-5 shadow h-screen sticky top-0 overflow-y-auto">
+        <div className="hidden md:block w-72 bg-base-100 p-5 shadow h-screen sticky top-0 overflow-y-auto card">
           <h2 className="font-semibold mb-4">আপনি কি খঁজতে চান?</h2>
 
           <div className="mb-3">
@@ -253,7 +253,7 @@ export default function BiodataGrid() {
         )}
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 ">
           {/* Top Bar */}
           <div className="flex flex-col md:flex-row justify-between gap-3 mb-4">
             {/* View Toggle */}
@@ -316,7 +316,7 @@ export default function BiodataGrid() {
                     <Image
                       src={item.img}
                       alt={item.name}
-                      className="w-full border"
+                      className="w-full h-full border rounded-tl-xl rounded-tr-xl"
                     />
 
                     <div className="card-body items-center text-center p-4">

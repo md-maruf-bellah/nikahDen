@@ -15,6 +15,7 @@ import {
   FamilyInfo,
   GeneralInfo,
 } from "./AllComponent";
+import { Check } from "lucide-react";
 
 const validationSchema = yup.object().shape({
   // স্টেপ ১: ব্যক্তিগত তথ্য
@@ -135,7 +136,7 @@ function FormContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:py-10">
+    <div className="max-w-7xl mx-auto p-4 md:py-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Stepper (Left) */}
         {/* <div className="md:col-span-1 space-y-4">
@@ -178,15 +179,15 @@ function FormContent() {
                 <div key={index} className="relative mb-14 flex items-center">
                   <div className="flex-1 text-right pr-6">
                     <p
-                      className={`text-lg transition-all ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : "text-gray-500"}`}
+                      className={`text-lg transition-all ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : ""}`}
                     >
                       {item}
                     </p>
                   </div>
                   <div
-                    className={`absolute right-[-18px] translate-x-1/2 z-10 w-8 h-8 flex items-center justify-center rounded-full text-white text-xs shadow-md transition-all duration-500 ${isDone ? "bg-green-500 scale-110" : isActive ? "bg-red-500" : "bg-gray-400"}`}
+                    className={`card absolute right-[-18px] translate-x-1/2 z-10 w-8 h-8 flex items-center justify-center  text-white  shadow-md transition-all duration-500 ${isDone ? "bg-green-500 scale-105" : isActive ? "bg-red-500 " : "bg-gray-400"}`}
                   >
-                    {isDone ? "✓" : stepNumber}
+                    {isDone ? <Check size={18} /> : stepNumber}
                   </div>
                 </div>
               );
@@ -204,7 +205,7 @@ function FormContent() {
         </div>
 
         {/* Form Body (Right) */}
-        <div className="md:col-span-3 border p-6 rounded-lg shadow-sm bg-white min-h-[400px]">
+        <div className="card md:col-span-3  p-6 bg-base-200 min-h-[400px]">
           <form onSubmit={handleSubmit(onNext, onError)}>
             <div className="mb-8">
               <h2 className="text-xl font-bold mb-4 border-b-2 border-red-500 inline-block uppercase tracking-wide">
@@ -245,13 +246,13 @@ function FormContent() {
                 type="button"
                 disabled={activeStep === 1}
                 onClick={() => setActiveStep(activeStep - 1)}
-                className="px-6 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 transition"
+                className="btn px-6 py-1 border hover:bg-gray-100 disabled:opacity-50 transition"
               >
                 পিছনে
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition font-medium shadow-md"
+                className=" btn px-6 py-2 border bg-red-500 hover:bg-red-600 text-white transition font-medium shadow-none"
               >
                 {activeStep === steps.length ? "সাবমিট করুন" : "পরবর্তী ধাপ"}
               </button>

@@ -68,7 +68,7 @@ export default function TestimonialSection() {
 
   return (
     <div className="w-full py-20 overflow-hidden">
-      <div className="max-w-5xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-6">
         {/* Heading Section */}
         <div className="text-center mb-16">
           <p className="text-[#ff6b6b] text-xs font-bold mb-1 tracking-wide">
@@ -84,19 +84,19 @@ export default function TestimonialSection() {
         </div>
 
         {/* Content Area */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-center min-h-[380px]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-center min-h-[380px]">
           {/* Image Column with Exact image_bbc8ba.png Border Framing */}
           <div className="md:col-span-5 flex justify-center items-center">
-            <div className="relative w-full max-w-[320px] aspect-square">
+            <div className="relative w-full max-w-[368px] aspect-square">
               {/* 
                 ফটো অনুযায়ী নিখুঁত বর্ডার ফ্রেম:
                 - w-1/2 এবং right-0 এর মাধ্যমে পেছনের কন্টেনারটি ডান থেকে শুরু হয়ে ইমেজের ঠিক মাঝখানে আসবে।
                 - border-t, border-b এবং border-r দেওয়ার কারণে লাইনগুলো ওপরে ও নিচে মাঝখান থেকে শুরু হয়ে ডানে মিশেছে।
               */}
-              <div className="absolute -right-5 -top-5 -bottom-5 w-1/2 border-r-[10px] border-t-[10px] border-b-[10px] border-[#ff6b6b] z-0 pointer-events-none"></div>
+              <div className="card absolute -right-5 -top-5 -bottom-5 w-1/2 border-r-[10px] border-t-[10px] border-b-[10px] border-[#ff6b6b] z-0 pointer-events-none"></div>
 
               {/* মেইন ইমেজ কন্টেনার */}
-              <div className="relative w-full h-full z-10 overflow-hidden bg-white shadow-md">
+              <div className="card relative w-full h-full z-10 overflow-hidden bg-white shadow-md">
                 <AnimatePresence initial={false} custom={direction}>
                   <motion.div
                     key={currentIndex}
@@ -109,13 +109,13 @@ export default function TestimonialSection() {
                       x: { type: "spring", stiffness: 350, damping: 35 },
                       opacity: { duration: 0.3 },
                     }}
-                    className="absolute inset-0"
+                    className="absolute inset-0 "
                   >
                     <Image
                       src={current.image}
                       alt={`${current.name} ${current.surname}`}
                       fill
-                      className="object-cover"
+                      className="object-cover "
                       sizes="(max-width: 768px) 100vw, 320px"
                       priority
                     />
@@ -149,13 +149,13 @@ export default function TestimonialSection() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={prevSlide}
-                  className="w-8 h-8 flex items-center justify-center border border-gray-400  hover:border-[#ff6b6b] hover:text-[#ff6b6b] transition-colors cursor-pointer rounded-sm bg-transparent"
+                  className="btn btn-square  hover:border-[#ff6b6b] hover:text-[#ff6b6b]  cursor-pointer"
                 >
                   <ChevronLeft size={16} strokeWidth={2.5} />
                 </button>
                 <button
                   onClick={nextSlide}
-                  className="w-8 h-8 flex items-center justify-center border border-gray-400  hover:border-[#ff6b6b] hover:text-[#ff6b6b] transition-colors cursor-pointer rounded-sm bg-transparent"
+                  className="btn btn-square  hover:border-[#ff6b6b] hover:text-[#ff6b6b]  cursor-pointer"
                 >
                   <ChevronRight size={16} strokeWidth={2.5} />
                 </button>

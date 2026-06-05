@@ -189,7 +189,7 @@ const AdminDashboard = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 p-1 hover:bg-gray-50 rounded-full transition-all"
               >
-                <div className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-red-50">
+                <div className="w-9 h-9 cursor-pointer rounded-full overflow-hidden ring-2 ring-red-50">
                   <Image
                     src={profile}
                     alt="Admin"
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-56 rounded-xl shadow-2xl border border-gray-100 py-2 z-50">
+                <div className="absolute bg-base-200 right-0 mt-3 w-56 rounded-xl shadow-xl border border-gray-100 py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-50 mb-1">
                     <p className="text-sm font-bold text-gray-700">
                       মেরাজ আকন্দ
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                       setActiveTab("লগ আউট");
                       setIsProfileOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer"
                   >
                     <LogOut size={16} /> লগ আউট
                   </button>

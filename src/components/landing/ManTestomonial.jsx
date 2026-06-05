@@ -14,7 +14,6 @@ import alem from "./../../../assets/member/alem1.png";
 
 import "swiper/css";
 import "swiper/css/navigation";
-import ManTestomonial from "./ManTestomonial";
 
 // Dummy data
 const femaleProfiles = [
@@ -129,13 +128,49 @@ const maleProfiles = [
     color: "উজ্জ্বল শ্যামলা",
     img: alem,
   },
+  {
+    name: "আবদুল করিম",
+    age: 28,
+    location: "ঢাকা",
+    profession: "ইঞ্জিনিয়ার",
+    height: "৫'৮\"",
+    color: "উজ্জ্বল ফর্সা",
+    img: alem,
+  },
+  {
+    name: "মোহাম্মদ রাফি",
+    age: 30,
+    location: "চট্টগ্রাম",
+    profession: "ডাক্তার",
+    height: "৫'১০\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: alem,
+  },
+  {
+    name: "আরিফুল ইসলাম",
+    age: 26,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: "৫'৯\"",
+    color: "উজ্জ্বল ফর্সা",
+    img: alem,
+  },
+  {
+    name: "শাহরিয়ার হোসেন",
+    age: 29,
+    location: "রংপুর",
+    profession: "শিক্ষক",
+    height: "৫'৭\"",
+    color: "উজ্জ্বল শ্যামলা",
+    img: alem,
+  },
 ];
 
 function ProfileCard({ profile }) {
   const [like, setLike] = useState(false);
 
   return (
-    <div className="card  relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
+    <div className="card relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
       {/* Like Button (same as before) */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (
@@ -149,8 +184,8 @@ function ProfileCard({ profile }) {
       <Image
         src={profile.img}
         alt={profile.name}
-        width={"100%"}
-        height={350}
+        width={400}
+        height={300}
         className="w-full h-full border rounded-tl-xl rounded-tr-xl"
       />
 
@@ -181,7 +216,7 @@ function ProfileCard({ profile }) {
 
 function ProfileSection({ title, profiles }) {
   return (
-    <section className="py-32">
+    <section className="py-32 bg-base-300">
       <div className="max-w-7xl mx-auto px-4 lg:px-16">
         {/* Title SAME */}
         <div className="text-center mb-8">
@@ -240,18 +275,17 @@ function ProfileSection({ title, profiles }) {
   );
 }
 
-export default function ProfileSections() {
+export default function ManTestomonial() {
   return (
     <>
-      <ProfileSection
+      {/* <ProfileSection
         title="পাত্র-পাত্রীর বায়োডাটা"
         profiles={[...maleProfiles, ...femaleProfiles]}
-      />
+      /> */}
 
-      {/* <ProfileSection title="পাত্রের বায়োডাটা" profiles={maleProfiles} /> */}
-      <ManTestomonial />
+      <ProfileSection title="পাত্রের বায়োডাটা" profiles={maleProfiles} />
 
-      <ProfileSection title="পাত্রীর বায়োডাটা" profiles={femaleProfiles} />
+      {/* <ProfileSection title="পাত্রীর বায়োডাটা" profiles={femaleProfiles} /> */}
     </>
   );
 }

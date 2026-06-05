@@ -62,7 +62,7 @@ export default function SearchBar() {
           </div>
 
           {/* Input Area */}
-          <div className="bg-[#e8dfdf] rounded-md overflow-hidden">
+          <div className="bg-[#e8dfdf] card overflow-hidden">
             {/* Mobile Layout */}
             <div className="flex flex-col md:hidden divide-y divide-gray-300">
               {["পাত্র", "অবিবাহিত", "১৮ - ২১", "ঢাকা"].map((item, i) => (

@@ -5,7 +5,7 @@ export const PersonalInfo = ({ register, errors }) => (
       <input
         {...register("name")}
         placeholder="পুরো নাম"
-        className={`input input-bordered w-full ${errors.name ? "border-red-500" : ""}`}
+        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
       />
       {errors.name && (
         <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
@@ -16,7 +16,7 @@ export const PersonalInfo = ({ register, errors }) => (
       <input
         {...register("birthDate")}
         type="date"
-        className={`input input-bordered w-full ${errors.birthDate ? "border-red-500" : ""}`}
+        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
       />
       {errors.birthDate && (
         <span className="text-red-500 text-xs mt-1">
@@ -28,7 +28,163 @@ export const PersonalInfo = ({ register, errors }) => (
     <div className="form-control w-full">
       <select
         {...register("gender")}
-        className={`select select-bordered w-full ${errors.gender ? "border-red-500" : ""}`}
+        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
+      >
+        <option value="">লিঙ্গ নির্বাচন করুন</option>
+        <option value="male">পুরুষ</option>
+        <option value="female">নারী</option>
+      </select>
+      {errors.gender && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.gender.message}
+        </span>
+      )}
+    </div>
+    <div className="form-control w-full">
+      <input
+        {...register("name")}
+        placeholder="পুরো নাম"
+        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+      />
+      {errors.name && (
+        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <input
+        {...register("birthDate")}
+        type="date"
+        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
+      />
+      {errors.birthDate && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.birthDate.message}
+        </span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <select
+        {...register("gender")}
+        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
+      >
+        <option value="">লিঙ্গ নির্বাচন করুন</option>
+        <option value="male">পুরুষ</option>
+        <option value="female">নারী</option>
+      </select>
+      {errors.gender && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.gender.message}
+        </span>
+      )}
+    </div>
+    <div className="form-control w-full">
+      <input
+        {...register("name")}
+        placeholder="পুরো নাম"
+        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+      />
+      {errors.name && (
+        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <input
+        {...register("birthDate")}
+        type="date"
+        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
+      />
+      {errors.birthDate && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.birthDate.message}
+        </span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <select
+        {...register("gender")}
+        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
+      >
+        <option value="">লিঙ্গ নির্বাচন করুন</option>
+        <option value="male">পুরুষ</option>
+        <option value="female">নারী</option>
+      </select>
+      {errors.gender && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.gender.message}
+        </span>
+      )}
+    </div>
+    <div className="form-control w-full">
+      <input
+        {...register("name")}
+        placeholder="পুরো নাম"
+        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+      />
+      {errors.name && (
+        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <input
+        {...register("birthDate")}
+        type="date"
+        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
+      />
+      {errors.birthDate && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.birthDate.message}
+        </span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <select
+        {...register("gender")}
+        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
+      >
+        <option value="">লিঙ্গ নির্বাচন করুন</option>
+        <option value="male">পুরুষ</option>
+        <option value="female">নারী</option>
+      </select>
+      {errors.gender && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.gender.message}
+        </span>
+      )}
+    </div>
+    <div className="form-control w-full">
+      <input
+        {...register("name")}
+        placeholder="পুরো নাম"
+        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+      />
+      {errors.name && (
+        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <input
+        {...register("birthDate")}
+        type="date"
+        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
+      />
+      {errors.birthDate && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.birthDate.message}
+        </span>
+      )}
+    </div>
+
+    <div className="form-control w-full">
+      <select
+        {...register("gender")}
+        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
       >
         <option value="">লিঙ্গ নির্বাচন করুন</option>
         <option value="male">পুরুষ</option>
@@ -49,7 +205,7 @@ export const ReligiousInfo = ({ register, errors }) => (
     <div>
       <select
         {...register("religion")}
-        className={`select select-bordered w-full ${errors.religion ? "border-red-500" : ""}`}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
       >
         <option value="">ধর্ম নির্বাচন করুন</option>
         <option value="islam">ইসলাম</option>
@@ -64,7 +220,189 @@ export const ReligiousInfo = ({ register, errors }) => (
       <input
         {...register("prayerStatus")}
         placeholder="নামাজ নিয়মিত পড়েন কি?"
-        className={`input input-bordered w-full ${errors.prayerStatus ? "border-red-500" : ""}`}
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
+      />
+      {errors.prayerStatus && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.prayerStatus.message}
+        </p>
+      )}
+    </div>
+    <div>
+      <select
+        {...register("religion")}
+        className={`select select-bordered w-full focus:outline-none ${errors.religion ? "border-red-500" : ""}`}
+      >
+        <option value="">ধর্ম নির্বাচন করুন</option>
+        <option value="islam">ইসলাম</option>
+        <option value="hindu">হিন্দু</option>
+      </select>
+      {errors.religion && (
+        <p className="text-red-500 text-xs mt-1">{errors.religion.message}</p>
+      )}
+    </div>
+
+    <div>
+      <input
+        {...register("prayerStatus")}
+        placeholder="নামাজ নিয়মিত পড়েন কি?"
+        className={`input input-bordered w-full focus:outline-none ${errors.prayerStatus ? "border-red-500" : ""}`}
       />
       {errors.prayerStatus && (
         <p className="text-red-500 text-xs mt-1">

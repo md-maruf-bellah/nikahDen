@@ -22,7 +22,7 @@ export default function Navbar() {
   return (
     <>
       {/* ================= NAVBAR ================= */}
-      <header className="sticky top-0 z-50 bg-base-100 shadow-sm px-4 lg:px-2 ">
+      <header className="sticky top-0 z-50 bg-base-100 shadow-none px-4 lg:px-2 ">
         <div className="max-w-7xl mx-auto ">
           <div className="flex items-center justify-between h-20">
             {/* ===== Logo ===== */}
@@ -56,7 +56,7 @@ export default function Navbar() {
 
               <Link
                 href="/register"
-                className="btn btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white hover:border-[#fd6969] text-sm px-6 rounded-lg transition-all duration-300"
+                className="btn btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white hover:border-[#fd6969] text-sm px-6  transition-all duration-300"
               >
                 রেজিস্ট্রেশন <FaArrowRightToBracket className="ml-1" />
               </Link>

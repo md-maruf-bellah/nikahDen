@@ -10,6 +10,8 @@ import {
   CheckCircle,
   Star,
 } from "lucide-react";
+import Link from "next/link";
+import { FaArrowRightToBracket } from "react-icons/fa6";
 
 const steps = [
   {
@@ -60,33 +62,35 @@ export default function HowItWorks() {
       <div className="max-w-7xl mx-auto px-4 ">
         {/* Header */}
         <div className="text-center mb-10">
-          <p className="text-lg font-semibold text-white">প্রক্রিয়া</p>
-          <h2 className="text-4xl font-bold mt-1">আমরা যেভাবে কাজ করি</h2>
-          <p className="text-sm  mt-2 text-white">
+          <p className="text-lg font-semibold text-base-200">প্রক্রিয়া</p>
+          <h2 className="text-4xl font-bold text-base-200 mt-1">
+            আমরা যেভাবে কাজ করি
+          </h2>
+          <p className="text-sm  mt-2 text-base-200">
             সহজ কয়েকটি ধাপে আপনার জীবনসঙ্গী খুঁজুন
           </p>
         </div>
 
         {/* Steps */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 items-center md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 items-center md:grid-cols-4 gap-5 ">
           {steps.map((step, i) => {
             const Icon = step.icon;
 
             return (
               <div
                 key={i}
-                className="  hover:bg-white/20 transition-all backdrop-blur-sm"
+                className="  hover:bg-white/20 transition-all backdrop-blur-sm card"
               >
-                <div className="card-body items-center text-center p-5">
-                  <div className="w-16 h-16 rounded bg-white text-gray-800  flex items-center font-extrabold justify-center mb-3">
+                <div className="card-body items-center text-center p-5 cursor-cell">
+                  <div className="card w-16 h-16  bg-base-100 flex items-center font-extrabold justify-center mb-3">
                     <Icon size={32} />
                   </div>
 
-                  <h4 className="font-bold text-sm lg:text-xl text-white">
+                  <h4 className="font-bold text-sm lg:text-xl text-base-200">
                     {step.title}
                   </h4>
 
-                  <p className="text-sm lg:text-lg opacity-80 mt-1 leading-relaxed text-white">
+                  <p className="text-sm lg:text-lg opacity-80 mt-1 leading-relaxed text-base-200">
                     {step.desc}
                   </p>
                 </div>
@@ -94,9 +98,12 @@ export default function HowItWorks() {
             );
           })}
           <div>
-            <button className="btn btn-outline text-white text-lg">
-              রেজিস্ট্রেশন করুন
-            </button>
+            <Link
+              href={"/register"}
+              className="btn btn-outline text-base-200 text-lg hover:text-gray-500"
+            >
+              রেজিস্ট্রেশন করুন <FaArrowRightToBracket className="ml-1" />
+            </Link>
           </div>
         </div>
       </div>

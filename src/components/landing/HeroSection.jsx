@@ -15,6 +15,7 @@ import "swiper/css/pagination";
 import "swiper/css/effect-fade";
 import Image from "next/image";
 import { FaArrowRightToBracket } from "react-icons/fa6";
+import Link from "next/link";
 
 export default function HeroSection() {
   const contentData = [
@@ -28,36 +29,36 @@ export default function HeroSection() {
       image: muslim,
       alt: "Muslim Matrimony",
     },
-    // {
-    //   tag: "সনাতন ম্যাট্রিমনি",
-    //   titlePrefix: "হিন্দু",
-    //   titleSuffix: "খুঁজুন এখন খুবই সহজে",
-    //   description:
-    //     "পবিত্র বেদ ও শাস্ত্র মতে, বিবাহ হলো দুটি আত্মার মিলন এবং একটি পবিত্র ধর্মীয় বন্ধন। আপনার জীবনের এই সুন্দর যাত্রাকে সার্থক করতে আদেশ হিন্দু জীবনসঙ্গী খুঁজে নিন আমাদের মাধ্যমে।",
-    //   btnText: "হিন্দু পাত্র-পাত্রী খুঁজুন",
-    //   image: hindu,
-    //   alt: "Hindu Matrimony",
-    // },
-    // {
-    //   tag: "খ্রিস্টান ম্যাট্রিমনি",
-    //   titlePrefix: "খ্রিস্টান",
-    //   titleSuffix: "খুঁজুন এখন খুবই সহজে",
-    //   description:
-    //     "পবিত্র বাইবেলের শিক্ষা অনুযায়ী, বিবাহ হলো ঈশ্বর কর্তৃক নির্ধারিত এক পবিত্র ও আজীবন চুক্তি। ঈশ্বরের আশীর্বাদে আপনার বিশ্বাসের সাথে মিল রেখে উপযুক্ত খ্রিস্টান পাত্র-পাত্রী খুঁজে নিন।",
-    //   btnText: "খ্রিস্টান পাত্র-পাত্রী খুঁজুন",
-    //   image: cristian,
-    //   alt: "Christian Matrimony",
-    // },
-    // {
-    //   tag: "বৌদ্ধ ম্যাট্রিমনি",
-    //   titlePrefix: "বৌদ্ধ",
-    //   titleSuffix: "খুঁজুন এখন খুবই সহজে",
-    //   description:
-    //     "ত্রিপিটকের অহিংসা ও শান্তির বাণীকে ধারণ করে জীবনের নতুন অধ্যায় শুরু করুন। পারস্পরিক শ্রদ্ধা ও সমতা ভিত্তিক সুখী দাম্পত্য জীবনের জন্য আপনার উপযুক্ত বৌদ্ধ জীবনসঙ্গী খুঁজে নিন।",
-    //   btnText: "বৌদ্ধ পাত্র-পাত্রী খুঁজুন",
-    //   image: buddha,
-    //   alt: "Buddha Matrimony",
-    // },
+    {
+      tag: "সনাতন ম্যাট্রিমনি",
+      titlePrefix: "হিন্দু",
+      titleSuffix: "খুঁজুন এখন খুবই সহজে",
+      description:
+        "পবিত্র বেদ ও শাস্ত্র মতে, বিবাহ হলো দুটি আত্মার মিলন এবং একটি পবিত্র ধর্মীয় বন্ধন। আপনার জীবনের এই সুন্দর যাত্রাকে সার্থক করতে আদেশ হিন্দু জীবনসঙ্গী খুঁজে নিন আমাদের মাধ্যমে।",
+      btnText: "হিন্দু পাত্র-পাত্রী খুঁজুন",
+      image: hindu,
+      alt: "Hindu Matrimony",
+    },
+    {
+      tag: "খ্রিস্টান ম্যাট্রিমনি",
+      titlePrefix: "খ্রিস্টান",
+      titleSuffix: "খুঁজুন এখন খুবই সহজে",
+      description:
+        "পবিত্র বাইবেলের শিক্ষা অনুযায়ী, বিবাহ হলো ঈশ্বর কর্তৃক নির্ধারিত এক পবিত্র ও আজীবন চুক্তি। ঈশ্বরের আশীর্বাদে আপনার বিশ্বাসের সাথে মিল রেখে উপযুক্ত খ্রিস্টান পাত্র-পাত্রী খুঁজে নিন।",
+      btnText: "খ্রিস্টান পাত্র-পাত্রী খুঁজুন",
+      image: cristian,
+      alt: "Christian Matrimony",
+    },
+    {
+      tag: "বৌদ্ধ ম্যাট্রিমনি",
+      titlePrefix: "বৌদ্ধ",
+      titleSuffix: "খুঁজুন এখন খুবই সহজে",
+      description:
+        "ত্রিপিটকের অহিংসা ও শান্তির বাণীকে ধারণ করে জীবনের নতুন অধ্যায় শুরু করুন। পারস্পরিক শ্রদ্ধা ও সমতা ভিত্তিক সুখী দাম্পত্য জীবনের জন্য আপনার উপযুক্ত বৌদ্ধ জীবনসঙ্গী খুঁজে নিন।",
+      btnText: "বৌদ্ধ পাত্র-পাত্রী খুঁজুন",
+      image: buddha,
+      alt: "Buddha Matrimony",
+    },
   ];
 
   // ডিফল্ট ০ ইনডেক্স (মুসলিম) সেট করা আছে
@@ -87,7 +88,7 @@ export default function HeroSection() {
       `}</style>
 
       {/* ব্যাকগ্রাউন্ড ডেকোরেটিভ গ্লো */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#fd6969]/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#fd6969]/5 blur-[120px]  pointer-events-none" />
 
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 items-center justify-between gap-8 md:gap-16 relative z-10">
         {/* DYNAMIC TEXT SECTION */}
@@ -111,19 +112,25 @@ export default function HeroSection() {
           </h1>
 
           {/* বিবরণী */}
-          <p className="text-base-content/70 text-base md:text-lg roun leading-relaxed mb-8 max-w-xl mx-auto md:mx-0 min-h-[100px] md:min-h-[auto]">
+          <p className="text-base-content/70 text-base md:text-lg roun leading-relaxed mb-8 max-w-xl mx-auto md:mx-0 min-h-[100px] md:min-h-[auto] ">
             {contentData[activeIndex].description}
           </p>
 
           {/* বাটনসমূহ */}
           <div className="flex flex-col sm:flex-row justify-center md:justify-start items-center gap-4">
-            <button className="btn bg-[#fd6969] hover:bg-[#e05858] hover:scale-105 active:scale-95 border-none text-base md:text-lg px-8 text-white w-full sm:w-auto  shadow-lg shadow-[#fd6969]/20 transition-all duration-300">
+            <Link
+              href={"/list"}
+              className="btn bg-[#fd6969] hover:bg-[#e05858] hover:scale-105 active:scale-95 border-none text-base md:text-lg px-8 text-white w-full sm:w-auto  shadow-lg shadow-[#fd6969]/20 transition-all duration-300"
+            >
               {contentData[activeIndex].btnText}
-            </button>
-            <button className="btn btn-link text-[#fd6969] font-semibold text-base md:text-lg no-underline hover:underline transition-all duration-300">
+            </Link>
+            <Link
+              href={"/register"}
+              className="btn btn-link text-[#fd6969] font-semibold text-base md:text-lg no-underline hover:underline transition-all duration-300"
+            >
               রেজিস্ট্রেশন করুন
               <FaArrowRightToBracket className="ml-1" />
-            </button>
+            </Link>
           </div>
         </div>
 

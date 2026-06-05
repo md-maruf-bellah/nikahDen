@@ -12,8 +12,8 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-6xl w-full bg-white rounded-lg shadow overflow-hidden flex flex-col lg:flex-row">
+    <div className="min-h-screen flex items-center justify-center  p-4">
+      <div className="card max-w-6xl w-full  shadow overflow-hidden flex flex-col lg:flex-row">
         {/* Left Side - Image with Overlay */}
         <div className="lg:w-1/2 relative min-h-[300px] lg:min-h-full">
           <Image
@@ -100,7 +100,7 @@ const Register = () => {
             </div>
 
             {/* Submit Button */}
-            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold rounded-xl">
+            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold ">
               কন্টিনিউ করুন
             </button>
           </form>

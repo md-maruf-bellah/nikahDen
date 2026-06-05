@@ -8,6 +8,7 @@ import Testimonials from "./Testimonials";
 import PricingSection from "./MembershipPlans";
 import ExportBoth from "./MembershipPlans";
 import TestimonialSection from "./Testimonials";
+import ManTestomonial from "./ManTestomonial";
 
 const Landing = () => {
   return (
@@ -15,6 +16,7 @@ const Landing = () => {
       <HeroSection />
       <ExportBoth />
       <ProfileSections />
+      {/* <ManTestomonial /> */}
       <HowItWorks />
       <TestimonialSection />
     </div>

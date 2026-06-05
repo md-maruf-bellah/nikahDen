@@ -2,8 +2,8 @@
 
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { Heart, Mail, Phone, MapPin, ChevronRight } from "lucide-react";
-import Image from "next/image";
 import logo from "./../../../assets/navbar/logo.png"; // আপনার লোগো পাথ ঠিক করে নিন
+import Image from "next/image";
 
 const footerLinks = {
   "মূল পেজস্": [
@@ -31,8 +31,9 @@ export default function Footer() {
           {/* Brand/About Section */}
           <aside className="space-y-6">
             <div className="flex items-center gap-2">
-              <div className="bg-[#fd6969] p-2 rounded-full">
-                <Heart size={24} fill="white" className="text-white" />
+              <div className="">
+                {/* <Heart size={24} fill="white" className="text-white" /> */}
+                <Image src={logo} />
               </div>
               <h2 className="text-2xl font-bold">নিকাহ্ দ্বীন</h2>
             </div>
