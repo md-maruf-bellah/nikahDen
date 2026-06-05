@@ -1,198 +1,142 @@
 // ১. ব্যক্তিগত তথ্য
 export const PersonalInfo = ({ register, errors }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Clothing Style */}
     <div className="form-control w-full">
+      <label>ঘরের বাহিরে সাধারণত কি ধরণের পোষাক পরেন?</label>
       <input
-        {...register("name")}
-        placeholder="পুরো নাম"
-        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+        {...register("clothingStyle")}
+        placeholder="পাঞ্জাবি, টি-শার্ট, অফিসিয়াল ড্রেস"
+        className={`input input-bordered w-full focus:outline-none ${
+          errors.clothingStyle ? "border-red-500" : ""
+        }`}
       />
-      {errors.name && (
-        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
-      )}
-    </div>
-
-    <div className="form-control w-full">
-      <input
-        {...register("birthDate")}
-        type="date"
-        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
-      />
-      {errors.birthDate && (
+      {errors.clothingStyle && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.birthDate.message}
+          {errors.clothingStyle.message}
         </span>
       )}
     </div>
 
+    {/* Health Condition */}
     <div className="form-control w-full">
-      <select
-        {...register("gender")}
-        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
-      >
-        <option value="">লিঙ্গ নির্বাচন করুন</option>
-        <option value="male">পুরুষ</option>
-        <option value="female">নারী</option>
-      </select>
-      {errors.gender && (
-        <span className="text-red-500 text-xs mt-1">
-          {errors.gender.message}
-        </span>
-      )}
-    </div>
-    <div className="form-control w-full">
+      <label>আপনার মানসিক বা শারীরিক কোনো রোগ আছে?</label>
       <input
-        {...register("name")}
-        placeholder="পুরো নাম"
-        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+        {...register("healthCondition")}
+        type="text"
+        placeholder="রোগের নাম এবং বর্তমান অবস্থা"
+        className={`input input-bordered w-full focus:outline-none ${
+          errors.healthCondition ? "border-red-500" : ""
+        }`}
       />
-      {errors.name && (
-        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
-      )}
-    </div>
-
-    <div className="form-control w-full">
-      <input
-        {...register("birthDate")}
-        type="date"
-        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
-      />
-      {errors.birthDate && (
+      {errors.healthCondition && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.birthDate.message}
+          {errors.healthCondition.message}
         </span>
       )}
     </div>
 
+    {/* Entertainment Habit */}
     <div className="form-control w-full">
-      <select
-        {...register("gender")}
-        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
-      >
-        <option value="">লিঙ্গ নির্বাচন করুন</option>
-        <option value="male">পুরুষ</option>
-        <option value="female">নারী</option>
-      </select>
-      {errors.gender && (
-        <span className="text-red-500 text-xs mt-1">
-          {errors.gender.message}
-        </span>
-      )}
-    </div>
-    <div className="form-control w-full">
+      <label>নাটক / সিনেমা / সিরিয়াল / গান এসব দেখেন বা শুনেন?</label>
       <input
-        {...register("name")}
-        placeholder="পুরো নাম"
-        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+        {...register("entertainmentHabit")}
+        placeholder="হ্যাঁ/না এবং কী ধরনের পছন্দ করেন"
+        className={`input input-bordered w-full focus:outline-none ${
+          errors.entertainmentHabit ? "border-red-500" : ""
+        }`}
       />
-      {errors.name && (
-        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
-      )}
-    </div>
-
-    <div className="form-control w-full">
-      <input
-        {...register("birthDate")}
-        type="date"
-        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
-      />
-      {errors.birthDate && (
+      {errors.entertainmentHabit && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.birthDate.message}
+          {errors.entertainmentHabit.message}
         </span>
       )}
     </div>
 
+    {/* Political View */}
     <div className="form-control w-full">
-      <select
-        {...register("gender")}
-        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
-      >
-        <option value="">লিঙ্গ নির্বাচন করুন</option>
-        <option value="male">পুরুষ</option>
-        <option value="female">নারী</option>
-      </select>
-      {errors.gender && (
-        <span className="text-red-500 text-xs mt-1">
-          {errors.gender.message}
-        </span>
-      )}
-    </div>
-    <div className="form-control w-full">
+      <label>আপনার রাজনৈতিক দর্শন</label>
       <input
-        {...register("name")}
-        placeholder="পুরো নাম"
-        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+        {...register("politicalView")}
+        type="text"
+        placeholder="রাজনৈতিক দর্শন"
+        className={`input input-bordered w-full focus:outline-none  ${
+          errors.politicalView ? "border-red-500" : ""
+        }`}
       />
-      {errors.name && (
-        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
-      )}
-    </div>
-
-    <div className="form-control w-full">
-      <input
-        {...register("birthDate")}
-        type="date"
-        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
-      />
-      {errors.birthDate && (
+      {errors.politicalView && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.birthDate.message}
+          {errors.politicalView.message}
         </span>
       )}
     </div>
 
+    {/* Favorite Books & Personalities */}
     <div className="form-control w-full">
-      <select
-        {...register("gender")}
-        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
-      >
-        <option value="">লিঙ্গ নির্বাচন করুন</option>
-        <option value="male">পুরুষ</option>
-        <option value="female">নারী</option>
-      </select>
-      {errors.gender && (
-        <span className="text-red-500 text-xs mt-1">
-          {errors.gender.message}
-        </span>
-      )}
-    </div>
-    <div className="form-control w-full">
+      <label>পছন্দের কিছু বই এবং পছন্দের ব্যক্তিত্বের নাম লিখুন</label>
       <input
-        {...register("name")}
-        placeholder="পুরো নাম"
-        className={`input input-bordered w-full focus:outline-none ${errors.name ? "border-red-500" : ""}`}
+        {...register("favoriteBooksPeople")}
+        type="text"
+        placeholder="বই ও ব্যক্তিত্বের নাম"
+        className={`input input-bordered w-full focus:outline-none ${
+          errors.favoriteBooksPeople ? "border-red-500" : ""
+        }`}
       />
-      {errors.name && (
-        <span className="text-red-500 text-xs mt-1">{errors.name.message}</span>
-      )}
-    </div>
-
-    <div className="form-control w-full">
-      <input
-        {...register("birthDate")}
-        type="date"
-        className={`input input-bordered w-full focus:outline-none ${errors.birthDate ? "border-red-500" : "focus:outline-none"}`}
-      />
-      {errors.birthDate && (
+      {errors.favoriteBooksPeople && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.birthDate.message}
+          {errors.favoriteBooksPeople.message}
         </span>
       )}
     </div>
 
+    {/* Phone Number */}
     <div className="form-control w-full">
-      <select
-        {...register("gender")}
-        className={`select select-bordered w-full focus:outline-none ${errors.gender ? "border-red-500" : ""}`}
-      >
-        <option value="">লিঙ্গ নির্বাচন করুন</option>
-        <option value="male">পুরুষ</option>
-        <option value="female">নারী</option>
-      </select>
-      {errors.gender && (
+      <label>পাত্রের মোবাইল নাম্বার</label>
+      <input
+        {...register("phoneNumber")}
+        type="text"
+        placeholder="01XXXXXXXXX"
+        className={`input input-bordered w-full focus:outline-none ${
+          errors.phoneNumber ? "border-red-500" : ""
+        }`}
+      />
+      {errors.phoneNumber && (
         <span className="text-red-500 text-xs mt-1">
-          {errors.gender.message}
+          {errors.phoneNumber.message}
+        </span>
+      )}
+    </div>
+
+    {/* About Yourself */}
+    <div className="form-control w-full">
+      <label>নিজের শখ, পছন্দ-অপছন্দ, রুচিবোধ, স্বপ্ন ইত্যাদি বিষয়ে লিখুন</label>
+      <textarea
+        {...register("aboutYourself")}
+        placeholder="নিজের সম্পর্কে লিখুন"
+        className={`textarea textarea-bordered w-full focus:outline-none ${
+          errors.aboutYourself ? "border-red-500" : ""
+        }`}
+      />
+      {errors.aboutYourself && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.aboutYourself.message}
+        </span>
+      )}
+    </div>
+
+    {/* Special Categories */}
+    <div className="form-control w-full">
+      <label>আপনার ক্ষেত্রে প্রযোজ্য হয় এমন ক্যাটাগরি সিলেক্ট করুন।</label>
+      <textarea
+        {...register("specialCategories")}
+        placeholder="আপনার জন্য প্রযোজ্য ক্যাটাগরি লিখুন"
+        className={`textarea textarea-bordered w-full focus:outline-none ${
+          errors.specialCategories ? "border-red-500" : ""
+        }`}
+      />
+      {errors.specialCategories && (
+        <span className="text-red-500 text-xs mt-1">
+          {errors.specialCategories.message}
         </span>
       )}
     </div>

@@ -19,17 +19,49 @@ import { Check } from "lucide-react";
 
 const validationSchema = yup.object().shape({
   // স্টেপ ১: ব্যক্তিগত তথ্য
-  name: yup.string().when("$activeStep", {
+
+  clothingStyle: yup.string().when("$activeStep", {
     is: 1,
-    then: (schema) => schema.required("পুরো নাম আবশ্যক"),
+    then: (schema) => schema.required("পোশাকের ধরন লিখুন"),
   }),
-  birthDate: yup.string().when("$activeStep", {
+
+  healthCondition: yup.string().when("$activeStep", {
     is: 1,
-    then: (schema) => schema.required("জন্ম তারিখ আবশ্যক"),
+    then: (schema) => schema.required("শারীরিক বা মানসিক অবস্থা লিখুন"),
   }),
-  gender: yup.string().when("$activeStep", {
+
+  entertainmentHabit: yup.string().when("$activeStep", {
     is: 1,
-    then: (schema) => schema.required("লিঙ্গ নির্বাচন করুন"),
+    then: (schema) => schema.required("বিনোদন সম্পর্কিত তথ্য লিখুন"),
+  }),
+
+  politicalView: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("রাজনৈতিক দর্শন লিখুন"),
+  }),
+
+  favoriteBooksPeople: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("পছন্দের বই ও ব্যক্তিত্বের নাম লিখুন"),
+  }),
+
+  aboutYourself: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) =>
+      schema.required("নিজের সম্পর্কে লিখুন").min(20, "কমপক্ষে ২০ অক্ষর লিখুন"),
+  }),
+
+  phoneNumber: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) =>
+      schema
+        .required("মোবাইল নম্বর লিখুন")
+        .matches(/^(\+8801|01)[3-9]\d{8}$/, "সঠিক মোবাইল নম্বর লিখুন"),
+  }),
+
+  specialCategories: yup.string().when("$activeStep", {
+    is: 1,
+    then: (schema) => schema.required("ক্যাটাগরি নির্বাচন করুন"),
   }),
 
   // স্টেপ ২: ধর্মীয় তথ্য
