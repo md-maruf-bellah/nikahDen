@@ -65,17 +65,75 @@ const validationSchema = yup.object().shape({
   }),
 
   // স্টেপ ২: ধর্মীয় তথ্য
+
   religion: yup.string().when("$activeStep", {
     is: 2,
     then: (schema) => schema.required("ধর্ম নির্বাচন করুন"),
   }),
-  prayerStatus: yup.string().when("$activeStep", {
+
+  sectOrDenomination: yup.string().when("$activeStep", {
     is: 2,
-    then: (schema) => schema.required("এটি জানানো আবশ্যক"),
+    then: (schema) => schema.required("মাজহাব / সম্প্রদায় লিখুন"),
+  }),
+
+  religiousPracticeLevel: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্মীয় চর্চার স্তর নির্বাচন করুন"),
+  }),
+
+  placeOfWorshipAttendance: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("উপাসনালয়ে যাতায়াতের তথ্য লিখুন"),
+  }),
+
+  holyBookReading: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্মগ্রন্থ পাঠ সম্পর্কে লিখুন"),
+  }),
+
+  religiousEducation: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্মীয় শিক্ষা লিখুন"),
+  }),
+
+  religiousDressPreference: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্মীয় পোশাক অনুসরণ লিখুন"),
+  }),
+
+  charityActivity: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("দান/সামাজিক কাজ সম্পর্কে লিখুন"),
+  }),
+
+  religiousOrganization: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("ধর্মীয় সংগঠন সম্পর্কে লিখুন"),
+  }),
+
+  dietaryPractice: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) => schema.required("খাদ্যনীতি অনুসরণ সম্পর্কে লিখুন"),
+  }),
+
+  futureReligiousGoal: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) =>
+      schema
+        .required("ভবিষ্যৎ পরিকল্পনা লিখুন")
+        .min(20, "কমপক্ষে ২০ অক্ষর লিখুন"),
+  }),
+
+  partnerReligiousExpectation: yup.string().when("$activeStep", {
+    is: 2,
+    then: (schema) =>
+      schema
+        .required("জীবনসঙ্গীর ধর্মীয় প্রত্যাশা লিখুন")
+        .min(20, "কমপক্ষে ২০ অক্ষর লিখুন"),
   }),
 
   // স্টেপ ৩: শিক্ষাগত যোগ্যতা
-  lastDegree: yup.string().when("$activeStep", {
+  education: yup.string().when("$activeStep", {
     is: 3,
     then: (schema) => schema.required("শিক্ষাগত যোগ্যতা আবশ্যক"),
   }),
@@ -115,14 +173,14 @@ function FormContent() {
   const { formData, updateFormData } = useFormData();
 
   const steps = [
-    "ব্যক্তিগত",
-    "ধর্মীয়",
-    "শিক্ষাগত",
-    "পেশাগত",
-    "পারিবারিক",
-    "যোগাযোগ",
+    "ব্যক্তিগত তথ্য",
+    "ধর্মীয় তথ্য",
+    "শিক্ষাগত তথ্য",
+    "পেশাগত তথ্য",
+    "পারিবারিক তথ্য",
+    "যোগাযোগ তথ্য",
     "অঙ্গীকার",
-    "সাধারণ",
+    "সাধারণ তথ্য",
   ];
 
   const {
@@ -168,7 +226,7 @@ function FormContent() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:py-10">
+    <div className="max-w-5xl mx-auto p-4 md:py-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Stepper (Left) */}
         {/* <div className="md:col-span-1 space-y-4">
@@ -208,10 +266,10 @@ function FormContent() {
               const isDone = stepNumber < activeStep;
               const isLast = index === steps.length - 1;
               return (
-                <div key={index} className="relative mb-14 flex items-center">
+                <div key={index} className="relative  mb-14 flex items-center">
                   <div className="flex-1 text-right pr-6">
                     <p
-                      className={`text-lg transition-all ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : ""}`}
+                      className={`text-xl font-semibold transition-all  ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : ""}`}
                     >
                       {item}
                     </p>
@@ -240,8 +298,9 @@ function FormContent() {
         <div className="card md:col-span-3  p-6 bg-base-200 min-h-[400px]">
           <form onSubmit={handleSubmit(onNext, onError)}>
             <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4 border-b-2 border-red-500 inline-block uppercase tracking-wide">
-                {steps[activeStep - 1]} তথ্য
+              <h2 className="text-2xl font-bold mb-4 border-b-3  border-red-500 inline-block uppercase tracking-wide">
+                {steps[activeStep - 1]}
+                {/* তথ্য */}
               </h2>
 
               <div className="mt-2">
