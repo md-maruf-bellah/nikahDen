@@ -226,10 +226,25 @@ function FormContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:py-10">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {/* Stepper (Left) */}
-        {/* <div className="md:col-span-1 space-y-4">
+    <div>
+      {/* Header */}
+      <div className="bg-red-400 text-white text-center py-8 md:py-10">
+        <h1 className="text-xl md:text-2xl font-bold">বায়োডাটা তৈরি করুন </h1>
+        <p className="text-xs md:text-sm mt-2">সকল পাত্র-পাত্রী তালিকা</p>
+
+        {/* Mobile Filter Button */}
+        <button
+          onClick={() => setOpen(true)}
+          className="btn btn-sm btn-primary mt-3 md:hidden"
+        >
+          ফিল্টার
+        </button>
+      </div>
+
+      <div className="max-w-6xl mx-auto p-4 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Stepper (Left) */}
+          {/* <div className="md:col-span-1 space-y-4">
           {steps.map((label, index) => (
             <div key={index} className="flex items-center gap-3">
               <div
@@ -255,100 +270,104 @@ function FormContent() {
             </div>
           ))}
         </div> */}
-        {/* LEFT STEPPER (Desktop & Mobile) */}
-        <div className="md:col-span-1">
-          {/* Desktop Vertical Stepper */}
-          <div className="hidden md:block relative pr-8">
-            <div className="absolute right-3 top-0 h-full w-[2px] bg-gray-300"></div>
-            {steps.map((item, index) => {
-              const stepNumber = index + 1;
-              const isActive = stepNumber === activeStep;
-              const isDone = stepNumber < activeStep;
-              const isLast = index === steps.length - 1;
-              return (
-                <div key={index} className="relative  mb-14 flex items-center">
-                  <div className="flex-1 text-right pr-6">
-                    <p
-                      className={`text-xl font-semibold transition-all  ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : ""}`}
-                    >
-                      {item}
-                    </p>
-                  </div>
+          {/* LEFT STEPPER (Desktop & Mobile) */}
+          <div className="md:col-span-1">
+            {/* Desktop Vertical Stepper */}
+            <div className="hidden md:block relative pr-8">
+              <div className="absolute right-3 top-0 h-full w-[2px] bg-gray-300"></div>
+              {steps.map((item, index) => {
+                const stepNumber = index + 1;
+                const isActive = stepNumber === activeStep;
+                const isDone = stepNumber < activeStep;
+                const isLast = index === steps.length - 1;
+                return (
                   <div
-                    className={`card absolute right-[-18px] translate-x-1/2 z-10 w-8 h-8 flex items-center justify-center  text-white  shadow-md transition-all duration-500 ${isDone ? "bg-green-500 scale-105" : isActive ? "bg-red-500 " : "bg-gray-400"}`}
+                    key={index}
+                    className="relative  mb-14 flex items-center"
                   >
-                    {isDone ? <Check size={18} /> : stepNumber}
+                    <div className="flex-1 text-right pr-6">
+                      <p
+                        className={`text-xl font-semibold transition-all  ${isLast && isActive ? "text-red-500 font-bold" : isDone ? "text-green-600" : ""}`}
+                      >
+                        {item}
+                      </p>
+                    </div>
+                    <div
+                      className={`card rounded-full absolute right-[-18px] translate-x-1/2 z-10 w-8 h-8 flex items-center justify-center  text-white  shadow-md transition-all duration-500 ${isDone ? "bg-green-500 scale-105" : isActive ? "bg-red-500 " : "bg-gray-400"}`}
+                    >
+                      {isDone ? <Check size={18} /> : stepNumber}
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+            {/* Mobile Horizontal Stepper */}
+            <div className="md:hidden flex items-center justify-center space-x-2 mb-8">
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 w-full rounded-full ${index + 1 <= activeStep ? "bg-red-500" : "bg-gray-300"}`}
+                ></div>
+              ))}
+            </div>
+          </div>
+
+          {/* Form Body (Right) */}
+          <div className="card md:col-span-3  p-6 bg-base-200 min-h-[400px]">
+            <form onSubmit={handleSubmit(onNext, onError)}>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4 border-b-3  border-red-500 inline-block uppercase tracking-wide">
+                  {steps[activeStep - 1]}
+                  {/* তথ্য */}
+                </h2>
+
+                <div className="mt-2">
+                  {activeStep === 1 && (
+                    <PersonalInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 2 && (
+                    <ReligiousInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 3 && (
+                    <EducationalInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 4 && (
+                    <ProfessionalInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 5 && (
+                    <FamilyInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 6 && (
+                    <ContactInfo register={register} errors={errors} />
+                  )}
+                  {activeStep === 7 && (
+                    <AgreementInfo register={register} errors={errors} />
+                  )}
+
+                  {activeStep === 8 && (
+                    <GeneralInfo register={register} errors={errors} />
+                  )}
                 </div>
-              );
-            })}
-          </div>
-          {/* Mobile Horizontal Stepper */}
-          <div className="md:hidden flex items-center justify-center space-x-2 mb-8">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 w-full rounded-full ${index + 1 <= activeStep ? "bg-red-500" : "bg-gray-300"}`}
-              ></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Form Body (Right) */}
-        <div className="card md:col-span-3  p-6 bg-base-200 min-h-[400px]">
-          <form onSubmit={handleSubmit(onNext, onError)}>
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 border-b-3  border-red-500 inline-block uppercase tracking-wide">
-                {steps[activeStep - 1]}
-                {/* তথ্য */}
-              </h2>
-
-              <div className="mt-2">
-                {activeStep === 1 && (
-                  <PersonalInfo register={register} errors={errors} />
-                )}
-                {activeStep === 2 && (
-                  <ReligiousInfo register={register} errors={errors} />
-                )}
-                {activeStep === 3 && (
-                  <EducationalInfo register={register} errors={errors} />
-                )}
-                {activeStep === 4 && (
-                  <ProfessionalInfo register={register} errors={errors} />
-                )}
-                {activeStep === 5 && (
-                  <FamilyInfo register={register} errors={errors} />
-                )}
-                {activeStep === 6 && (
-                  <ContactInfo register={register} errors={errors} />
-                )}
-                {activeStep === 7 && (
-                  <AgreementInfo register={register} errors={errors} />
-                )}
-
-                {activeStep === 8 && (
-                  <GeneralInfo register={register} errors={errors} />
-                )}
               </div>
-            </div>
 
-            <div className="flex justify-between border-t pt-4 mt-10">
-              <button
-                type="button"
-                disabled={activeStep === 1}
-                onClick={() => setActiveStep(activeStep - 1)}
-                className="btn px-6 py-1 border hover:bg-gray-100 disabled:opacity-50 transition"
-              >
-                পিছনে
-              </button>
-              <button
-                type="submit"
-                className=" btn px-6 py-2 border bg-red-500 hover:bg-red-600 text-white transition font-medium shadow-none"
-              >
-                {activeStep === steps.length ? "সাবমিট করুন" : "পরবর্তী ধাপ"}
-              </button>
-            </div>
-          </form>
+              <div className="flex justify-between border-t pt-4 mt-10">
+                <button
+                  type="button"
+                  disabled={activeStep === 1}
+                  onClick={() => setActiveStep(activeStep - 1)}
+                  className="btn px-6 py-1 border hover:bg-gray-100 disabled:opacity-50 transition"
+                >
+                  পিছনে
+                </button>
+                <button
+                  type="submit"
+                  className=" btn px-6 py-2 border bg-red-500 hover:bg-red-600 text-white transition font-medium shadow-none"
+                >
+                  {activeStep === steps.length ? "সাবমিট করুন" : "পরবর্তী ধাপ"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>

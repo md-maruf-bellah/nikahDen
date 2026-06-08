@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { Link2, Trash2 } from "lucide-react";
+import { Link2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 const LikeList = () => {
   const [selectedId, setSelectedId] = useState(null);
@@ -24,12 +25,12 @@ const LikeList = () => {
   ];
 
   return (
-    <div className="p-4 md:p-10 bg-white min-h-screen">
+    <div className="p-4 md:p-10  min-h-screen">
       <div className="max-w-5xl mx-auto overflow-x-auto">
         <table className="table w-full border-separate border-spacing-y-2">
           {/* Table Head */}
           <thead>
-            <tr className="text-[#111111] text-lg border-none">
+            <tr className=" text-lg border-none">
               <th className="bg-transparent font-bold">#</th>
               <th className="bg-transparent font-bold">বায়োডাটা নং</th>
               <th className="bg-transparent font-bold">ঠিকানা</th>
@@ -38,11 +39,12 @@ const LikeList = () => {
           </thead>
 
           {/* Table Body */}
-          <tbody className="text-gray-600">
+          <tbody className="">
             {tableData.map((item, index) => (
               <tr
                 key={index}
-                className={`${index % 2 === 0 ? "bg-[#FFF5F5]" : "bg-white"} border-none hover:bg-gray-100 transition-colors`}
+                // className={`${index % 2 === 0 ? "bg-[#FFF5F5]" : "bg-white"} border-none hover:bg-gray-100 transition-colors`}
+                className={`border-none hover:bg-gray-100 hover:text-gray-500 transition-colors cursor-pointer`}
               >
                 <td className="rounded-l-lg font-medium">{item.id}</td>
                 <td className="font-medium">{item.biodataNo}</td>
@@ -51,12 +53,12 @@ const LikeList = () => {
                 </td>
                 <td className="rounded-r-lg">
                   <div className="flex justify-center gap-4">
-                    <button className="text-gray-500 hover:text-primary transition-colors">
+                    <button className="  hover:text-primary transition-colors cursor-pointer">
                       <Link2 size={20} />
                     </button>
                     <button
                       onClick={() => setSelectedId(item.id)}
-                      className="text-gray-500 hover:text-error transition-colors"
+                      className="  hover:text-error transition-colors cursor-pointer"
                     >
                       <Trash2 size={20} />
                     </button>
@@ -87,7 +89,7 @@ const LikeList = () => {
           </p>
           <div className="modal-action">
             <button
-              className="btn btn-ghost"
+              className="btn btn-outline "
               onClick={() => setSelectedId(null)}
             >
               বাতিল করুন

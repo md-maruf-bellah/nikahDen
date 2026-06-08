@@ -44,7 +44,7 @@ const NotificationList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 ">
+    <div className="min-h-screen p-4 ">
       <div className="max-w-4xl mx-auto space-y-4">
         {notifications.map((item) => (
           <div
@@ -54,33 +54,33 @@ const NotificationList = () => {
             {/* Remove Button */}
             <button
               onClick={() => removeNotification(item.id)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors border border-gray-200 rounded p-0.5"
+              className="absolute top-4 right-4  hover:text-red-500 transition-colors border border-gray-200 rounded p-0.5 cursor-pointer"
             >
               <X size={14} />
             </button>
 
             {/* Content Header */}
             <div className="mb-3 pr-6">
-              <h3 className="text-md font-bold text-gray-800">
+              <h3 className="text-md font-bold ">
                 আপনার বায়োডাটা পছন্দ করেছেন{" "}
-                <span className="text-gray-400 font-semibold">{item.name}</span>
+                <span className=" font-semibold">{item.name}</span>
               </h3>
             </div>
 
             {/* Description */}
-            <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2 md:line-clamp-none">
+            <p className=" text-xs leading-relaxed mb-3 line-clamp-2 md:line-clamp-none">
               {item.description}
             </p>
 
             {/* Footer Actions & Info */}
-            <div className="flex flex-wrap items-center gap-y-4 gap-x-8 text-gray-500 text-xs font-medium pt-1 border-t border-gray-50">
+            <div className="flex flex-wrap items-center gap-y-4 gap-x-8  text-xs font-medium pt-1 border-t border-gray-50">
               <div className="flex items-center gap-2">
-                <Calendar size={18} className="text-gray-400" />
+                <Calendar size={18} className="" />
                 <span>{item.date}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <Clock size={18} className="text-gray-400" />
+                <Clock size={18} className="" />
                 <span>{item.time}</span>
               </div>
 
@@ -90,13 +90,13 @@ const NotificationList = () => {
               >
                 {item.isRead ? (
                   <>
-                    <MailOpen size={18} className="text-gray-400" />
+                    <MailOpen size={18} className="" />
                     <span>পড়া হয়েছে</span>
                   </>
                 ) : (
                   <>
-                    <Mail size={18} className="text-gray-400" />
-                    <span className="text-gray-800">পড়ুন</span>
+                    <Mail size={18} className="" />
+                    <span className="">পড়ুন</span>
                   </>
                 )}
               </button>
@@ -106,7 +106,7 @@ const NotificationList = () => {
 
         {notifications.length === 0 && (
           <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-dashed border-gray-300">
-            <p className="text-gray-400">কোনো নোটিফিকেশন নেই।</p>
+            <p className="">কোনো নোটিফিকেশন নেই।</p>
           </div>
         )}
       </div>

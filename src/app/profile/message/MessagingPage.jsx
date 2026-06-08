@@ -349,10 +349,10 @@ const MessagingApp = () => {
   };
 
   return (
-    <div className="flex h-[75vh]  lg:h-[100vh] lg:max-w-full w-full m-auto bg-base-200 border rounded-lg border-red-100 overflow-hidden relative">
+    <div className="flex h-[75vh]  lg:h-[100vh] lg:max-w-full w-full m-auto bg-base-200 border  border-primary/40 rounded-lg  overflow-hidden relative">
       {/* Left Side: Chat List (মোবাইলে হাইড হবে যদি চ্যাট উইন্ডো ওপেন থাকে) */}
       <div
-        className={`w-full lg:w-80 border-r border-gray-100 flex flex-col bg-white ${showChatWindow ? "hidden lg:flex" : "flex"}`}
+        className={`w-full lg:w-80 border-r border-gray-100 flex flex-col ${showChatWindow ? "hidden lg:flex" : "flex"}`}
       >
         <div className="p-5">
           <div className="relative">
@@ -413,7 +413,7 @@ const MessagingApp = () => {
 
       {/* Right Side: Conversation Area */}
       <div
-        className={`flex-1 flex flex-col bg-white transition-all duration-300 ${!showChatWindow ? "hidden lg:flex" : "flex"}`}
+        className={`flex-1 flex flex-col transition-all duration-300 ${!showChatWindow ? "hidden lg:flex" : "flex"}`}
       >
         {/* Chat Header */}
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">

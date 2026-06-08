@@ -294,7 +294,7 @@ export default function BiodataGrid() {
 
           {/* GRID VIEW */}
           {view === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 cursor-pointer sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {maleProfiles.map((item, i) => (
                 <div key={i} className="relative">
                   <div className="absolute right-2 top-2 z-5">
@@ -363,7 +363,7 @@ export default function BiodataGrid() {
                   {maleProfiles.map((item, i) => (
                     <tr
                       key={i}
-                      className="hover:bg-gray-50 hover:text-gray-800 transition-colors duration-200"
+                      className="hover:bg-base-300 cursor-pointer transition-colors duration-200"
                     >
                       <td>
                         <Image

@@ -24,7 +24,7 @@ const MembershipDashboard = () => {
               <p className="text-red-500 font-bold text-lg mb-4">মান্থলি</p>
               <button
                 onClick={() => setActiveModal("package")}
-                className="btn btn-outline btn-error btn-sm rounded-md px-6 normal-case"
+                className="btn btn-outline btn-error btn-sm  px-6 normal-case"
               >
                 প্যাকেজ পরিবর্তন করুন
               </button>
@@ -43,7 +43,7 @@ const MembershipDashboard = () => {
               </p>
               <button
                 onClick={() => setActiveModal("connect")}
-                className="btn btn-outline btn-error btn-sm rounded-md px-6 normal-case"
+                className="btn btn-outline btn-error btn-sm  px-6 normal-case"
               >
                 কানেক্ট কিনুন
               </button>

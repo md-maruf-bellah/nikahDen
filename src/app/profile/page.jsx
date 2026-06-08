@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -52,25 +52,25 @@ const Dashboard = () => {
         );
       case "পছন্দের তালিকা":
         return (
-          <div className="border border-rose-200 rounded-lg">
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
             <LikeList />
           </div>
         );
       case "আপনাকে যারা পছন্দ করেছেন":
         return (
-          <div className="border border-rose-200 rounded-lg">
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
             <LikeList />
           </div>
         );
       case "মেম্বারশিপ":
         return (
-          <div className="border border-rose-200 rounded-lg">
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
             <MemberShip />
           </div>
         );
       case "নোটিফিকেশন":
         return (
-          <div className="border border-rose-200 rounded-lg">
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
             <NotificationList />
           </div>
         );
@@ -89,6 +89,11 @@ const Dashboard = () => {
         );
     }
   };
+
+  useEffect(() => {
+    // window.scroll(0, 0);
+    window.scrollY(0, 0);
+  }, []);
 
   return (
     <div>
@@ -143,8 +148,8 @@ const Dashboard = () => {
                   }}
                   className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
                     activeTab === item.label
-                      ? "bg-red-50 text-red-500 border-r-4 border-red-500 font-bold"
-                      : " hover:bg-gray-50 hover:text-red-500 cursor-pointer"
+                      ? "bg-base-200 text-red-500 border-r-4 border-red-500 font-bold"
+                      : " hover:bg-base-200 hover:text-red-500 cursor-pointer"
                   }`}
                 >
                   {item.icon}

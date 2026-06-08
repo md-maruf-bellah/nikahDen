@@ -32,6 +32,7 @@ import Commnent from "./comment/page";
 import Invoice from "./invoice/page";
 import Support from "./support/page";
 import UserPage from "./user/page";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
@@ -172,7 +173,8 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
+            <ThemeSwitcher />
+            {/* <div className="relative hidden md:block">
               <Search
                 className="absolute left-3 top-2.5 text-gray-400"
                 size={18}
@@ -180,9 +182,9 @@ const AdminDashboard = () => {
               <input
                 type="text"
                 placeholder="সার্চ..."
-                className="pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm w-64 focus:outline-none focus:ring-1 focus:ring-red-400"
+                className="input  text-sm w-64 focus:outline-none "
               />
-            </div>
+            </div> */}
 
             <div className="relative" ref={profileRef}>
               <button
@@ -223,7 +225,7 @@ const AdminDashboard = () => {
 
         {/* --- Scrollable Content Area --- */}
         <main className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-          <div className="w-full mx-auto  border border-gray-200 rounded min-h-full cursor-pointer">
+          <div className="card w-full mx-auto  border border-gray-200  min-h-full cursor-pointer">
             {renderContent()}
           </div>
         </main>

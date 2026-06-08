@@ -1,4 +1,4 @@
-// ১. ব্যক্তিগত তথ্য
+// ১. ব্যক্তিগত তথ্য ===================================
 export const PersonalInfo = ({ register, errors }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {/* Clothing Style */}
@@ -669,21 +669,118 @@ export const ProfessionalInfo = ({ register, errors }) => (
 // ৫. পারিবারিক তথ্য
 export const FamilyInfo = ({ register, errors }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <input
-      {...register("fatherName")}
-      placeholder="পিতার নাম"
-      className="input input-bordered input-lg text-sm w-full"
-    />
-    <input
-      {...register("motherName")}
-      placeholder="মাতার নাম"
-      className="input input-bordered input-lg text-sm w-full"
-    />
-    <input
-      {...register("siblings")}
-      placeholder="ভাই-বোনের সংখ্যা"
-      className="input input-bordered input-lg text-sm w-full"
-    />
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">পেশা</label>
+      <input
+        {...register("occupation")}
+        placeholder="পেশা"
+        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
+          errors.occupation ? "border-red-500" : ""
+        }`}
+      />
+
+      {errors.occupation && (
+        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      )}
+    </div>
   </div>
 );
 
@@ -693,17 +790,17 @@ export const ContactInfo = ({ register, errors }) => (
     <input
       {...register("mobile")}
       placeholder="মোবাইল নম্বর"
-      className="input input-bordered input-lg text-sm w-full"
+      className="input input-bordered input-lg text-sm w-full focus:outline-none"
     />
     <textarea
       {...register("presentAddress")}
       placeholder="বর্তমান ঠিকানা"
-      className="textarea textarea-bordered w-full"
+      className="textarea textarea-bordered w-full focus:outline-none"
     />
     <textarea
       {...register("permanentAddress")}
       placeholder="স্থায়ী ঠিকানা"
-      className="textarea textarea-bordered w-full"
+      className="textarea textarea-bordered w-full focus:outline-none"
     />
   </div>
 );
