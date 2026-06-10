@@ -91,8 +91,8 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // window.scroll(0, 0);
-    window.scrollY(0, 0);
+    // scroll to top when activeTab changes
+    window.scrollTo(0, 0);
   }, []);
 
   return (
