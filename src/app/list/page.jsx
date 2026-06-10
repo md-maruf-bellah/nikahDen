@@ -9,87 +9,142 @@ import { MdTableRows } from "react-icons/md";
 import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
 
-const maleProfiles = [
+import muslimBoy from "./../../../assets/member/new/muslimBoy.png";
+import muslimGirl from "./../../../assets/member/new/muslimGirl.png";
+import hinduBoy from "./../../../assets/member/new/hinduBoy.png";
+import hinduGirl from "./../../../assets/member/new/hinduGirl.png";
+import christianBoy from "./../../../assets/member/new/christianBoy.png";
+import christianGirl from "./../../../assets/member/new/christianGirl.png";
+import buddhistBoy from "./../../../assets/member/new/buddhistBoy.png";
+import buddhistGirl from "./../../../assets/member/new/buddhistGirl.png";
+
+export const maleProfiles = [
+  // Muslim
   {
     name: "আবদুল করিম",
+    religion: "ইসলাম",
     age: 28,
     location: "ঢাকা",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৮\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: man,
-  },
-  {
-    name: "মোহাম্মদ রাফি",
-    age: 30,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: "৫'১০\"",
-    color: "ফর্সা",
-    img: man,
-  },
-  {
-    name: "আরিফুল ইসলাম",
-    age: 26,
-    location: "খুলনা",
-    profession: "ব্যবসায়ী",
-    height: "৫'৯\"",
+    profession: "সফটওয়্যার ইঞ্জিনিয়ার",
+    height: `৫'৮"`,
     color: "উজ্জ্বল ফর্সা",
-    img: man,
-  },
-  {
-    name: "শাহরিয়ার হোসেন",
-    age: 29,
-    location: "রংপুর",
-    profession: "শিক্ষক",
-    height: "৫'৭\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: man,
-  },
-  {
-    name: "আবদুল করিম",
-    age: 28,
-    location: "ঢাকা",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৮\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: man,
+    img: muslimBoy,
   },
   {
     name: "মোহাম্মদ রাফি",
+    religion: "ইসলাম",
     age: 30,
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
-    height: "৫'১০\"",
-    color: "ফর্সা",
-    img: man,
+    height: `৫'১০"`,
+    color: "উজ্জ্বল শ্যামলা",
+    img: muslimBoy,
   },
   {
     name: "আরিফুল ইসলাম",
+    religion: "ইসলাম",
     age: 26,
     location: "খুলনা",
     profession: "ব্যবসায়ী",
-    height: "৫'৯\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: man,
-  },
-  {
-    name: "শাহরিয়ার হোসেন",
-    age: 29,
-    location: "রংপুর",
-    profession: "শিক্ষক",
-    height: "৫'৭\"",
-    color: "ফর্সা",
-    img: man,
-  },
-  {
-    name: "শাহরিয়ার হোসেন",
-    age: 29,
-    location: "রংপুর",
-    profession: "শিক্ষক",
-    height: "৫'৭\"",
+    height: `৫'৯"`,
     color: "শ্যামলা",
-    img: man,
+    img: muslimBoy,
+  },
+
+  // Hindu
+  {
+    name: "অরিন্দম চক্রবর্তী",
+    religion: "হিন্দু",
+    age: 29,
+    location: "রাজশাহী",
+    profession: "ব্যাংকার",
+    height: `৫'৮"`,
+    color: "ফর্সা",
+    img: hinduBoy,
+  },
+  {
+    name: "সৌরভ দাস",
+    religion: "হিন্দু",
+    age: 27,
+    location: "যশোর",
+    profession: "শিক্ষক",
+    height: `৫'৭"`,
+    color: "উজ্জ্বল শ্যামলা",
+    img: hinduBoy,
+  },
+  {
+    name: "রাহুল রায়",
+    religion: "হিন্দু",
+    age: 31,
+    location: "বরিশাল",
+    profession: "চার্টার্ড অ্যাকাউন্ট্যান্ট",
+    height: `৫'৯"`,
+    color: "ফর্সা",
+    img: hinduBoy,
+  },
+
+  // Christian
+  {
+    name: "জন পিটার",
+    religion: "খ্রিস্টান",
+    age: 28,
+    location: "ঢাকা",
+    profession: "আইটি অফিসার",
+    height: `৫'৯"`,
+    color: "উজ্জ্বল ফর্সা",
+    img: christianBoy,
+  },
+  {
+    name: "মাইকেল গোমেজ",
+    religion: "খ্রিস্টান",
+    age: 32,
+    location: "খুলনা",
+    profession: "ব্যবসায়ী",
+    height: `৫'১০"`,
+    color: "শ্যামলা",
+    img: christianBoy,
+  },
+  {
+    name: "ডেভিড কস্তা",
+    religion: "খ্রিস্টান",
+    age: 27,
+    location: "চট্টগ্রাম",
+    profession: "গ্রাফিক ডিজাইনার",
+    height: `৫'৮"`,
+    color: "ফর্সা",
+    img: christianBoy,
+  },
+
+  // Buddhist
+  {
+    name: "সঞ্জয় বড়ুয়া",
+    religion: "বৌদ্ধ",
+    age: 29,
+    location: "কক্সবাজার",
+    profession: "সরকারি চাকরি",
+    height: `৫'৮"`,
+    color: "উজ্জ্বল শ্যামলা",
+    img: buddhistBoy,
+  },
+  {
+    name: "অমিত বড়ুয়া",
+    religion: "বৌদ্ধ",
+    age: 26,
+    location: "রাঙ্গামাটি",
+    profession: "ইঞ্জিনিয়ার",
+    height: `৫'৭"`,
+    color: "ফর্সা",
+    img: buddhistBoy,
+  },
+  {
+    name: "সুমন চাকমা",
+    religion: "বৌদ্ধ",
+    age: 30,
+    location: "বান্দরবান",
+    profession: "ব্যবসায়ী",
+    height: `৫'৯"`,
+    color: "শ্যামলা",
+    img: buddhistBoy,
   },
 ];
 
