@@ -2,17 +2,14 @@
 import { Search } from "lucide-react";
 
 const selectFields = [
+  {
+    label: "কোন ধর্ম থেকে খুঁজছি",
+    options: ["ইসলাম", "হিন্দু", "খ্রিস্টান", "বৌদ্ধ", "অন্যান্য"],
+  },
   { label: "আমি খুঁজছি", options: ["পাত্র", "পাত্রী"] },
   {
     label: "বৈবাহিক অবস্থা",
-    options: [
-      "যেকোনো",
-      "ডাক্তার",
-      "ইঞ্জিনিয়ার",
-      "শিক্ষক",
-      "ব্যবসায়ী",
-      "অন্যান্য",
-    ],
+    options: ["অবিবাহিত", "তালাকপ্রাপ্ত", "বিধবা/বিপত্নীক", "অন্যান্য"],
   },
   { label: "বয়স", options: ["১৮-২২", "২৩-২৭", "২৮-৩২", "৩৩-৩৭", "38+"] },
   {
@@ -53,11 +50,12 @@ export default function SearchBar() {
       <div className=" w-full lg:max-w-5xl  border border-primary/0 mx-auto bg-base-200 py-6 px-4 card block md:flex-row items-center gap-4">
         <div className="max-w-6xl mx-auto">
           {/* Top Labels (Hidden on mobile) */}
-          <div className="hidden md:grid grid-cols-5 text-center mb-2 font-medium text-lg">
+          <div className="hidden md:grid grid-cols-5  mb-2 font-medium text-lg text-start">
+            <p>কোন ধর্ম থেকে খুঁজছি</p>
             <p>আমি খুঁজছি</p>
             <p>বৈবাহিক অবস্থা</p>
-            <p>বয়স</p>
-            <p>জেলা</p>
+            <p>বয়স</p>
+            <p>বিভাগ</p>
             <p></p>
           </div>
 
@@ -65,10 +63,20 @@ export default function SearchBar() {
           <div className="bg-[#e8dfdf] card overflow-hidden">
             {/* Mobile Layout */}
             <div className="flex flex-col md:hidden divide-y divide-gray-300">
-              {["পাত্র", "অবিবাহিত", "১৮ - ২১", "ঢাকা"].map((item, i) => (
+              {selectFields?.map((item, i) => (
                 <div key={i} className="px-4 py-3">
-                  <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
-                    <option>{item}</option>
+                  <select
+                    className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf]"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      {item.label}
+                    </option>
+                    {item.options.map((option, j) => (
+                      <option key={j} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </select>
                 </div>
               ))}
@@ -95,44 +103,87 @@ export default function SearchBar() {
             {/* Desktop Layout */}
             <div className="hidden md:flex items-center h-[60px] ">
               <div className="flex-1 px-4">
-                <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
-                  <option>পাত্র</option>
-                  <option>পাত্র</option>
-                  <option>পাত্র</option>
-                  <option>পাত্র</option>
+                <select
+                  className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    ধর্ম নির্বাচন করুন
+                  </option>
+                  <option value="islam">ইসলাম</option>
+                  <option value="hinduism">হিন্দু</option>
+                  <option value="christianity">খ্রিস্টান</option>
+                  <option value="buddhism">বৌদ্ধ</option>
+                  <option value="other">অন্যান্য</option>
                 </select>
               </div>
 
               <div className="w-px h-6 bg-gray-400"></div>
 
               <div className="flex-1 px-4">
-                <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
-                  <option>অবিবাহিত</option>
-                  <option>অবিবাহিত</option>
-                  <option>অবিবাহিত</option>
-                  <option>অবিবাহিত</option>
+                <select
+                  className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    পাত্র নির্বাচন করুন
+                  </option>
+                  <option value="patro">পাত্র</option>
+                  <option value="patri">পাত্রী</option>
                 </select>
               </div>
 
               <div className="w-px h-6 bg-gray-400"></div>
 
               <div className="flex-1 px-4">
-                <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
-                  <option>১৮ - ২১</option>
-                  <option>১৮ - ২১</option>
-                  <option>১৮ - ২১</option>
-                  <option>১৮ - ২১</option>
+                <select
+                  className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
+                  defaultValue=""
+                >
+                  {" "}
+                  <option value="" disabled>
+                    নির্বাচন করুন
+                  </option>
+                  <option value="unmarried">অবিবাহিত</option>
+                  <option value="divorced">তালাকপ্রাপ্ত</option>
+                  <option value="widow">বিধবা/বিপত্নীক</option>
                 </select>
               </div>
 
               <div className="w-px h-6 bg-gray-400"></div>
 
               <div className="flex-1 px-4">
-                <select className="w-full bg-transparent outline-none text-gray-700 appearance-none">
-                  <option>ঢাকা</option>
-                  <option>ঢাকা</option>
-                  <option>ঢাকা</option>
-                  <option>ঢাকা</option>
+                <select
+                  className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    বয়স নির্বাচন করুন
+                  </option>
+                  <option value="18-21">১৮ - ২১</option>
+                  <option value="22-25">২২ - ২৫</option>
+                  <option value="26-30">২৬ - ৩০</option>
+                </select>
+              </div>
+
+              <div className="w-px h-6 bg-gray-400"></div>
+
+              <div className="flex-1 px-4">
+                <select
+                  className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    স্থান নির্বাচন করুন
+                  </option>
+                  <option value="dhaka">ঢাকা</option>
+                  <option value="chittagong">চট্টগ্রাম</option>
+                  <option value="khulna">খুলনা</option>
+                  <option value="rajshahi">রাজশাহী</option>
+                  <option value="sylhet">সিলেট</option>
+                  <option value="barishal">বরিশাল</option>
+                  <option value="rangpur">রংপুর</option>
+                  <option value="mymensingh">ময়মনসিংহ</option>
                 </select>
               </div>
 
