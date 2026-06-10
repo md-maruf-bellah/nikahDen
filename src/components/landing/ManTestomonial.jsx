@@ -9,160 +9,147 @@ import { FcLikePlaceholder, FcLike } from "react-icons/fc";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import alema from "./../../../assets/member/alema1.png";
-import alem from "./../../../assets/member/alem1.png";
+import muslimBoy from "./../../../assets/member/new/muslimBoy.png";
+import muslimGirl from "./../../../assets/member/new/muslimGirl.png";
+import hinduBoy from "./../../../assets/member/new/hinduBoy.png";
+import hinduGirl from "./../../../assets/member/new/hinduGirl.png";
+import christianBoy from "./../../../assets/member/new/christianBoy.png";
+import christianGirl from "./../../../assets/member/new/christianGirl.png";
+import buddhistBoy from "./../../../assets/member/new/buddhistBoy.png";
+import buddhistGirl from "./../../../assets/member/new/buddhistGirl.png";
 
 import "swiper/css";
 import "swiper/css/navigation";
 
 // Dummy data
-const femaleProfiles = [
-  {
-    name: "আফরিন খানম",
-    age: 24,
-    location: "ঢাকা",
-    profession: "শিক্ষার্থী",
-    height: "৫'৪\"",
-    color: "উজ্জ্বল ফর্সা",
-    img: alema,
-  },
-  {
-    name: "সাবরিনা ইসলাম",
-    age: 26,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: "৫'৩\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: alema,
-  },
-  {
-    name: "নাফিসা রহমান",
-    age: 23,
-    location: "সিলেট",
-    profession: "শিক্ষক",
-    height: "৫'5\"",
-    color: "ফর্সা",
-    img: alema,
-  },
-  {
-    name: "তাহমিনা বেগম",
-    age: 27,
-    location: "রাজশাহী",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৪\"",
-    color: "শ্যামলা",
-    img: alema,
-  },
-  {
-    name: "আফরিন খানম",
-    age: 24,
-    location: "ঢাকা",
-    profession: "শিক্ষার্থী",
-    height: "৫'৪\"",
-    color: "উজ্জ্বল ফর্সা",
-    img: alema,
-  },
-  {
-    name: "সাবরিনা ইসলাম",
-    age: 26,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: "৫'৩\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: alema,
-  },
-  {
-    name: "নাফিসা রহমান",
-    age: 23,
-    location: "সিলেট",
-    profession: "শিক্ষক",
-    height: "৫'5\"",
-    color: "ফর্সা",
-    img: alema,
-  },
-  {
-    name: "তাহমিনা বেগম",
-    age: 27,
-    location: "রাজশাহী",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৪\"",
-    color: "শ্যামলা",
-    img: alema,
-  },
-];
 
-const maleProfiles = [
+export const maleProfiles = [
+  // Muslim
   {
     name: "আবদুল করিম",
+    religion: "ইসলাম",
     age: 28,
     location: "ঢাকা",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৮\"",
+    profession: "সফটওয়্যার ইঞ্জিনিয়ার",
+    height: `৫'৮"`,
     color: "উজ্জ্বল ফর্সা",
-    img: alem,
+    img: muslimBoy,
   },
   {
     name: "মোহাম্মদ রাফি",
+    religion: "ইসলাম",
     age: 30,
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
-    height: "৫'১০\"",
+    height: `৫'১০"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: alem,
+    img: muslimBoy,
   },
   {
     name: "আরিফুল ইসলাম",
+    religion: "ইসলাম",
     age: 26,
     location: "খুলনা",
     profession: "ব্যবসায়ী",
-    height: "৫'৯\"",
-    color: "উজ্জ্বল ফর্সা",
-    img: alem,
+    height: `৫'৯"`,
+    color: "শ্যামলা",
+    img: muslimBoy,
   },
+
+  // Hindu
   {
-    name: "শাহরিয়ার হোসেন",
+    name: "অরিন্দম চক্রবর্তী",
+    religion: "হিন্দু",
     age: 29,
-    location: "রংপুর",
-    profession: "শিক্ষক",
-    height: "৫'৭\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: alem,
+    location: "রাজশাহী",
+    profession: "ব্যাংকার",
+    height: `৫'৮"`,
+    color: "ফর্সা",
+    img: hinduBoy,
   },
   {
-    name: "আবদুল করিম",
+    name: "সৌরভ দাস",
+    religion: "হিন্দু",
+    age: 27,
+    location: "যশোর",
+    profession: "শিক্ষক",
+    height: `৫'৭"`,
+    color: "উজ্জ্বল শ্যামলা",
+    img: hinduBoy,
+  },
+  {
+    name: "রাহুল রায়",
+    religion: "হিন্দু",
+    age: 31,
+    location: "বরিশাল",
+    profession: "চার্টার্ড অ্যাকাউন্ট্যান্ট",
+    height: `৫'৯"`,
+    color: "ফর্সা",
+    img: hinduBoy,
+  },
+
+  // Christian
+  {
+    name: "জন পিটার",
+    religion: "খ্রিস্টান",
     age: 28,
     location: "ঢাকা",
-    profession: "ইঞ্জিনিয়ার",
-    height: "৫'৮\"",
+    profession: "আইটি অফিসার",
+    height: `৫'৯"`,
     color: "উজ্জ্বল ফর্সা",
-    img: alem,
+    img: christianBoy,
   },
   {
-    name: "মোহাম্মদ রাফি",
-    age: 30,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: "৫'১০\"",
-    color: "উজ্জ্বল শ্যামলা",
-    img: alem,
-  },
-  {
-    name: "আরিফুল ইসলাম",
-    age: 26,
+    name: "মাইকেল গোমেজ",
+    religion: "খ্রিস্টান",
+    age: 32,
     location: "খুলনা",
     profession: "ব্যবসায়ী",
-    height: "৫'৯\"",
-    color: "উজ্জ্বল ফর্সা",
-    img: alem,
+    height: `৫'১০"`,
+    color: "শ্যামলা",
+    img: christianBoy,
   },
   {
-    name: "শাহরিয়ার হোসেন",
+    name: "ডেভিড কস্তা",
+    religion: "খ্রিস্টান",
+    age: 27,
+    location: "চট্টগ্রাম",
+    profession: "গ্রাফিক ডিজাইনার",
+    height: `৫'৮"`,
+    color: "ফর্সা",
+    img: christianBoy,
+  },
+
+  // Buddhist
+  {
+    name: "সঞ্জয় বড়ুয়া",
+    religion: "বৌদ্ধ",
     age: 29,
-    location: "রংপুর",
-    profession: "শিক্ষক",
-    height: "৫'৭\"",
+    location: "কক্সবাজার",
+    profession: "সরকারি চাকরি",
+    height: `৫'৮"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: alem,
+    img: buddhistBoy,
+  },
+  {
+    name: "অমিত বড়ুয়া",
+    religion: "বৌদ্ধ",
+    age: 26,
+    location: "রাঙ্গামাটি",
+    profession: "ইঞ্জিনিয়ার",
+    height: `৫'৭"`,
+    color: "ফর্সা",
+    img: buddhistBoy,
+  },
+  {
+    name: "সুমন চাকমা",
+    religion: "বৌদ্ধ",
+    age: 30,
+    location: "বান্দরবান",
+    profession: "ব্যবসায়ী",
+    height: `৫'৯"`,
+    color: "শ্যামলা",
+    img: buddhistBoy,
   },
 ];
 
