@@ -14,7 +14,7 @@ export const maleProfiles = [
   // Muslim
   {
     name: "আবদুল করিম",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 28,
     location: "ঢাকা",
     profession: "সফটওয়্যার ইঞ্জিনিয়ার",
@@ -24,7 +24,7 @@ export const maleProfiles = [
   },
   {
     name: "মোহাম্মদ রাফি",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 30,
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
@@ -33,8 +33,8 @@ export const maleProfiles = [
     img: boy,
   },
   {
-    name: "আরিফুল ইসলাম",
-    religion: "ইসলাম",
+    name: "আরিফুল মুসলিম",
+    religion: "মুসলিম",
     age: 26,
     location: "খুলনা",
     profession: "ব্যবসায়ী",
@@ -147,6 +147,13 @@ export default function BiodataGrid() {
 
   const handleLike = () => {
     setLike((prev) => !prev);
+  };
+
+  const religionBadge = {
+    মুসলিম: "bg-emerald-600",
+    হিন্দু: "bg-orange-600",
+    খ্রিস্টান: "bg-sky-600",
+    বৌদ্ধ: "bg-amber-600",
   };
   return (
     <div className="bg-base-200 min-h-screen">
@@ -344,6 +351,15 @@ export default function BiodataGrid() {
             <div className="grid grid-cols-2 cursor-pointer sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {maleProfiles.map((item, i) => (
                 <div key={i} className="relative">
+                  <div className="absolute left-2 top-2 z-10 cursor-pointer">
+                    {religionBadge[item.religion] && (
+                      <span
+                        className={`badge badge-sm text-white ${religionBadge[item.religion]}`}
+                      >
+                        {item.religion}
+                      </span>
+                    )}
+                  </div>
                   <div className="absolute right-2 top-2 z-5">
                     {like ? (
                       <FcLike
@@ -438,6 +454,15 @@ export default function BiodataGrid() {
 
                       <td className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
+                          <div>
+                            {religionBadge[item.religion] && (
+                              <span
+                                className={`badge badge-sm text-white ${religionBadge[item.religion]}`}
+                              >
+                                {item.religion}
+                              </span>
+                            )}
+                          </div>
                           <div>
                             {like ? (
                               <FcLike

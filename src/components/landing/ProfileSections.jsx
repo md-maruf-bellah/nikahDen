@@ -31,7 +31,7 @@ export const maleProfiles = [
   // Muslim
   {
     name: "আবদুল করিম",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 28,
     location: "ঢাকা",
     profession: "সফটওয়্যার ইঞ্জিনিয়ার",
@@ -41,7 +41,7 @@ export const maleProfiles = [
   },
   {
     name: "মোহাম্মদ রাফি",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 30,
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
@@ -50,8 +50,8 @@ export const maleProfiles = [
     img: boy,
   },
   {
-    name: "আরিফুল ইসলাম",
-    religion: "ইসলাম",
+    name: "আরিফুল মুসলিম",
+    religion: "মুসলিম",
     age: 26,
     location: "খুলনা",
     profession: "ব্যবসায়ী",
@@ -165,7 +165,7 @@ export const femaleProfiles = [
   // Muslim
   {
     name: "আফরিন খানম",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 24,
     location: "ঢাকা",
     profession: "শিক্ষার্থী",
@@ -174,8 +174,8 @@ export const femaleProfiles = [
     img: girl,
   },
   {
-    name: "সাবরিনা ইসলাম",
-    religion: "ইসলাম",
+    name: "সাবরিনা মুসলিম",
+    religion: "মুসলিম",
     age: 26,
     location: "চট্টগ্রাম",
     profession: "ডাক্তার",
@@ -185,7 +185,7 @@ export const femaleProfiles = [
   },
   {
     name: "নাফিসা রহমান",
-    religion: "ইসলাম",
+    religion: "মুসলিম",
     age: 23,
     location: "সিলেট",
     profession: "শিক্ষক",
@@ -295,10 +295,10 @@ function ProfileCard({ profile }) {
   const [like, setLike] = useState(false);
 
   const religionBadge = {
-    ইসলাম: "bg-emerald-600",
+    মুসলিম: "bg-emerald-600",
     হিন্দু: "bg-orange-600",
     খ্রিস্টান: "bg-sky-600",
-    বৌদ্ধ: "bg-amber-500",
+    বৌদ্ধ: "bg-amber-600",
   };
 
   return (
