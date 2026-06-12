@@ -14,8 +14,8 @@ import "swiper/css";
 import "swiper/css/navigation";
 import ManTestomonial from "./ManTestomonial";
 
-import muslimBoy from "./../../../assets/member/new/muslimBoy.png";
-import muslimGirl from "./../../../assets/member/new/muslimGirl.png";
+import boy from "./../../../assets/member/new/boy.png";
+import girl from "./../../../assets/member/new/girl.png";
 import hinduBoy from "./../../../assets/member/new/hinduBoy.png";
 import hinduGirl from "./../../../assets/member/new/hinduGirl.png";
 import christianBoy from "./../../../assets/member/new/christianBoy.png";
@@ -37,7 +37,7 @@ export const maleProfiles = [
     profession: "সফটওয়্যার ইঞ্জিনিয়ার",
     height: `৫'৮"`,
     color: "উজ্জ্বল ফর্সা",
-    img: muslimBoy,
+    img: boy,
   },
   {
     name: "মোহাম্মদ রাফি",
@@ -47,7 +47,7 @@ export const maleProfiles = [
     profession: "ডাক্তার",
     height: `৫'১০"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: muslimBoy,
+    img: boy,
   },
   {
     name: "আরিফুল ইসলাম",
@@ -57,7 +57,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'৯"`,
     color: "শ্যামলা",
-    img: muslimBoy,
+    img: boy,
   },
 
   // Hindu
@@ -69,7 +69,7 @@ export const maleProfiles = [
     profession: "ব্যাংকার",
     height: `৫'৮"`,
     color: "ফর্সা",
-    img: hinduBoy,
+    img: boy,
   },
   {
     name: "সৌরভ দাস",
@@ -79,7 +79,7 @@ export const maleProfiles = [
     profession: "শিক্ষক",
     height: `৫'৭"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: hinduBoy,
+    img: boy,
   },
   {
     name: "রাহুল রায়",
@@ -89,7 +89,7 @@ export const maleProfiles = [
     profession: "চার্টার্ড অ্যাকাউন্ট্যান্ট",
     height: `৫'৯"`,
     color: "ফর্সা",
-    img: hinduBoy,
+    img: boy,
   },
 
   // Christian
@@ -101,7 +101,7 @@ export const maleProfiles = [
     profession: "আইটি অফিসার",
     height: `৫'৯"`,
     color: "উজ্জ্বল ফর্সা",
-    img: christianBoy,
+    img: boy,
   },
   {
     name: "মাইকেল গোমেজ",
@@ -111,7 +111,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'১০"`,
     color: "শ্যামলা",
-    img: christianBoy,
+    img: boy,
   },
   {
     name: "ডেভিড কস্তা",
@@ -121,7 +121,7 @@ export const maleProfiles = [
     profession: "গ্রাফিক ডিজাইনার",
     height: `৫'৮"`,
     color: "ফর্সা",
-    img: christianBoy,
+    img: boy,
   },
 
   // Buddhist
@@ -133,7 +133,7 @@ export const maleProfiles = [
     profession: "সরকারি চাকরি",
     height: `৫'৮"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: buddhistBoy,
+    img: boy,
   },
   {
     name: "অমিত বড়ুয়া",
@@ -143,7 +143,7 @@ export const maleProfiles = [
     profession: "ইঞ্জিনিয়ার",
     height: `৫'৭"`,
     color: "ফর্সা",
-    img: buddhistBoy,
+    img: boy,
   },
   {
     name: "সুমন চাকমা",
@@ -153,7 +153,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'৯"`,
     color: "শ্যামলা",
-    img: buddhistBoy,
+    img: boy,
   },
 ];
 
@@ -171,7 +171,7 @@ export const femaleProfiles = [
     profession: "শিক্ষার্থী",
     height: `৫'৪"`,
     color: "উজ্জ্বল ফর্সা",
-    img: muslimGirl,
+    img: girl,
   },
   {
     name: "সাবরিনা ইসলাম",
@@ -181,7 +181,7 @@ export const femaleProfiles = [
     profession: "ডাক্তার",
     height: `৫'৩"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: muslimGirl,
+    img: girl,
   },
   {
     name: "নাফিসা রহমান",
@@ -191,7 +191,7 @@ export const femaleProfiles = [
     profession: "শিক্ষক",
     height: `৫'৫"`,
     color: "ফর্সা",
-    img: muslimGirl,
+    img: girl,
   },
 
   // Hindu
@@ -203,7 +203,7 @@ export const femaleProfiles = [
     profession: "ব্যাংকার",
     height: `৫'৩"`,
     color: "ফর্সা",
-    img: hinduGirl,
+    img: girl,
   },
   {
     name: "স্নেহা দাস",
@@ -213,7 +213,7 @@ export const femaleProfiles = [
     profession: "শিক্ষিকা",
     height: `৫'৪"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: hinduGirl,
+    img: girl,
   },
   {
     name: "অনন্যা চক্রবর্তী",
@@ -223,7 +223,7 @@ export const femaleProfiles = [
     profession: "সফটওয়্যার ইঞ্জিনিয়ার",
     height: `৫'৫"`,
     color: "ফর্সা",
-    img: hinduGirl,
+    img: girl,
   },
 
   // Christian
@@ -235,7 +235,7 @@ export const femaleProfiles = [
     profession: "নার্স",
     height: `৫'৪"`,
     color: "উজ্জ্বল ফর্সা",
-    img: christianGirl,
+    img: girl,
   },
   {
     name: "ক্রিস্টিনা কস্তা",
@@ -245,7 +245,7 @@ export const femaleProfiles = [
     profession: "শিক্ষিকা",
     height: `৫'৫"`,
     color: "শ্যামলা",
-    img: christianGirl,
+    img: girl,
   },
   {
     name: "অ্যাঞ্জেলা রোজারিও",
@@ -255,7 +255,7 @@ export const femaleProfiles = [
     profession: "গ্রাফিক ডিজাইনার",
     height: `৫'৩"`,
     color: "ফর্সা",
-    img: christianGirl,
+    img: girl,
   },
 
   // Buddhist
@@ -267,7 +267,7 @@ export const femaleProfiles = [
     profession: "শিক্ষার্থী",
     height: `৫'৪"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: buddhistGirl,
+    img: girl,
   },
   {
     name: "মিতা চাকমা",
@@ -277,7 +277,7 @@ export const femaleProfiles = [
     profession: "ডাক্তার",
     height: `৫'৩"`,
     color: "ফর্সা",
-    img: buddhistGirl,
+    img: girl,
   },
   {
     name: "রুমা মারমা",
@@ -287,15 +287,32 @@ export const femaleProfiles = [
     profession: "শিক্ষিকা",
     height: `৫'৫"`,
     color: "শ্যামলা",
-    img: buddhistGirl,
+    img: girl,
   },
 ];
 
 function ProfileCard({ profile }) {
   const [like, setLike] = useState(false);
 
+  const religionBadge = {
+    ইসলাম: "bg-emerald-600",
+    হিন্দু: "bg-orange-600",
+    খ্রিস্টান: "bg-sky-600",
+    বৌদ্ধ: "bg-amber-500",
+  };
+
   return (
     <div className="card  relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
+      {/* Like Button (same as before) */}
+      <div className="absolute left-2 top-2 z-10 cursor-pointer">
+        {religionBadge[profile.religion] && (
+          <span
+            className={`badge badge-sm text-white ${religionBadge[profile.religion]}`}
+          >
+            {profile.religion}
+          </span>
+        )}
+      </div>
       {/* Like Button (same as before) */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (

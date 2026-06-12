@@ -8,15 +8,7 @@ import { TfiLayoutGrid3Alt } from "react-icons/tfi";
 import { MdTableRows } from "react-icons/md";
 import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
-
-import muslimBoy from "./../../../assets/member/new/muslimBoy.png";
-import muslimGirl from "./../../../assets/member/new/muslimGirl.png";
-import hinduBoy from "./../../../assets/member/new/hinduBoy.png";
-import hinduGirl from "./../../../assets/member/new/hinduGirl.png";
-import christianBoy from "./../../../assets/member/new/christianBoy.png";
-import christianGirl from "./../../../assets/member/new/christianGirl.png";
-import buddhistBoy from "./../../../assets/member/new/buddhistBoy.png";
-import buddhistGirl from "./../../../assets/member/new/buddhistGirl.png";
+import boy from "./../../../assets/member/new/boy.png";
 
 export const maleProfiles = [
   // Muslim
@@ -28,7 +20,7 @@ export const maleProfiles = [
     profession: "সফটওয়্যার ইঞ্জিনিয়ার",
     height: `৫'৮"`,
     color: "উজ্জ্বল ফর্সা",
-    img: muslimBoy,
+    img: boy,
   },
   {
     name: "মোহাম্মদ রাফি",
@@ -38,7 +30,7 @@ export const maleProfiles = [
     profession: "ডাক্তার",
     height: `৫'১০"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: muslimBoy,
+    img: boy,
   },
   {
     name: "আরিফুল ইসলাম",
@@ -48,7 +40,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'৯"`,
     color: "শ্যামলা",
-    img: muslimBoy,
+    img: boy,
   },
 
   // Hindu
@@ -60,7 +52,7 @@ export const maleProfiles = [
     profession: "ব্যাংকার",
     height: `৫'৮"`,
     color: "ফর্সা",
-    img: hinduBoy,
+    img: boy,
   },
   {
     name: "সৌরভ দাস",
@@ -70,7 +62,7 @@ export const maleProfiles = [
     profession: "শিক্ষক",
     height: `৫'৭"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: hinduBoy,
+    img: boy,
   },
   {
     name: "রাহুল রায়",
@@ -80,7 +72,7 @@ export const maleProfiles = [
     profession: "চার্টার্ড অ্যাকাউন্ট্যান্ট",
     height: `৫'৯"`,
     color: "ফর্সা",
-    img: hinduBoy,
+    img: boy,
   },
 
   // Christian
@@ -92,7 +84,7 @@ export const maleProfiles = [
     profession: "আইটি অফিসার",
     height: `৫'৯"`,
     color: "উজ্জ্বল ফর্সা",
-    img: christianBoy,
+    img: boy,
   },
   {
     name: "মাইকেল গোমেজ",
@@ -102,7 +94,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'১০"`,
     color: "শ্যামলা",
-    img: christianBoy,
+    img: boy,
   },
   {
     name: "ডেভিড কস্তা",
@@ -112,7 +104,7 @@ export const maleProfiles = [
     profession: "গ্রাফিক ডিজাইনার",
     height: `৫'৮"`,
     color: "ফর্সা",
-    img: christianBoy,
+    img: boy,
   },
 
   // Buddhist
@@ -124,7 +116,7 @@ export const maleProfiles = [
     profession: "সরকারি চাকরি",
     height: `৫'৮"`,
     color: "উজ্জ্বল শ্যামলা",
-    img: buddhistBoy,
+    img: boy,
   },
   {
     name: "অমিত বড়ুয়া",
@@ -134,7 +126,7 @@ export const maleProfiles = [
     profession: "ইঞ্জিনিয়ার",
     height: `৫'৭"`,
     color: "ফর্সা",
-    img: buddhistBoy,
+    img: boy,
   },
   {
     name: "সুমন চাকমা",
@@ -144,7 +136,7 @@ export const maleProfiles = [
     profession: "ব্যবসায়ী",
     height: `৫'৯"`,
     color: "শ্যামলা",
-    img: buddhistBoy,
+    img: boy,
   },
 ];
 

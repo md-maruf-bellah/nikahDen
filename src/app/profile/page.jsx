@@ -91,8 +91,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    // scroll to top when activeTab changes
-    window.scrollTo(0, 0);
+    // when i click on the menu item then the sidebar will be closed in mobile view
   }, []);
 
   return (
