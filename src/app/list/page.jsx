@@ -8,7 +8,7 @@ import { TfiLayoutGrid3Alt } from "react-icons/tfi";
 import { MdTableRows } from "react-icons/md";
 import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
-import boy from "./../../../assets/member/new/boy.png";
+import boy from "./../../../assets/member/alem.png";
 
 export const maleProfiles = [
   // Muslim
