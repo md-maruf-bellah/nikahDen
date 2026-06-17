@@ -14,14 +14,8 @@ import "swiper/css";
 import "swiper/css/navigation";
 import ManTestomonial from "./ManTestomonial";
 
-import boy from "./../../../assets/member/new/boy.png";
-import girl from "./../../../assets/member/new/girl.png";
-import hinduBoy from "./../../../assets/member/new/hinduBoy.png";
-import hinduGirl from "./../../../assets/member/new/hinduGirl.png";
-import christianBoy from "./../../../assets/member/new/christianBoy.png";
-import christianGirl from "./../../../assets/member/new/christianGirl.png";
-import buddhistBoy from "./../../../assets/member/new/buddhistBoy.png";
-import buddhistGirl from "./../../../assets/member/new/buddhistGirl.png";
+import boy from "./../../../assets/member/alem.png";
+import girl from "./../../../assets/member/alema.png";
 
 // ======================
 // Male Profiles
@@ -295,24 +289,24 @@ function ProfileCard({ profile }) {
   const [like, setLike] = useState(false);
 
   const religionBadge = {
-    মুসলিম: "bg-emerald-600",
-    হিন্দু: "bg-orange-600",
-    খ্রিস্টান: "bg-sky-600",
-    বৌদ্ধ: "bg-amber-600",
+    religion: "bg-emerald-600",
+    religion: "bg-orange-600",
+    religion: "bg-sky-600",
+    religion: "bg-amber-600",
   };
 
   return (
     <div className="card  relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
       {/* Like Button (same as before) */}
-      <div className="absolute left-2 top-2 z-10 cursor-pointer">
-        {religionBadge[profile.religion] && (
+      {/* <div className="absolute left-2 top-2 z-10 cursor-pointer">
+        {religionBadge[profile.location] && (
           <span
-            className={`badge badge-sm text-white ${religionBadge[profile.religion]}`}
+            className={`badge badge-sm text-white ${religionBadge[profile.location]}`}
           >
-            {profile.religion}
+            {profile.location}
           </span>
         )}
-      </div>
+      </div> */}
       {/* Like Button (same as before) */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (

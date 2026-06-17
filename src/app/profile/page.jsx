@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import profile from "./../../../assets/member/alem1.png";
+import profile from "./../../../assets/member/alem.png";
 import MessagingPage from "./message/MessagingPage";
 import ProfileData from "./biodata/page";
 import LikeList from "./likeList/page";

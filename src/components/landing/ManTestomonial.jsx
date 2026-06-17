@@ -9,7 +9,7 @@ import { FcLikePlaceholder, FcLike } from "react-icons/fc";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
-import boy from "./../../../assets/member/new/boy.png";
+import boy from "./../../../assets/member/alem.png";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -159,7 +159,7 @@ function ProfileCard({ profile }) {
   return (
     <div className="card relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
       {/* Like Button (same as before) */}
-      <div className="absolute left-2 top-2 z-10 cursor-pointer">
+      {/* <div className="absolute left-2 top-2 z-10 cursor-pointer">
         {religionBadge[profile.religion] && (
           <span
             className={`badge badge-sm text-white ${religionBadge[profile.religion]}`}
@@ -167,7 +167,7 @@ function ProfileCard({ profile }) {
             {profile.religion}
           </span>
         )}
-      </div>
+      </div> */}
       {/* Like Button (same as before) */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (

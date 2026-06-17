@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import man from "./../../../assets/member/alem1.png";
+import man from "./../../../assets/member/alem.png";
 import Link from "next/link";
 import { TfiLayoutGrid3Alt } from "react-icons/tfi";
 import { MdTableRows } from "react-icons/md";

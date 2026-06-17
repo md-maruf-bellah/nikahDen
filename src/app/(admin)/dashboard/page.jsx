@@ -19,7 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
-import profile from "./../../../../assets/member/alem1.png";
+import profile from "./../../../../assets/member/alem.png";
 import MembershipDashboard from "../../profile/memberAndPackage/page";
 import ProfileData from "../../profile/biodata/page";
 import LikeList from "../../profile/likeList/page";
