@@ -351,7 +351,7 @@ export default function BiodataGrid() {
             <div className="grid grid-cols-2 cursor-pointer sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {maleProfiles.map((item, i) => (
                 <div key={i} className="relative">
-                  <div className="absolute left-2 top-2 z-10 cursor-pointer">
+                  {/* <div className="absolute left-2 top-2 z-10 cursor-pointer">
                     {religionBadge[item.religion] && (
                       <span
                         className={`badge badge-sm text-white ${religionBadge[item.religion]}`}
@@ -359,7 +359,7 @@ export default function BiodataGrid() {
                         {item.religion}
                       </span>
                     )}
-                  </div>
+                  </div> */}
                   <div className="absolute right-2 top-2 z-5">
                     {like ? (
                       <FcLike
@@ -454,7 +454,7 @@ export default function BiodataGrid() {
 
                       <td className="whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <div>
+                          {/* <div>
                             {religionBadge[item.religion] && (
                               <span
                                 className={`badge badge-sm text-white ${religionBadge[item.religion]}`}
@@ -462,7 +462,7 @@ export default function BiodataGrid() {
                                 {item.religion}
                               </span>
                             )}
-                          </div>
+                          </div> */}
                           <div>
                             {like ? (
                               <FcLike
