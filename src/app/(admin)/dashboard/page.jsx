@@ -3,43 +3,40 @@ import React, { useRef, useState, useEffect } from "react";
 import {
   LayoutDashboard,
   FileText,
-  Heart,
   Users,
   CreditCard,
   Bell,
   MessageSquare,
+  Send,
   LogOut,
   Menu,
   X,
-  Search,
   ChevronLeft,
   ChevronRight,
-  User,
-  Settings,
-  ShieldCheck,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import profile from "./../../../../assets/member/alem.png";
-import MembershipDashboard from "../../profile/memberAndPackage/page";
-import ProfileData from "../../profile/biodata/page";
-import LikeList from "../../profile/likeList/page";
-import MemberShip from "../../profile/memberShip/page";
+import { useAuth } from "@/lib/auth-context";
 import NotificationList from "../../profile/notification/page";
-import LogoutForm from "../../profile/logout/page";
 import MessagingPage from "../../message/page";
 import UserManagement from "./table/page";
-import Commnent from "./comment/page";
 import Invoice from "./invoice/page";
 import Support from "./support/page";
-import UserPage from "./user/page";
+import BiodataModeration from "./user/page";
+import StatsDashboard from "./stats/page";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const AdminDashboard = () => {
+  const router = useRouter();
+  const { user, loading: authLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+
+  const isStaff = ["SUPERADMIN", "ADMIN", "EDITOR"].includes(user?.role);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -51,12 +48,18 @@ const AdminDashboard = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!authLoading && !isStaff) router.replace("/");
+  }, [authLoading, isStaff, router]);
+
+  if (authLoading || !isStaff) return null;
+
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: "ড্যাশবোর্ড" },
-    { icon: <CreditCard size={20} />, label: "User" },
-    { icon: <FileText size={20} />, label: "Commnent" },
-    { icon: <Heart size={20} />, label: "Invoice" },
-    { icon: <Users size={20} />, label: "Support" },
+    { icon: <Users size={20} />, label: "ইউজার ম্যানেজমেন্ট" },
+    { icon: <FileText size={20} />, label: "বায়োডাটা মডারেশন" },
+    { icon: <CreditCard size={20} />, label: "ইনভয়েস" },
+    { icon: <Bell size={20} />, label: "সাপোর্ট" },
     { icon: <Bell size={20} />, label: "নোটিফিকেশন" },
     { icon: <MessageSquare size={20} />, label: "মেসেজিং" },
     { icon: <LogOut size={20} />, label: "লগ আউট" },
@@ -65,18 +68,21 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "ড্যাশবোর্ড":
+        return <StatsDashboard />;
+      case "ইউজার ম্যানেজমেন্ট":
         return <UserManagement />;
-      case "Commnent":
-        return <Commnent />;
-      case "Invoice":
+      case "বায়োডাটা মডারেশন":
+        return <BiodataModeration />;
+      case "ইনভয়েস":
         return <Invoice />;
-      case "Support":
+      case "সাপোর্ট":
         return <Support />;
-      case "User":
-        return <UserPage />;
-
+      case "নোটিফিকেশন":
+        return <NotificationList />;
+      case "মেসেজিং":
+        return <MessagingPage />;
       default:
-        return <UserManagement />;
+        return <StatsDashboard />;
     }
   };
 
@@ -107,7 +113,7 @@ const AdminDashboard = () => {
           <div className="h-16 flex items-center px-6 border-b border-gray-100 shrink-0">
             {!isCollapsed ? (
               <h1 className="text-xl font-bold text-red-500 uppercase">
-                Biye Sadi
+                নিকাহ্ দ্বীন
               </h1>
             ) : (
               <div className="w-10 h-10 px-5 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold mx-auto">
@@ -127,6 +133,10 @@ const AdminDashboard = () => {
               <div key={index} className="group relative">
                 <button
                   onClick={() => {
+                    if (item.label === "লগ আউট") {
+                      logout();
+                      return;
+                    }
                     setActiveTab(item.label);
                     if (window.innerWidth < 1024) setIsSidebarOpen(false);
                   }}
@@ -174,17 +184,6 @@ const AdminDashboard = () => {
 
           <div className="flex items-center gap-4">
             <ThemeSwitcher />
-            {/* <div className="relative hidden md:block">
-              <Search
-                className="absolute left-3 top-2.5 text-gray-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="সার্চ..."
-                className="input  text-sm w-64 focus:outline-none "
-              />
-            </div> */}
 
             <div className="relative" ref={profileRef}>
               <button
@@ -204,18 +203,15 @@ const AdminDashboard = () => {
                 <div className="absolute bg-base-200 right-0 mt-3 w-56 rounded-xl shadow-xl border border-gray-100 py-2 z-50">
                   <div className="px-4 py-3 border-b border-gray-50 mb-1">
                     <p className="text-sm font-bold text-gray-700">
-                      মেরাজ আকন্দ
+                      {user?.firstName} {user?.lastName}
                     </p>
-                    <p className="text-xs text-gray-400">meraj@ramoit.com</p>
+                    <p className="text-xs text-gray-400">{user?.email}</p>
                   </div>
                   <button
-                    onClick={() => {
-                      setActiveTab("লগ আউট");
-                      setIsProfileOpen(false);
-                    }}
+                    onClick={logout}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer"
                   >
-                    <LogOut size={16} /> লগ আউট
+                    <Send size={16} /> লগ আউট
                   </button>
                 </div>
               )}

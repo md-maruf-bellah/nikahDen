@@ -1,14 +1,31 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, CreditCard, Zap } from "lucide-react";
+import { membershipApi } from "@/lib/api";
 
 const MembershipDashboard = () => {
+  const router = useRouter();
   const [activeModal, setActiveModal] = useState(null);
+  const [data, setData] = useState(null);
 
-  const stats = [
-    { label: "বায়োডাটা ভিজিট সংখ্যা", value: "১০" },
-    { label: "আপনার পছন্দকৃত বায়োডাটা সংখ্যা", value: "৫" },
-    { label: "আপনার বায়োডাটা যত জন পছন্দ করেছেন", value: "৫" },
+  useEffect(() => {
+    membershipApi
+      .mine()
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  const plan = data?.subscription?.plan;
+  const isActive = data?.subscription?.isActive;
+  const daysLeft = data?.subscription?.daysLeft ?? 0;
+  const connects = data?.connects?.balance ?? 0;
+  const stats = data?.stats || { biodataVisits: 0, likesReceived: 0, likesSent: 0 };
+
+  const statRows = [
+    { label: "বায়োডাটা ভিজিট সংখ্যা", value: stats.biodataVisits },
+    { label: "আপনার পছন্দকৃত বায়োডাটা সংখ্যা", value: stats.likesSent },
+    { label: "আপনার বায়োডাটা যত জন পছন্দ করেছেন", value: stats.likesReceived },
   ];
 
   return (
@@ -21,7 +38,20 @@ const MembershipDashboard = () => {
             {/* Current Package */}
             <div className="p-6 border-b border-red-50">
               <p className=" mb-2">বর্তমান প্যাকেজ</p>
-              <p className="text-red-500 font-bold text-lg mb-4">মান্থলি</p>
+              <p className="text-red-500 font-bold text-lg mb-1">
+                {plan?.nameBn || plan?.name || "কোনো প্যাকেজ নেই"}
+              </p>
+              {data?.subscription && (
+                <p className="text-xs text-gray-500 mb-4">
+                  {isActive ? `${daysLeft} দিন বাকি` : "মেয়াদ শেষ"} •{" "}
+                  {new Date(data.subscription.expiresAt).toLocaleDateString("bn-BD")}
+                </p>
+              )}
+              {!data?.subscription && (
+                <p className="text-xs text-gray-500 mb-4">
+                  মেম্বারশিপ কিনে কানেক্ট ও পূর্ণ সুবিধা নিন
+                </p>
+              )}
               <button
                 onClick={() => setActiveModal("package")}
                 className="btn btn-outline btn-error btn-sm  px-6 normal-case"
@@ -32,8 +62,8 @@ const MembershipDashboard = () => {
 
             {/* Connection Status */}
             <div className="p-6">
-              <p className=" mb-2">কানেক্ট অবশিষ্ট রয়েছে</p>
-              <p className="text-red-500 font-bold text-2xl mb-4">১০০</p>
+              <p className=" mb-2">কানেক্ট অবশিষ্ট রয়েছে</p>
+              <p className="text-red-500 font-bold text-2xl mb-4">{connects}</p>
               <p className="text-sm mb-6 leading-relaxed">
                 প্রতিটি বায়োডাটা দেখতে ১ টি করে কানেক্টে ব্যবহার হবে।
                 <span className="text-red-400 cursor-pointer hover:underline ml-1">
@@ -55,7 +85,7 @@ const MembershipDashboard = () => {
         <section>
           <h2 className="text-xl font-bold  mb-4">বায়োডাটা স্টেট্</h2>
           <div className="rounded border  border-primary/15 overflow-hidden divide-y divide-gray-400">
-            {stats.map((item, index) => (
+            {statRows.map((item, index) => (
               <div key={index} className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <p className=" font-medium max-w-[60%]">{item.label}</p>
@@ -90,8 +120,11 @@ const MembershipDashboard = () => {
             <Zap className="text-red-500" /> প্যাকেজ পরিবর্তন করুন
           </h3>
           <p className="py-4 ">
-            আপনি কি আপনার বর্তমান 'মান্থলি' প্যাকেজটি পরিবর্তন করে অন্য কোনো
-            প্যাকেজ নিতে চান?
+            আপনি কি আপনার বর্তমান{' '}
+            <span className="font-bold">
+              {plan?.nameBn || plan?.name || "প্যাকেজ"}
+            </span>{' '}
+            পরিবর্তন করে অন্য কোনো প্যাকেজ নিতে চান?
           </p>
           <div className="modal-action">
             <button
@@ -102,7 +135,7 @@ const MembershipDashboard = () => {
             </button>
             <button
               className="btn btn-error text-white"
-              onClick={() => setActiveModal(null)}
+              onClick={() => router.push("/member")}
             >
               প্যাকেজ দেখুন
             </button>
@@ -137,7 +170,7 @@ const MembershipDashboard = () => {
             </button>
             <button
               className="btn btn-error text-white"
-              onClick={() => setActiveModal(null)}
+              onClick={() => router.push("/member")}
             >
               কিনুন
             </button>
@@ -151,4 +184,4 @@ const MembershipDashboard = () => {
   );
 };
 
-export default MembershipDashboard;
+export default MembershipDashboard;

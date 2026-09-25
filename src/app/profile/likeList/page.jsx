@@ -1,28 +1,47 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Link2 } from "lucide-react";
 import { Trash2 } from "lucide-react";
+import { biodataApi } from "@/lib/api";
 
-const LikeList = () => {
-  const [selectedId, setSelectedId] = useState(null);
+const LikeList = ({ received = false } = {}) => {
+  const [selected, setSelected] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const tableData = [
-    {
-      id: "০১",
-      biodataNo: "বায়োডাটা নং",
-      address: "১৩৭/ক, সদর-১২০০, সিরাজগঞ্জ, রাজশাহী, বাংলাদেশ",
-    },
-    {
-      id: "০১",
-      biodataNo: "বায়োডাটা নং",
-      address: "১৩৭/ক, সদর-১২০০, সিরাজগঞ্জ, রাজশাহী, বাংলাদেশ",
-    },
-    {
-      id: "০১",
-      biodataNo: "বায়োডাটা নং",
-      address: "১৩৭/ক, সদর-১২০০, সিরাজগঞ্জ, রাজশাহী, বাংলাদেশ",
-    },
-  ];
+  const load = useCallback(async () => {
+    try {
+      const res = received
+        ? await biodataApi.likesReceived({ limit: 50 })
+        : await biodataApi.likesSent({ limit: 50 });
+      setRows(res?.data || []);
+    } catch {
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [received]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) return load();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
+
+  const handleDelete = async (item) => {
+    try {
+      await biodataApi.unlike(item.biodata.id);
+      setRows((prev) => prev.filter((r) => r.id !== item.id));
+    } catch {
+      /* keep */
+    }
+    setSelected(null);
+  };
 
   return (
     <div className="p-4 md:p-10  min-h-screen">
@@ -32,7 +51,7 @@ const LikeList = () => {
           <thead>
             <tr className=" text-lg border-none">
               <th className="bg-transparent font-bold">#</th>
-              <th className="bg-transparent font-bold">বায়োডাটা নং</th>
+              <th className="bg-transparent font-bold">বায়োডাটা নং</th>
               <th className="bg-transparent font-bold">ঠিকানা</th>
               <th className="bg-transparent font-bold text-center">অপশন</th>
             </tr>
@@ -40,32 +59,69 @@ const LikeList = () => {
 
           {/* Table Body */}
           <tbody className="">
-            {tableData.map((item, index) => (
-              <tr
-                key={index}
-                // className={`${index % 2 === 0 ? "bg-[#FFF5F5]" : "bg-white"} border-none hover:bg-gray-100 transition-colors`}
-                className={`border-none hover:bg-gray-100 hover:text-gray-500 transition-colors cursor-pointer`}
-              >
-                <td className="rounded-l-lg font-medium">{item.id}</td>
-                <td className="font-medium">{item.biodataNo}</td>
-                <td className="max-w-xs md:max-w-none truncate md:whitespace-normal">
-                  {item.address}
-                </td>
-                <td className="rounded-r-lg">
-                  <div className="flex justify-center gap-4">
-                    <button className="  hover:text-primary transition-colors cursor-pointer">
-                      <Link2 size={20} />
-                    </button>
-                    <button
-                      onClick={() => setSelectedId(item.id)}
-                      className="  hover:text-error transition-colors cursor-pointer"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
+            {loading && (
+              <tr>
+                <td colSpan={4} className="text-center py-10">
+                  <span className="loading loading-spinner loading-md text-red-400"></span>
                 </td>
               </tr>
-            ))}
+            )}
+            {!loading &&
+              rows.map((item, index) => (
+                <tr
+                  key={item.id}
+                  className={`border-none hover:bg-gray-100 hover:text-gray-500 transition-colors cursor-pointer`}
+                >
+                  <td className="rounded-l-lg font-medium">{index + 1}</td>
+                  <td className="font-medium">
+                    {received
+                      ? item?.from?.name || "—"
+                      : item?.biodata?.biodataNo || "—"}
+                  </td>
+                  <td className="max-w-xs md:max-w-none truncate md:whitespace-normal">
+                    {received
+                      ? new Date(item.likedAt).toLocaleDateString("bn-BD", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : item?.biodata?.district || item?.biodata?.division || "—"}
+                  </td>
+                  <td className="rounded-r-lg">
+                    <div className="flex justify-center gap-4">
+                      {!received && item?.biodata ? (
+                        <>
+                          <Link
+                            href={`/details?id=${item.biodata.id}`}
+                            className="hover:text-primary transition-colors cursor-pointer"
+                          >
+                            <Link2 size={20} />
+                          </Link>
+                          <button
+                            onClick={() => setSelected(item)}
+                            className="hover:text-error transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-gray-400">
+                          {item?.isMutual ? "পারস্পরিক ম্যাচ" : "নতুন"}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            {!loading && rows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center py-10 text-gray-400">
+                  {received
+                    ? "আপনাকে কেউ এখনো পছন্দ করেনি।"
+                    : "আপনি এখনো কাউকে পছন্দ করেননি।"}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -75,7 +131,7 @@ const LikeList = () => {
         type="checkbox"
         id="delete_modal"
         className="modal-toggle"
-        checked={!!selectedId}
+        checked={!!selected}
         readOnly
       />
       <div className="modal modal-bottom sm:modal-middle">
@@ -84,32 +140,30 @@ const LikeList = () => {
             <Trash2 size={24} /> সতর্কবার্তা!
           </h3>
           <p className="py-4 text-gray-700 text-lg">
-            আপনি কি নিশ্চিত যে আপনি এই বায়োডাটাটি ডিলিট করতে চান? এই কাজটি আর
-            ফিরিয়ে আনা সম্ভব নয়।
+            আপনি কি নিশ্চিত যে আপনি এই বায়োডাটাটি পছন্দ তালিকা থেকে মুছে ফেলতে
+            চান?
           </p>
           <div className="modal-action">
             <button
               className="btn btn-outline "
-              onClick={() => setSelectedId(null)}
+              onClick={() => setSelected(null)}
             >
               বাতিল করুন
             </button>
             <button
               className="btn btn-error text-white"
-              onClick={() => setSelectedId(null)}
+              onClick={() => selected && handleDelete(selected)}
             >
               হ্যাঁ, ডিলিট করুন
             </button>
           </div>
         </div>
-        <label className="modal-backdrop" onClick={() => setSelectedId(null)}>
+        <label className="modal-backdrop" onClick={() => setSelected(null)}>
           Close
         </label>
       </div>
-
-      {/* Mobile view suggestion: স্ক্রিন খুব ছোট হলে টেবিলটি স্ক্রলযোগ্য হবে */}
     </div>
   );
 };
 
-export default LikeList;
+export default LikeList;

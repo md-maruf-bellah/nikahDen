@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, X, Globe, ArrowRight } from "lucide-react";
+import { Menu, X, Globe, ArrowRight, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FaArrowRightToBracket } from "react-icons/fa6";
 import LanguageSelect from "../LanguageSelect";
 import logoImage from "./../../../assets/navbar/logo.png";
 import ThemeSwitcher from "../ThemeSwitcher";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { isLoggedIn, user, logout } = useAuth();
 
   // নেভিগেশন লিঙ্কগুলোকে অবজেক্ট আকারে রাখা ভালো
   const navLinks = [
@@ -54,12 +56,38 @@ export default function Navbar() {
               <ThemeSwitcher />
               <LanguageSelect />
 
-              <Link
-                href="/register"
-                className="btn btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white hover:border-[#fd6969] text-sm px-6  transition-all duration-300"
-              >
-                রেজিস্ট্রেশন <FaArrowRightToBracket className="ml-1" />
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="btn btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white hover:border-[#fd6969] text-sm px-6  transition-all duration-300"
+                  >
+                    {user?.firstName || "প্রোফাইল"}
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="btn btn-ghost btn-sm text-gray-500 hover:text-[#fd6969]"
+                    title="লগ আউট"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="btn btn-ghost text-gray-600 hover:text-[#fd6969] text-sm px-4 transition-all duration-300"
+                  >
+                    লগইন
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="btn btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white hover:border-[#fd6969] text-sm px-6  transition-all duration-300"
+                  >
+                    রেজিস্ট্রেশন <FaArrowRightToBracket className="ml-1" />
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* ===== Mobile Menu Toggle ===== */}
@@ -133,14 +161,35 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="flex gap-2">
-            <Link
-              href="/register"
-              onClick={() => setOpen(false)}
-              className="btn w bg-[#fd6969] border-none text-white hover:bg-[#e85a5a] shadow-lg shadow-red-200 flex items-center justify-center gap-2 rounded py-4"
-            >
-              রেজিস্ট্রেশন করুন <ArrowRight size={18} />
-            </Link>
+          <div className="flex flex-col gap-3">
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/profile"
+                  onClick={() => setOpen(false)}
+                  className="btn bg-[#fd6969] border-none text-white hover:bg-[#e85a5a] shadow-lg shadow-red-200 flex items-center justify-center gap-2 rounded py-4"
+                >
+                  {user?.firstName || "প্রোফাইল"} <ArrowRight size={18} />
+                </Link>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    logout();
+                  }}
+                  className="btn btn-outline border-[#fd6969] text-[#fd6969] flex items-center justify-center gap-2 rounded py-4"
+                >
+                  লগ আউট <LogOut size={18} />
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/register"
+                onClick={() => setOpen(false)}
+                className="btn w bg-[#fd6969] border-none text-white hover:bg-[#e85a5a] shadow-lg shadow-red-200 flex items-center justify-center gap-2 rounded py-4"
+              >
+                রেজিস্ট্রেশন করুন <ArrowRight size={18} />
+              </Link>
+            )}
             <LanguageSelect />
           </div>
         </div>

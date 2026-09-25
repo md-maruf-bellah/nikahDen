@@ -1,15 +1,11 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: all;
-}
+
+@plugin "daisyui";
 
 :root {
-  /* --font-noto: "Noto Sans Bengali", sans-serif; */
   --font-noto: "Noto Sans Bengali", sans-serif;
-  /* --font-hindist: "Hind Siliguri", sans-serif; */
 }
 
-/* IMPORTANT: force font globally */
 html,
 body {
   font-family: var(--font-noto);

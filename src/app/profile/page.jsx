@@ -23,10 +23,21 @@ import NotificationList from "./notification/page";
 import MembershipDashboard from "./memberAndPackage/page";
 import LogoutForm from "./logout/page";
 import Navbar from "@/components/landing/Navabar";
+import { useAuth } from "@/lib/auth-context";
+import { tokenStore } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !tokenStore.getAccess()) {
+      router.replace("/login");
+    }
+  }, [loading, router]);
 
   const menuItems = [
     { icon: <LayoutDashboard size={18} />, label: "ড্যাশবোর্ড" },
@@ -59,7 +70,7 @@ const Dashboard = () => {
       case "আপনাকে যারা পছন্দ করেছেন":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
-            <LikeList />
+            <LikeList received />
           </div>
         );
       case "মেম্বারশিপ":
@@ -122,16 +133,22 @@ const Dashboard = () => {
             <div className="p-6 text-center border-b border-gray-100 relative">
               <div className="relative inline-block">
                 <Image
-                  src={profile}
+                  src={user?.avatar || profile}
                   alt="Profile"
                   className="w-24 h-24 rounded-full border-2 border-gray-200 mx-auto"
+                  width={96}
+                  height={96}
                 />
                 <button className="absolute bottom-0 right-0  p-1 rounded-full shadow-md border border-gray-100">
                   <Edit3 size={14} className="" />
                 </button>
               </div>
-              <h3 className="mt-4 font-bold text-lg">মেরাজ আকন্দ</h3>
-              <p className="text-xs ">ঢাকা, বাংলাদেশ</p>
+              <h3 className="mt-4 font-bold text-lg">
+                {user?.firstName || user?.name || "সদস্য"}
+              </h3>
+              <p className="text-xs ">
+                {user?.email || "—"}
+              </p>
             </div>
 
             <nav className="py-4">
@@ -174,4 +191,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard;

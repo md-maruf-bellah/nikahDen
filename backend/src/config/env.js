@@ -1,0 +1,66 @@
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const isProd = process.env.NODE_ENV === "production";
+
+const requiredInProd = [
+  "MONGODB_URI",
+  "JWT_ACCESS_SECRET",
+  "JWT_REFRESH_SECRET",
+];
+
+if (isProd) {
+  const missing = requiredInProd.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    console.error(`Missing required environment variables in production: ${missing.join(", ")}`);
+    process.exit(1);
+  }
+}
+
+const env = {
+  NODE_ENV: process.env.NODE_ENV || "development",
+  IS_PROD: isProd,
+
+  PORT: parseInt(process.env.PORT || "5000", 10),
+
+  MONGODB_URI:
+    process.env.MONGODB_URI ||
+    (isProd ? "" : "mongodb://127.0.0.1:27017/nikahdeen_dev"),
+
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:3000",
+
+  JWT_ACCESS_SECRET:
+    process.env.JWT_ACCESS_SECRET || "dev-access-secret-change-me-in-production",
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+
+  JWT_REFRESH_SECRET:
+    process.env.JWT_REFRESH_SECRET || "dev-refresh-secret-change-me-in-production",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
+
+  ACCESS_COOKIE_NAME: "nikahdeen_access",
+  REFRESH_COOKIE_NAME: "nikahdeen_refresh",
+
+  // Tokens are returned in the JSON body by default. Set to "true" to ALSO
+  // store them in httpOnly cookies (needed when the frontend cannot keep
+  // tokens in JS, e.g. server-rendered pages).
+  USE_COOKIES: process.env.USE_COOKIES === "true",
+
+  // Cost (in connects) for a member to view another member's biodata.
+  VIEW_CONNECT_COST: parseInt(process.env.VIEW_CONNECT_COST || "1", 10),
+
+  // In-memory / local uploads folder. Swap for S3/Cloudinary in production.
+  UPLOAD_DIR: process.env.UPLOAD_DIR || "uploads",
+
+  RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "15", 10) * 60 * 1000,
+  RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "300", 10),
+  AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "20", 10),
+
+  SMTP_HOST: process.env.SMTP_HOST || "",
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
+  SMTP_USER: process.env.SMTP_USER || "",
+  SMTP_PASS: process.env.SMTP_PASS || "",
+  MAIL_FROM: process.env.MAIL_FROM || "Nikah Deen <no-reply@nikahdeen.local>",
+};
+
+export default env;

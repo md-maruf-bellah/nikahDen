@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { FcLike, FcLikePlaceholder } from "react-icons/fc";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import boy from "./../../../assets/member/alem.png";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -27,7 +28,7 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
   return (
     <div className="mt-10 relative">
       <h3 className="text-center text-lg lg:text-2xl font-bold mb-6">
-        অনুরূপ বায়োডাটা সমূহ
+        অনুরূপ বায়োডাটা সমূহ
       </h3>
 
       <Swiper
@@ -50,7 +51,7 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
         className="pb-12"
       >
         {profiles.map((item, index) => (
-          <SwiperSlide key={index}>
+          <SwiperSlide key={item.id || index}>
             <div className="relative h-full">
               {/* Like Button */}
               <button
@@ -68,28 +69,31 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
               {/* Card */}
               <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
                 <Image
-                  src={item.img}
-                  alt={item.name}
+                  src={item.profileImage || boy}
+                  alt={item.fullName || "profile"}
                   width={400}
                   height={300}
                   className="w-full object-cover"
                 />
 
                 <div className="card-body items-center text-center p-4">
+                  <h4 className="font-bold text-sm truncate w-full">
+                    {item.fullName}
+                  </h4>
                   <div className="text-sm">
                     <div className="flex justify-between gap-3">
                       <p>বয়স - {item.age}</p>
-                      <p>লোকেশান - {item.location}</p>
+                      <p>লোকেশান - {item.district || item.division}</p>
                     </div>
 
                     <div className="flex justify-between gap-3 mt-1">
-                      <p>উচ্চতা - {item.height}</p>
-                      <p>গাত্রবর্ণ - {item.color}</p>
+                      <p>উচ্চতা - {item.heightText || "—"}</p>
+                      <p>গাত্রবর্ণ - {item.skinColor || "—"}</p>
                     </div>
                   </div>
 
                   <Link
-                    href="/profile"
+                    href={`/details?id=${item.id}`}
                     className="btn btn-outline text-xs md:text-lg w-5/6 mt-3"
                   >
                     বায়োডাটা দেখুন
@@ -129,4 +133,4 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
       </button>
     </div>
   );
-}
+}

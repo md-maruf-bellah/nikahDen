@@ -5,11 +5,40 @@ import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
+import { authApi, tokenStore } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
-const Register = () => {
+const Login = () => {
+  const router = useRouter();
+  const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    setLoading(true);
+    try {
+      const data = await authApi.login({ email, password });
+      tokenStore.set(data.accessToken, data.refreshToken);
+      await refreshUser();
+      // Staff go to the admin dashboard, members to the member dashboard.
+      const role = data.user?.role;
+      const isStaff = role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
+      router.push(isStaff ? "/dashboard" : "/profile");
+    } catch (err) {
+      setError(err.message || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -34,13 +63,15 @@ const Register = () => {
             </h1>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            একাউন্ট তৈরি করুন
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">লগইন করুন</h2>
 
-          <form className="space-y-5">
-            {/* Name Fields */}
+          {error && (
+            <div className="alert alert-error text-sm py-2 mb-4 shadow-none">
+              <span>{error}</span>
+            </div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div className="relative">
               <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
@@ -48,6 +79,9 @@ const Register = () => {
               </label>
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="xxx@example.com"
                 className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
               />
@@ -61,6 +95,9 @@ const Register = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="***********"
                   className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
                 />
@@ -74,28 +111,26 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Terms and Conditions */}
-            <div className="flex items-start gap-2 py-2">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm checkbox-error mt-1"
-                id="terms"
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm text-gray-600 cursor-pointer"
+            <p className="text-right">
+              <Link
+                href="/reset"
+                className="text-sm text-red-500 underline font-semibold"
               >
-                আমি আপনাদের সকল{" "}
-                <span className="text-red-500 underline">
-                  ট্রামস্ এন্ড কন্ডিশন
-                </span>{" "}
-                এর সাথে সহমত পোষন করতেছি।
-              </label>
-            </div>
+                পাসওয়ার্ড ভুলে গেছেন?
+              </Link>
+            </p>
 
             {/* Submit Button */}
-            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold ">
-              কন্টিনিউ করুন
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                "লগইন করুন"
+              )}
             </button>
           </form>
 
@@ -104,21 +139,27 @@ const Register = () => {
 
           {/* Social Logins */}
           <div className="space-y-4">
-            <button className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold">
+            <button
+              type="button"
+              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+            >
               <FcGoogle size={22} />
-              Sign up with Google
+              Sign in with Google
             </button>
-            <button className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold">
+            <button
+              type="button"
+              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+            >
               <FaFacebook size={22} />
-              Sign up with Facebook
+              Sign in with Facebook
             </button>
           </div>
 
           {/* Footer Link */}
           <p className="text-center mt-8 text-sm text-gray-600 font-medium">
-            আমার একাউন্ট রয়েছে{" "}
-            <Link href="/login" className="text-red-500 underline font-bold">
-              লগইন করুন
+            একাউন্ট নেই?{" "}
+            <Link href="/register" className="text-red-500 underline font-bold">
+              রেজিস্ট্রেশন করুন
             </Link>
           </p>
         </div>
@@ -127,4 +168,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;

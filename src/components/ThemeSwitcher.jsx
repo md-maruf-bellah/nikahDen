@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Palette, Check } from "lucide-react"; // আইকন ব্যবহারের জন্য
+import { useEffect, useState } from "react";import { Palette, Check } from "lucide-react"; // আইকন ব্যবহারের জন্য
 
 const themes = [
   "light",
@@ -74,19 +73,21 @@ const themeColors = {
 };
 
 export default function ThemeSwitcher() {
+  // localStorage is browser-only: SSR renders "light", the browser syncs the
+  // saved theme right after mount.
   const [theme, setTheme] = useState("light");
 
-  const changeTheme = (t) => {
+  const applyTheme = (t) => {
     setTheme(t);
     document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("theme", t);
   };
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") || "light";
-    setTheme(saved);
     document.documentElement.setAttribute("data-theme", saved);
-  }, [theme]);
+    const raf = requestAnimationFrame(() => setTheme(saved));
+    return () => cancelAnimationFrame(raf);
+  }, []);
   return (
     <div className="dropdown dropdown-end">
       {/* ===== Styled Button ===== */}
@@ -119,7 +120,10 @@ export default function ThemeSwitcher() {
           {themes.map((t) => (
             <li key={t}>
               <button
-                onClick={() => changeTheme(t)}
+                onClick={() => {
+                  applyTheme(t);
+                  localStorage.setItem("theme", t);
+                }}
                 className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 
                   ${
                     theme === t

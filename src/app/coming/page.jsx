@@ -57,7 +57,7 @@ const ComingSoon = () => {
         {/* Text Content */}
         <h2 className="text-2xl md:text-3xl font-semibold mb-2">Coming Soon</h2>
         <p className="text-sm md:text-base opacity-90 mb-10 leading-relaxed">
-          This website is underconstruction mood. We'll <br /> be back after
+          This website is underconstruction mood. We&apos;ll <br /> be back after
         </p>
 
         {/* daisyUI Countdown Timer */}

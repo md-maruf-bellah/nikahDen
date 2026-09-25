@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FcLikePlaceholder, FcLike } from "react-icons/fc";
@@ -17,330 +18,77 @@ import ManTestomonial from "./ManTestomonial";
 import boy from "./../../../assets/member/alem.png";
 import girl from "./../../../assets/member/alema.png";
 
-// ======================
-// Male Profiles
-// ======================
+import { biodataApi, tokenStore } from "@/lib/api";
 
-export const maleProfiles = [
-  // Muslim
-  {
-    name: "আবদুল করিম",
-    religion: "মুসলিম",
-    age: 28,
-    location: "ঢাকা",
-    profession: "সফটওয়্যার ইঞ্জিনিয়ার",
-    height: `৫'৮"`,
-    color: "উজ্জ্বল ফর্সা",
-    img: boy,
-  },
-  {
-    name: "মোহাম্মদ রাফি",
-    religion: "মুসলিম",
-    age: 30,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: `৫'১০"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: boy,
-  },
-  {
-    name: "আরিফুল মুসলিম",
-    religion: "মুসলিম",
-    age: 26,
-    location: "খুলনা",
-    profession: "ব্যবসায়ী",
-    height: `৫'৯"`,
-    color: "শ্যামলা",
-    img: boy,
-  },
-
-  // Hindu
-  {
-    name: "অরিন্দম চক্রবর্তী",
-    religion: "হিন্দু",
-    age: 29,
-    location: "রাজশাহী",
-    profession: "ব্যাংকার",
-    height: `৫'৮"`,
-    color: "ফর্সা",
-    img: boy,
-  },
-  {
-    name: "সৌরভ দাস",
-    religion: "হিন্দু",
-    age: 27,
-    location: "যশোর",
-    profession: "শিক্ষক",
-    height: `৫'৭"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: boy,
-  },
-  {
-    name: "রাহুল রায়",
-    religion: "হিন্দু",
-    age: 31,
-    location: "বরিশাল",
-    profession: "চার্টার্ড অ্যাকাউন্ট্যান্ট",
-    height: `৫'৯"`,
-    color: "ফর্সা",
-    img: boy,
-  },
-
-  // Christian
-  {
-    name: "জন পিটার",
-    religion: "খ্রিস্টান",
-    age: 28,
-    location: "ঢাকা",
-    profession: "আইটি অফিসার",
-    height: `৫'৯"`,
-    color: "উজ্জ্বল ফর্সা",
-    img: boy,
-  },
-  {
-    name: "মাইকেল গোমেজ",
-    religion: "খ্রিস্টান",
-    age: 32,
-    location: "খুলনা",
-    profession: "ব্যবসায়ী",
-    height: `৫'১০"`,
-    color: "শ্যামলা",
-    img: boy,
-  },
-  {
-    name: "ডেভিড কস্তা",
-    religion: "খ্রিস্টান",
-    age: 27,
-    location: "চট্টগ্রাম",
-    profession: "গ্রাফিক ডিজাইনার",
-    height: `৫'৮"`,
-    color: "ফর্সা",
-    img: boy,
-  },
-
-  // Buddhist
-  {
-    name: "সঞ্জয় বড়ুয়া",
-    religion: "বৌদ্ধ",
-    age: 29,
-    location: "কক্সবাজার",
-    profession: "সরকারি চাকরি",
-    height: `৫'৮"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: boy,
-  },
-  {
-    name: "অমিত বড়ুয়া",
-    religion: "বৌদ্ধ",
-    age: 26,
-    location: "রাঙ্গামাটি",
-    profession: "ইঞ্জিনিয়ার",
-    height: `৫'৭"`,
-    color: "ফর্সা",
-    img: boy,
-  },
-  {
-    name: "সুমন চাকমা",
-    religion: "বৌদ্ধ",
-    age: 30,
-    location: "বান্দরবান",
-    profession: "ব্যবসায়ী",
-    height: `৫'৯"`,
-    color: "শ্যামলা",
-    img: boy,
-  },
-];
-
-// ======================
-// Female Profiles
-// ======================
-
-export const femaleProfiles = [
-  // Muslim
-  {
-    name: "আফরিন খানম",
-    religion: "মুসলিম",
-    age: 24,
-    location: "ঢাকা",
-    profession: "শিক্ষার্থী",
-    height: `৫'৪"`,
-    color: "উজ্জ্বল ফর্সা",
-    img: girl,
-  },
-  {
-    name: "সাবরিনা মুসলিম",
-    religion: "মুসলিম",
-    age: 26,
-    location: "চট্টগ্রাম",
-    profession: "ডাক্তার",
-    height: `৫'৩"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: girl,
-  },
-  {
-    name: "নাফিসা রহমান",
-    religion: "মুসলিম",
-    age: 23,
-    location: "সিলেট",
-    profession: "শিক্ষক",
-    height: `৫'৫"`,
-    color: "ফর্সা",
-    img: girl,
-  },
-
-  // Hindu
-  {
-    name: "প্রিয়া রায়",
-    religion: "হিন্দু",
-    age: 25,
-    location: "খুলনা",
-    profession: "ব্যাংকার",
-    height: `৫'৩"`,
-    color: "ফর্সা",
-    img: girl,
-  },
-  {
-    name: "স্নেহা দাস",
-    religion: "হিন্দু",
-    age: 27,
-    location: "রাজশাহী",
-    profession: "শিক্ষিকা",
-    height: `৫'৪"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: girl,
-  },
-  {
-    name: "অনন্যা চক্রবর্তী",
-    religion: "হিন্দু",
-    age: 24,
-    location: "বরিশাল",
-    profession: "সফটওয়্যার ইঞ্জিনিয়ার",
-    height: `৫'৫"`,
-    color: "ফর্সা",
-    img: girl,
-  },
-
-  // Christian
-  {
-    name: "মারিয়া গোমেজ",
-    religion: "খ্রিস্টান",
-    age: 26,
-    location: "ঢাকা",
-    profession: "নার্স",
-    height: `৫'৪"`,
-    color: "উজ্জ্বল ফর্সা",
-    img: girl,
-  },
-  {
-    name: "ক্রিস্টিনা কস্তা",
-    religion: "খ্রিস্টান",
-    age: 28,
-    location: "চট্টগ্রাম",
-    profession: "শিক্ষিকা",
-    height: `৫'৫"`,
-    color: "শ্যামলা",
-    img: girl,
-  },
-  {
-    name: "অ্যাঞ্জেলা রোজারিও",
-    religion: "খ্রিস্টান",
-    age: 25,
-    location: "খুলনা",
-    profession: "গ্রাফিক ডিজাইনার",
-    height: `৫'৩"`,
-    color: "ফর্সা",
-    img: girl,
-  },
-
-  // Buddhist
-  {
-    name: "সুচিত্রা বড়ুয়া",
-    religion: "বৌদ্ধ",
-    age: 24,
-    location: "কক্সবাজার",
-    profession: "শিক্ষার্থী",
-    height: `৫'৪"`,
-    color: "উজ্জ্বল শ্যামলা",
-    img: girl,
-  },
-  {
-    name: "মিতা চাকমা",
-    religion: "বৌদ্ধ",
-    age: 27,
-    location: "রাঙ্গামাটি",
-    profession: "ডাক্তার",
-    height: `৫'৩"`,
-    color: "ফর্সা",
-    img: girl,
-  },
-  {
-    name: "রুমা মারমা",
-    religion: "বৌদ্ধ",
-    age: 25,
-    location: "বান্দরবান",
-    profession: "শিক্ষিকা",
-    height: `৫'৫"`,
-    color: "শ্যামলা",
-    img: girl,
-  },
-];
+export const maleProfiles = [];
+export const femaleProfiles = [];
 
 function ProfileCard({ profile }) {
-  const [like, setLike] = useState(false);
+  const router = useRouter();
+  const [like, setLike] = useState(Boolean(profile.likedByMe));
+  const [busy, setBusy] = useState(false);
 
-  const religionBadge = {
-    religion: "bg-emerald-600",
-    religion: "bg-orange-600",
-    religion: "bg-sky-600",
-    religion: "bg-amber-600",
+  const toggleLike = async () => {
+    if (!tokenStore.getAccess()) {
+      router.push("/login");
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (like) {
+        await biodataApi.unlike(profile.id);
+        setLike(false);
+      } else {
+        await biodataApi.like(profile.id);
+        setLike(true);
+      }
+    } catch {
+      /* keep previous state on failure */
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="card  relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
       {/* Like Button (same as before) */}
-      {/* <div className="absolute left-2 top-2 z-10 cursor-pointer">
-        {religionBadge[profile.location] && (
-          <span
-            className={`badge badge-sm text-white ${religionBadge[profile.location]}`}
-          >
-            {profile.location}
-          </span>
-        )}
-      </div> */}
-      {/* Like Button (same as before) */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (
-          <FcLike size={24} onClick={() => setLike(false)} />
+          <FcLike size={24} onClick={toggleLike} />
         ) : (
-          <FcLikePlaceholder size={24} onClick={() => setLike(true)} />
+          <FcLikePlaceholder size={24} onClick={toggleLike} />
         )}
       </div>
 
       {/* Image (same) */}
       <Image
-        src={profile.img}
-        alt={profile.name}
-        width={"100%"}
+        src={profile.profileImage || boy}
+        alt={profile.fullName || "profile"}
+        width={400}
         height={350}
         className="w-full h-full border rounded-tl-xl rounded-tr-xl"
       />
 
       {/* Body (UNCHANGED DESIGN) */}
       <div className="card-body items-center text-center p-4">
+        <h2 className="font-bold text-base truncate w-full">
+          {profile.fullName}
+        </h2>
         <div className="text-line-through">
           <div className="flex justify-around items-center gap-3">
             <p>বয়স - {profile.age}</p>
-            <p>লোকেশান - {profile.location}</p>
+            <p>লোকেশান - {profile.district || profile.division}</p>
           </div>
 
           <div className="flex justify-around items-center gap-3">
-            <p>উচ্চতা - {profile.height}</p>
-            <p>গাত্রবর্ণ - {profile.color}</p>
+            <p>উচ্চতা - {profile.heightText || "—"}</p>
+            <p>গাত্রবর্ণ - {profile.skinColor || "—"}</p>
           </div>
         </div>
 
         <Link
-          href="/details"
+          href={`/details?id=${profile.id}`}
           className="btn btn-outline text-xs md:text-lg w-5/6 p-4"
         >
           বায়োডাটা দেখুন
@@ -390,11 +138,16 @@ function ProfileSection({ title, profiles }) {
             }}
           >
             {profiles.map((p, i) => (
-              <SwiperSlide key={i}>
+              <SwiperSlide key={p.id || i}>
                 <ProfileCard profile={p} />
               </SwiperSlide>
             ))}
           </Swiper>
+          {profiles.length === 0 && (
+            <p className="text-center text-gray-400 py-10">
+              এখনো কোনো বায়োডাটা অনুমোদিত হয়নি।
+            </p>
+          )}
         </div>
 
         {/* Footer SAME */}
@@ -412,17 +165,39 @@ function ProfileSection({ title, profiles }) {
 }
 
 export default function ProfileSections() {
+  const [all, setAll] = useState([]);
+  const [females, setFemales] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ data: latest }, { data: brides }] = await Promise.all([
+          biodataApi.list({ limit: 10, sortBy: "createdAt", sortOrder: "desc" }),
+          biodataApi.list({ limit: 10, gender: "FEMALE", sortBy: "createdAt", sortOrder: "desc" }),
+        ]);
+        if (cancelled) return;
+        setAll(latest || []);
+        setFemales(brides || []);
+      } catch {
+        /* backend offline — keep empty state */
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <>
-      <ProfileSection
-        title="পাত্র-পাত্রীর বায়োডাটা"
-        profiles={[...maleProfiles, ...femaleProfiles]}
-      />
+      <ProfileSection title="পাত্র-পাত্রীর বায়োডাটা" profiles={all} />
 
-      {/* <ProfileSection title="পাত্রের বায়োডাটা" profiles={maleProfiles} /> */}
       <ManTestomonial />
 
-      <ProfileSection title="পাত্রীর বায়োডাটা" profiles={femaleProfiles} />
+      <ProfileSection title="পাত্রীর বায়োডাটা" profiles={females} />
     </>
   );
-}
+}

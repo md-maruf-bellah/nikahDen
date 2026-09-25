@@ -5,15 +5,49 @@ import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
+import { authApi, tokenStore } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const Register = () => {
+  const router = useRouter();
+  const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!agreed) {
+      setError("আপনাকে অবশ্যই ট্রামস্ এন্ড কন্ডিশনে সম্মত হতে হবে।");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await authApi.register({ firstName, lastName, email, password });
+      tokenStore.set(data.accessToken, data.refreshToken);
+      await refreshUser();
+      router.push("/profile");
+    } catch (err) {
+      setError(err.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="card max-w-6xl w-full bg-white  shadow overflow-hidden flex flex-col lg:flex-row">
+      <div className=" card max-w-6xl w-full bg-white  shadow overflow-hidden flex flex-col lg:flex-row">
         {/* Left Side - Image with Overlay */}
         <div className="lg:w-1/2 relative min-h-[300px] lg:min-h-full">
           <Image
@@ -38,7 +72,13 @@ const Register = () => {
             একাউন্ট তৈরি করুন
           </h2>
 
-          <form className="space-y-5">
+          {error && (
+            <div className="alert alert-error text-sm py-2 mb-4 shadow-none">
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
@@ -47,6 +87,9 @@ const Register = () => {
                 </label>
                 <input
                   type="text"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   placeholder="Mr. XXXXX"
                   className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
                 />
@@ -57,6 +100,8 @@ const Register = () => {
                 </label>
                 <input
                   type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   placeholder="XXXXX"
                   className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
                 />
@@ -70,6 +115,9 @@ const Register = () => {
               </label>
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="xxx@example.com"
                 className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
               />
@@ -83,7 +131,11 @@ const Register = () => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="***********"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="কমপক্ষে ৮ অক্ষর"
                   className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
                 />
                 <button
@@ -102,6 +154,8 @@ const Register = () => {
                 type="checkbox"
                 className="checkbox checkbox-sm checkbox-error mt-1"
                 id="terms"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
               />
               <label
                 htmlFor="terms"
@@ -116,8 +170,16 @@ const Register = () => {
             </div>
 
             {/* Submit Button */}
-            <button className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold ">
-              কন্টিনিউ করুন
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                "কন্টিনিউ করুন"
+              )}
             </button>
           </form>
 
@@ -126,11 +188,17 @@ const Register = () => {
 
           {/* Social Logins */}
           <div className="space-y-4">
-            <button className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold">
+            <button
+              type="button"
+              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+            >
               <FcGoogle size={22} />
               Sign up with Google
             </button>
-            <button className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold">
+            <button
+              type="button"
+              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+            >
               <FaFacebook size={22} />
               Sign up with Facebook
             </button>

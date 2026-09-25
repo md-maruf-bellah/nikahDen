@@ -1,46 +1,74 @@
 "use client";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { siteApi } from "@/lib/api";
 
-const selectFields = [
-  {
-    label: "কোন ধর্ম থেকে খুঁজছি",
-    options: ["ইসলাম", "হিন্দু", "খ্রিস্টান", "বৌদ্ধ", "অন্যান্য"],
-  },
-  { label: "আমি খুঁজছি", options: ["পাত্র", "পাত্রী"] },
-  {
-    label: "বৈবাহিক অবস্থা",
-    options: ["অবিবাহিত", "তালাকপ্রাপ্ত", "বিধবা/বিপত্নীক", "অন্যান্য"],
-  },
-  { label: "বয়স", options: ["১৮-২২", "২৩-২৭", "২৮-৩২", "৩৩-৩৭", "38+"] },
-  {
-    label: "বিভাগ",
-    options: [
-      "ঢাকা",
-      "চট্টগ্রাম",
-      "রাজশাহী",
-      "সিলেট",
-      "বরিশাল",
-      "খুলনা",
-      "রংপুর",
-      "ময়মনসিংহ",
-    ],
-  },
-];
+const RELIGION_MAP = {
+  islam: "Islam",
+  hinduism: "Hinduism",
+  christianity: "Christianity",
+  buddhism: "Buddhism",
+  other: "Other",
+};
 
 export default function SearchBar() {
+  const router = useRouter();
+  const [stats, setStats] = useState({ users: 0, grooms: 0, brides: 0, marriages: 0 });
+  const [filters, setFilters] = useState({
+    religion: "",
+    gender: "",
+    maritalStatus: "",
+    age: "",
+    division: "",
+  });
+
+  useEffect(() => {
+    siteApi
+      .stats()
+      .then((s) =>
+        setStats({
+          users: s?.accounts ?? 0,
+          grooms: s?.grooms ?? 0,
+          brides: s?.brides ?? 0,
+          marriages: s?.marriagesCompleted ?? 0,
+        })
+      )
+      .catch(() => {});
+  }, []);
+
+  const set = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
+
+  const submit = () => {
+    const params = new URLSearchParams();
+    const religion = RELIGION_MAP[filters.religion];
+    if (religion) params.set("religion", religion);
+    if (filters.gender) params.set("gender", filters.gender === "patro" ? "MALE" : "FEMALE");
+    if (filters.maritalStatus) params.set("maritalStatus", filters.maritalStatus);
+    if (filters.age) {
+      const [min, max] = filters.age.split("-");
+      params.set("ageMin", min);
+      if (max) params.set("ageMax", max);
+    }
+    if (filters.division) params.set("district", filters.division);
+    router.push(`/list?${params.toString()}`);
+  };
+
   return (
     <section className=" p-4">
       {/* STATS */}
       <div className="w-full lg:max-w-3xl mx-auto my-10 grid grid-cols-2 md:grid-cols-4 gap-7 ">
         {[
-          { num: "১২৫", label: "একাউন্ট" },
-          { num: "২৬", label: "পাত্রের বায়োডাটা" },
-          { num: "৩২", label: "পাত্রীর বায়োডাটা" },
-          { num: "৫০", label: "বিবাহ সম্পন্ন হয়েছে" },
+          { num: stats.users, label: "একাউন্ট" },
+          { num: stats.grooms, label: "পাত্রের বায়োডাটা" },
+          { num: stats.brides, label: "পাত্রীর বায়োডাটা" },
+          { num: stats.marriages, label: "বিবাহ সম্পন্ন হয়েছে" },
         ].map((stat, i) => (
           <div key={i} className="card bg-[#fd6969] text-white shadow-md">
             <div className="card-body p-4 text-center">
-              <div className="text-5xl font-extrabold">{stat.num}</div>
+              <div className="text-5xl font-extrabold">
+                {stat.num.toLocaleString("bn-BD")}
+              </div>
               <div className="text-lg opacity-90">{stat.label}</div>
             </div>
           </div>
@@ -63,18 +91,77 @@ export default function SearchBar() {
           <div className="bg-[#e8dfdf] card overflow-hidden">
             {/* Mobile Layout */}
             <div className="flex flex-col md:hidden divide-y divide-gray-300">
-              {selectFields?.map((item, i) => (
+              {[
+                {
+                  key: "religion",
+                  label: "কোন ধর্ম থেকে খুঁজছি",
+                  options: [
+                    ["", "ধর্ম নির্বাচন করুন"],
+                    ["islam", "ইসলাম"],
+                    ["hinduism", "হিন্দু"],
+                    ["christianity", "খ্রিস্টান"],
+                    ["buddhism", "বৌদ্ধ"],
+                    ["other", "অন্যান্য"],
+                  ],
+                },
+                {
+                  key: "gender",
+                  label: "আমি খুঁজছি",
+                  options: [
+                    ["", "পাত্র/পাত্রী নির্বাচন করুন"],
+                    ["patro", "পাত্র"],
+                    ["patri", "পাত্রী"],
+                  ],
+                },
+                {
+                  key: "maritalStatus",
+                  label: "বৈবাহিক অবস্থা",
+                  options: [
+                    ["", "নির্বাচন করুন"],
+                    ["UNMARRIED", "অবিবাহিত"],
+                    ["DIVORCED", "তালাকপ্রাপ্ত"],
+                    ["WIDOWED", "বিধবা/বিপত্নীক"],
+                    ["OTHER", "অন্যান্য"],
+                  ],
+                },
+                {
+                  key: "age",
+                  label: "বয়স",
+                  options: [
+                    ["", "বয়স নির্বাচন করুন"],
+                    ["18-21", "১৮ - ২১"],
+                    ["22-25", "২২ - ২৫"],
+                    ["26-30", "২৬ - ৩০"],
+                    ["31-35", "৩১ - ৩৫"],
+                    ["36-40", "৩৬ - ৪০"],
+                    ["41-60", "৪১+"],
+                  ],
+                },
+                {
+                  key: "division",
+                  label: "বিভাগ",
+                  options: [
+                    ["", "স্থান নির্বাচন করুন"],
+                    ["ঢাকা", "ঢাকা"],
+                    ["চট্টগ্রাম", "চট্টগ্রাম"],
+                    ["খুলনা", "খুলনা"],
+                    ["রাজশাহী", "রাজশাহী"],
+                    ["সিলেট", "সিলেট"],
+                    ["বরিশাল", "বরিশাল"],
+                    ["রংপুর", "রংপুর"],
+                    ["ময়মনসিংহ", "ময়মনসিংহ"],
+                  ],
+                },
+              ].map((item, i) => (
                 <div key={i} className="px-4 py-3">
                   <select
                     className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf]"
-                    defaultValue=""
+                    value={filters[item.key]}
+                    onChange={set(item.key)}
                   >
-                    <option value="" disabled>
-                      {item.label}
-                    </option>
-                    {item.options.map((option, j) => (
-                      <option key={j} value={option}>
-                        {option}
+                    {item.options.map(([value, label], j) => (
+                      <option key={j} value={value}>
+                        {label}
                       </option>
                     ))}
                   </select>
@@ -82,21 +169,11 @@ export default function SearchBar() {
               ))}
 
               {/* Button */}
-              <button className="w-full bg-[#5a5a5a] py-3 flex items-center justify-center hover:bg-[#444] transition">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-4.35-4.35m1.6-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+              <button
+                onClick={submit}
+                className="w-full bg-[#5a5a5a] py-3 flex items-center justify-center hover:bg-[#444] transition"
+              >
+                <Search className="w-5 h-5 text-white" />
               </button>
             </div>
 
@@ -105,7 +182,8 @@ export default function SearchBar() {
               <div className="flex-1 px-4">
                 <select
                   className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
-                  defaultValue=""
+                  value={filters.religion}
+                  onChange={set("religion")}
                 >
                   <option value="" disabled>
                     ধর্ম নির্বাচন করুন
@@ -123,7 +201,8 @@ export default function SearchBar() {
               <div className="flex-1 px-4">
                 <select
                   className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
-                  defaultValue=""
+                  value={filters.gender}
+                  onChange={set("gender")}
                 >
                   <option value="" disabled>
                     পাত্র নির্বাচন করুন
@@ -138,15 +217,15 @@ export default function SearchBar() {
               <div className="flex-1 px-4">
                 <select
                   className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
-                  defaultValue=""
+                  value={filters.maritalStatus}
+                  onChange={set("maritalStatus")}
                 >
-                  {" "}
                   <option value="" disabled>
                     নির্বাচন করুন
                   </option>
-                  <option value="unmarried">অবিবাহিত</option>
-                  <option value="divorced">তালাকপ্রাপ্ত</option>
-                  <option value="widow">বিধবা/বিপত্নীক</option>
+                  <option value="UNMARRIED">অবিবাহিত</option>
+                  <option value="DIVORCED">তালাকপ্রাপ্ত</option>
+                  <option value="WIDOWED">বিধবা/বিপত্নীক</option>
                 </select>
               </div>
 
@@ -155,7 +234,8 @@ export default function SearchBar() {
               <div className="flex-1 px-4">
                 <select
                   className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
-                  defaultValue=""
+                  value={filters.age}
+                  onChange={set("age")}
                 >
                   <option value="" disabled>
                     বয়স নির্বাচন করুন
@@ -163,6 +243,8 @@ export default function SearchBar() {
                   <option value="18-21">১৮ - ২১</option>
                   <option value="22-25">২২ - ২৫</option>
                   <option value="26-30">২৬ - ৩০</option>
+                  <option value="31-35">৩১ - ৩৫</option>
+                  <option value="36-60">৩৬+</option>
                 </select>
               </div>
 
@@ -171,37 +253,28 @@ export default function SearchBar() {
               <div className="flex-1 px-4">
                 <select
                   className="select select-ghost w-full bg-[#e8dfdf] border-none outline-none focus:outline-none focus:border-none text-gray-700 focus:bg-[#e8dfdf] cursor-pointer"
-                  defaultValue=""
+                  value={filters.division}
+                  onChange={set("division")}
                 >
                   <option value="" disabled>
                     স্থান নির্বাচন করুন
                   </option>
-                  <option value="dhaka">ঢাকা</option>
-                  <option value="chittagong">চট্টগ্রাম</option>
-                  <option value="khulna">খুলনা</option>
-                  <option value="rajshahi">রাজশাহী</option>
-                  <option value="sylhet">সিলেট</option>
-                  <option value="barishal">বরিশাল</option>
-                  <option value="rangpur">রংপুর</option>
-                  <option value="mymensingh">ময়মনসিংহ</option>
+                  <option value="ঢাকা">ঢাকা</option>
+                  <option value="চট্টগ্রাম">চট্টগ্রাম</option>
+                  <option value="খুলনা">খুলনা</option>
+                  <option value="রাজশাহী">রাজশাহী</option>
+                  <option value="সিলেট">সিলেট</option>
+                  <option value="বরিশাল">বরিশাল</option>
+                  <option value="রংপুর">রংপুর</option>
+                  <option value="ময়মনসিংহ">ময়মনসিংহ</option>
                 </select>
               </div>
 
-              <button className="w-[70px] h-full bg-[#5a5a5a] flex items-center justify-center hover:bg-[#444] transition cursor-pointer">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-4.35-4.35m1.6-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+              <button
+                onClick={submit}
+                className="w-[70px] h-full bg-[#5a5a5a] flex items-center justify-center hover:bg-[#444] transition cursor-pointer"
+              >
+                <Search className="w-5 h-5 text-white" />
               </button>
             </div>
           </div>
@@ -209,4 +282,4 @@ export default function SearchBar() {
       </div>
     </section>
   );
-}
+}

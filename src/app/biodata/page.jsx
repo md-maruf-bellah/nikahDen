@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -16,6 +17,8 @@ import {
   GeneralInfo,
 } from "./AllComponent";
 import { Check } from "lucide-react";
+import { biodataApi, tokenStore } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const validationSchema = yup.object().shape({
   // স্টেপ ১: ব্যক্তিগত তথ্য
@@ -133,15 +136,33 @@ const validationSchema = yup.object().shape({
   }),
 
   // স্টেপ ৩: শিক্ষাগত যোগ্যতা
-  education: yup.string().when("$activeStep", {
+  education: yup.mixed().when("$activeStep", {
     is: 3,
-    then: (schema) => schema.required("শিক্ষাগত যোগ্যতা আবশ্যক"),
+    then: (schema) =>
+      schema.test(
+        "education-filled",
+        "শিক্ষাগত যোগ্যতা আবশ্যক",
+        (v) =>
+          v == null ||
+          (Array.isArray(v)
+            ? v.some((x) => String(x || "").trim() !== "")
+            : String(v).trim() !== "")
+      ),
   }),
 
   // স্টেপ ৪: পেশাগত তথ্য
-  occupation: yup.string().when("$activeStep", {
+  occupation: yup.mixed().when("$activeStep", {
     is: 4,
-    then: (schema) => schema.required("আপনার পেশা লিখুন"),
+    then: (schema) =>
+      schema.test(
+        "occupation-filled",
+        "আপনার পেশা লিখুন",
+        (v) =>
+          v == null ||
+          (Array.isArray(v)
+            ? v.some((x) => String(x || "").trim() !== "")
+            : String(v).trim() !== "")
+      ),
   }),
 
   // স্টেপ ৬: যোগাযোগ (স্টেপ ৫ স্কিপ করা হয়েছে বা অপশনাল রাখা যায়)
@@ -158,19 +179,122 @@ const validationSchema = yup.object().shape({
     is: 7,
     then: (schema) => schema.oneOf([true], "আপনাকে অবশ্যই অঙ্গীকার করতে হবে"),
   }),
-
-  mobile: yup.string().when("$activeStep", {
-    is: 8,
-    then: (schema) =>
-      schema
-        .required("মোবাইল নম্বর আবশ্যক")
-        .matches(/^[0-9]+$/, "সঠিক নম্বর দিন"),
-  }),
 });
+
+// স্টেপ ৮ এ যোগ হওয়া সাধারণ তথ্য (পাত্র/পাত্রী, বয়স, বিভাগ, বৈবাহিক অবস্থা)
+function GeneralFields({ register, errors }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="form-control w-full">
+        <label className="label">আপনি কি খুঁজছেন / আপনার পরিচয়</label>
+        <select
+          {...register("gender")}
+          className={`select select-bordered w-full ${
+            errors.gender ? "border-red-500" : ""
+          }`}
+        >
+          <option value="">নির্বাচন করুন</option>
+          <option value="MALE">পাত্র</option>
+          <option value="FEMALE">পাত্রী</option>
+        </select>
+        {errors.gender && (
+          <span className="text-red-500 text-xs mt-1">
+            {errors.gender.message}
+          </span>
+        )}
+      </div>
+
+      <div className="form-control w-full">
+        <label className="label">বৈবাহিক অবস্থা</label>
+        <select
+          {...register("maritalStatus")}
+          className={`select select-bordered w-full ${
+            errors.maritalStatus ? "border-red-500" : ""
+          }`}
+        >
+          <option value="">নির্বাচন করুন</option>
+          <option value="UNMARRIED">অবিবাহিত</option>
+          <option value="DIVORCED">তালাকপ্রাপ্ত</option>
+          <option value="WIDOWED">বিধবা/বিপত্নীক</option>
+          <option value="OTHER">অন্যান্য</option>
+        </select>
+        {errors.maritalStatus && (
+          <span className="text-red-500 text-xs mt-1">
+            {errors.maritalStatus.message}
+          </span>
+        )}
+      </div>
+
+      <div className="form-control w-full">
+        <label className="label">জন্মসাল (বয়স হিসাব করা হবে)</label>
+        <input
+          type="number"
+          min={1950}
+          max={2008}
+          {...register("birthYear")}
+          placeholder="১৯৯৮"
+          className={`input input-bordered w-full ${
+            errors.birthYear ? "border-red-500" : ""
+          }`}
+        />
+        {errors.birthYear && (
+          <span className="text-red-500 text-xs mt-1">
+            {errors.birthYear.message}
+          </span>
+        )}
+      </div>
+
+      <div className="form-control w-full">
+        <label className="label">বিভাগ</label>
+        <select
+          {...register("division")}
+          className={`select select-bordered w-full ${
+            errors.division ? "border-red-500" : ""
+          }`}
+        >
+          <option value="">নির্বাচন করুন</option>
+          <option value="ঢাকা">ঢাকা</option>
+          <option value="চট্টগ্রাম">চট্টগ্রাম</option>
+          <option value="খুলনা">খুলনা</option>
+          <option value="রাজশাহী">রাজশাহী</option>
+          <option value="সিলেট">সিলেট</option>
+          <option value="বরিশাল">বরিশাল</option>
+          <option value="রংপুর">রংপুর</option>
+          <option value="ময়মনসিংহ">ময়মনসিংহ</option>
+        </select>
+        {errors.division && (
+          <span className="text-red-500 text-xs mt-1">
+            {errors.division.message}
+          </span>
+        )}
+      </div>
+
+      <div className="form-control w-full md:col-span-2">
+        <label className="label">জেলা</label>
+        <input
+          {...register("district")}
+          placeholder="যেমন: ঢাকা"
+          className={`input input-bordered w-full ${
+            errors.district ? "border-red-500" : ""
+          }`}
+        />
+        {errors.district && (
+          <span className="text-red-500 text-xs mt-1">
+            {errors.district.message}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function FormContent() {
   const [activeStep, setActiveStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const { formData, updateFormData } = useFormData();
+  const { user } = useAuth();
+  const router = useRouter();
 
   const steps = [
     "ব্যক্তিগত তথ্য",
@@ -187,40 +311,92 @@ function FormContent() {
     register,
     handleSubmit,
     formState: { errors },
-    trigger, // এটি ব্যবহার করে আমরা ম্যানুয়ালি চেক করতে পারব
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: formData,
-    context: { activeStep: activeStep }, // Yup এই activeStep ব্যবহার করবে
-    mode: "onChange", // টাইপ করার সাথে সাথে এরর দেখাবে
+    context: { activeStep: activeStep },
+    mode: "onChange",
   });
 
-  const onNext = (data) => {
+  const onNext = async (data) => {
+    setSubmitError("");
     // ১. প্রথমে গ্লোবাল কনটেক্সট আপডেট করুন
     updateFormData(data);
 
-    // ২. বর্তমান ডাটা কনসোলে দেখুন
-    console.log(`Step ${activeStep} Data:`, data);
-
-    if (activeStep <= steps.length) {
-      // ৩. পরবর্তী স্টেপে যান
+    if (activeStep < steps.length) {
       setActiveStep((prev) => prev + 1);
-      // নেক্সট পেজে যাওয়ার পর স্ক্রল উপরে নিয়ে আসা
       window.scrollTo(0, 0);
-    } else {
-      // শেষ ধাপে ডাটা অ্যারে অফ অবজেক্ট হিসেবে কনভার্ট করা
-      const finalArray = Object.entries({ ...formData, ...data }).map(
-        ([key, value]) => ({
-          field: key,
-          value: value,
-        }),
-      );
-      console.log("Final Submitted Data (Array Format):", finalArray);
-      //   alert("বায়োডাটা সফলভাবে তৈরি হয়েছে!");
+      return;
+    }
+
+    // শেষ ধাপ — বাস্তব ব্যাকএন্ডে জমা দিন
+    if (!tokenStore.getAccess()) {
+      setSubmitError("বায়োডাটা জমা দিতে আগে লগইন করুন।");
+      router.push("/login");
+      return;
+    }
+
+    const all = { ...formData, ...data };
+    if (!all.gender || !all.maritalStatus || !all.birthYear || !all.division) {
+      setSubmitError("পাত্র/পাত্রী, বৈবাহিক অবস্থা, জন্মসাল ও বিভাগ নির্বাচন করুন।");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        firstName: user?.firstName || "",
+        lastName: user?.lastName || "",
+        gender: all.gender,
+        maritalStatus: all.maritalStatus,
+        birthYear: Number(all.birthYear),
+        division: all.division,
+        district: all.district || "",
+        religion: all.religion || undefined,
+        sectOrDenomination: all.sectOrDenomination || undefined,
+        religiousPracticeLevel: all.religiousPracticeLevel || undefined,
+        placeOfWorshipAttendance: all.placeOfWorshipAttendance || undefined,
+        holyBookReading: all.holyBookReading || undefined,
+        religiousEducation: all.religiousEducation || undefined,
+        religiousDressPreference: all.religiousDressPreference || undefined,
+        charityActivity: all.charityActivity || undefined,
+        religiousOrganization: all.religiousOrganization || undefined,
+        dietaryPractice: all.dietaryPractice || undefined,
+        futureReligiousGoal: all.futureReligiousGoal || undefined,
+        partnerReligiousExpectation: all.partnerReligiousExpectation || undefined,
+        clothingStyle: all.clothingStyle || undefined,
+        healthCondition: all.healthCondition || undefined,
+        entertainmentHabit: all.entertainmentHabit || undefined,
+        politicalView: all.politicalView || undefined,
+        favoriteBooksPeople: all.favoriteBooksPeople || undefined,
+        aboutYourself: all.aboutYourself || undefined,
+        specialCategories: all.specialCategories || undefined,
+        education:
+          (Array.isArray(all.education)
+            ? all.education.find((x) => String(x || "").trim())
+            : all.education) || undefined,
+        occupation:
+          (Array.isArray(all.occupation)
+            ? all.occupation.find((x) => String(x || "").trim())
+            : all.occupation) || undefined,
+        mobile: all.mobile || all.phoneNumber || undefined,
+        phoneNumber: all.phoneNumber || all.mobile || undefined,
+        presentAddress: all.presentAddress || undefined,
+        permanentAddress: all.permanentAddress || undefined,
+        agreed: Boolean(all.agreed),
+      };
+
+      await biodataApi.create(payload);
+      // অনুমোদনের জন্য জমা দিন
+      await biodataApi.submit().catch(() => {});
+      router.push("/profile");
+    } catch (err) {
+      setSubmitError(err.message || "বায়োডাটা জমা দেওয়া যায়নি। আবার চেষ্টা করুন।");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  // এরর হ্যান্ডলিং দেখার জন্য (যদি নেক্সট না কাজ করে কনসোলে এরর দেখাবে)
   const onError = (errors) => {
     console.log("Validation Errors:", errors);
   };
@@ -229,47 +405,12 @@ function FormContent() {
     <div>
       {/* Header */}
       <div className="bg-red-400 text-white text-center py-8 md:py-10">
-        <h1 className="text-xl md:text-2xl font-bold">বায়োডাটা তৈরি করুন </h1>
+        <h1 className="text-xl md:text-2xl font-bold">বায়োডাটা তৈরি করুন </h1>
         <p className="text-xs md:text-sm mt-2">সকল পাত্র-পাত্রী তালিকা</p>
-
-        {/* Mobile Filter Button */}
-        <button
-          onClick={() => setOpen(true)}
-          className="btn btn-sm btn-primary mt-3 md:hidden"
-        >
-          ফিল্টার
-        </button>
       </div>
 
       <div className="max-w-6xl mx-auto p-4 md:py-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Stepper (Left) */}
-          {/* <div className="md:col-span-1 space-y-4">
-          {steps.map((label, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs transition-colors duration-300 ${
-                  activeStep > index + 1
-                    ? "bg-green-500"
-                    : activeStep === index + 1
-                      ? "bg-red-500"
-                      : "bg-gray-300"
-                }`}
-              >
-                {activeStep > index + 1 ? "✓" : index + 1}
-              </div>
-              <span
-                className={`text-sm ${
-                  activeStep === index + 1
-                    ? "font-bold text-red-500"
-                    : "text-gray-500"
-                }`}
-              >
-                {label}
-              </span>
-            </div>
-          ))}
-        </div> */}
           {/* LEFT STEPPER (Desktop & Mobile) */}
           <div className="md:col-span-1">
             {/* Desktop Vertical Stepper */}
@@ -314,11 +455,15 @@ function FormContent() {
 
           {/* Form Body (Right) */}
           <div className="card md:col-span-3  p-6 bg-base-200 min-h-[400px]">
+            {submitError && (
+              <div className="alert alert-error text-sm mb-4 shadow-none">
+                <span>{submitError}</span>
+              </div>
+            )}
             <form onSubmit={handleSubmit(onNext, onError)}>
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 border-b-3  border-red-500 inline-block uppercase tracking-wide">
                   {steps[activeStep - 1]}
-                  {/* তথ্য */}
                 </h2>
 
                 <div className="mt-2">
@@ -345,7 +490,12 @@ function FormContent() {
                   )}
 
                   {activeStep === 8 && (
-                    <GeneralInfo register={register} errors={errors} />
+                    <>
+                      <GeneralInfo register={register} errors={errors} />
+                      <div className="mt-4">
+                        <GeneralFields register={register} errors={errors} />
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -361,9 +511,14 @@ function FormContent() {
                 </button>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className=" btn px-6 py-2 border bg-red-500 hover:bg-red-600 text-white transition font-medium shadow-none"
                 >
-                  {activeStep === steps.length ? "সাবমিট করুন" : "পরবর্তী ধাপ"}
+                  {submitting
+                    ? "জমা হচ্ছে..."
+                    : activeStep === steps.length
+                      ? "সাবমিট করুন"
+                      : "পরবর্তী ধাপ"}
                 </button>
               </div>
             </form>
@@ -380,4 +535,4 @@ export default function BiodataApp() {
       <FormContent />
     </FormProvider>
   );
-}
+}
