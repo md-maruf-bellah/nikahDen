@@ -1,5 +1,7 @@
 # নিকাহ দ্বীন (Nikah Deen) — Backend API
 
+[![CI](https://github.com/md-maruf-bellah/nikahDen/actions/workflows/ci.yml/badge.svg)](https://github.com/md-maruf-bellah/nikahDen/actions/workflows/ci.yml)
+
 Production-ready REST API for the **Nikah Deen / Biye Sadi** matrimony platform.
 
 Built from a full audit of the Next.js frontend in this repository. Pure
@@ -67,13 +69,34 @@ Verify: `curl http://localhost:5000/health`
 ## Scripts
 
 ```bash
-npm run dev      # watch mode
-npm start        # production start
-npm run seed     # idempotent seed
+npm run dev             # watch mode
+npm run dev:memory      # dev with an in-memory MongoDB (no local install needed)
+npm start               # production start
+npm run seed            # idempotent seed
 npm run seed:reset
-npm test         # integration tests (spins an in-memory MongoDB; downloads a
-                 # mongod binary on first run)
+npm test                # integration tests (spins an in-memory MongoDB; downloads a
+                        # mongod binary on first run)
+npm run verify:lifecycle  # smoke-test a RUNNING API: register → pay → match flow
+npm run check           # syntax check
 ```
+
+One-off scripts (no npm alias): `node scripts/verify-oauth-handoff.js` — verifies
+the OAuth handoff-code path against a running API.
+
+> **Test note:** pin the mongod binary with `MONGOMS_VERSION=7.0.24 npm test` —
+> newer defaults can fail on hosts with OpenSSL 3 (same pin CI uses).
+
+---
+
+## CI
+
+CI runs on every push (all branches) via [`.github/workflows/ci.yml`](../.github/workflows/ci.yml):
+
+- **Backend tests** — `npm ci && npm test` on Node 22 with `MONGOMS_VERSION=7.0.24`
+  (in-memory MongoDB, no Mongo service container needed).
+- **Frontend build** — `npm ci && npm run build` for the Next.js app at the repo root.
+
+The badge at the top reflects the latest run on `main`.
 
 ---
 

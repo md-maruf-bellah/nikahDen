@@ -28,7 +28,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ["22"]
+        # Node 20 LTS + 22 — backend engines >=18.17;
+        # --test-concurrency ফ্ল্যাগ v20.10 থেকে আছে, আর runner-এ "20" মানে latest v20.x
+        node: ["20", "22"]
     env:
       MONGOMS_VERSION: "7.0.24"
     steps:
