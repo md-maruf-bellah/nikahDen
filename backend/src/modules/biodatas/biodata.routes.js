@@ -11,7 +11,7 @@ import {
   statusSchema,
   similarSchema,
   idParam,
-  indexParam,
+  photoIndexParams,
 } from "./biodata.validation.js";
 import * as biodataController from "./biodata.controller.js";
 
@@ -26,6 +26,7 @@ router.get("/likes/received", authenticate, biodataController.likesReceived);
 
 // ---------------- own biodata ----------------
 router.get("/me", authenticate, biodataController.getMine);
+router.get("/me/completion", authenticate, biodataController.getMineCompletion);
 router.post("/", authenticate, validate(biodataSchema), biodataController.createMine);
 router.patch("/me", authenticate, validate(biodataSchema), biodataController.updateMine);
 router.post("/me/submit", authenticate, biodataController.submitMine);
@@ -44,8 +45,7 @@ router.delete("/:id/like", authenticate, validate(idParam, "params"), biodataCon
 router.delete(
   "/:id/photos/:index",
   authenticate,
-  validate(idParam, "params"),
-  validate(indexParam, "params"),
+  validate(photoIndexParams, "params"),
   biodataController.removePhoto
 );
 router.patch(

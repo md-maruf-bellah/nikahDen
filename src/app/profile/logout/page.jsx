@@ -1,64 +1,42 @@
 "use client";
-import React, { useState } from "react";
-import { Mail, Lock, EyeOff, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { tokenStore } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
-const LogoutForm = () => {
-  const [showPassword, setShowPassword] = useState(false);
+// লগ আউট পেজ — লোড হওয়ামাত্র সেশন বাতিল করে লগইনে পাঠায়
+const LogoutPage = () => {
+  const { logout } = useAuth();
+  const router = useRouter();
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => logout())
+      .catch(() => tokenStore.clear())
+      .finally(() => {
+        if (cancelled) return;
+        setDone(true);
+        router.replace("/login");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [logout, router]);
 
   return (
-    <div className=" p-4">
-      <div className="w-full  space-y-6">
-        {/* Header */}
-        <h2 className="text-2xl font-bold text-gray-700">Logout</h2>
-
-        <div className="space-y-4">
-          {/* Email/Name Input */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <Mail size={18} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              defaultValue="Maraj Akanda"
-              className="w-full pl-10 pr-10 py-2 border border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 font-bold text-gray-800"
-            />
-            <div className="absolute inset-y-0 right-3 flex items-center">
-              <Info size={18} className="text-gray-400 cursor-pointer" />
-            </div>
-          </div>
-
-          {/* Password Input */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <Lock size={18} className="text-gray-400" />
-            </div>
-            <input
-              type={showPassword ? "text" : "password"}
-              defaultValue="password123456"
-              className="w-full pl-10 pr-10 py-2 border border-gray-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 text-gray-600"
-            />
-            <div
-              className="absolute inset-y-0 right-3 flex items-center cursor-pointer"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              <EyeOff size={18} className="text-gray-400" />
-            </div>
-          </div>
-        </div>
-
-        {/* Links */}
-        <div className="flex justify-between text-xs text-gray-400">
-          <button className="hover:underline">Forget password?</button>
-          <button className="hover:underline">Generate a password</button>
-        </div>
-
-        {/* Logout Button */}
-        <button className="w-full bg-[#EF4444] hover:bg-red-600 text-white font-bold py-2 rounded-lg transition-colors text-lg">
-          Logout
-        </button>
-      </div>
+    <div className="flex items-center justify-center min-h-[300px] gap-2 text-gray-500">
+      {done ? (
+        <span>লগ আউট হয়েছে। লগইন পেজে যাচ্ছে...</span>
+      ) : (
+        <>
+          <Loader2 size={18} className="animate-spin" /> লগ আউট হচ্ছে...
+        </>
+      )}
     </div>
   );
 };
 
-export default LogoutForm;
+export default LogoutPage;

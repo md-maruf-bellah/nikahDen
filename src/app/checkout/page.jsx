@@ -9,9 +9,14 @@ function CheckoutBody() {
   const router = useRouter();
   const params = useSearchParams();
   const planIdParam = params.get("planId");
+  const packIdParam = params.get("packId");
+  const kindParam = params.get("kind");
+  const orderKind = kindParam === "PACK" || packIdParam ? "PACK" : "PLAN";
 
   const [plans, setPlans] = useState([]);
+  const [packs, setPacks] = useState([]);
   const [plan, setPlan] = useState(null);
+  const [pack, setPack] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [coupon, setCoupon] = useState(null);
   const [couponMsg, setCouponMsg] = useState("");
@@ -20,17 +25,28 @@ function CheckoutBody() {
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
-    membershipApi
-      .plans()
-      .then((list) => {
-        const arr = Array.isArray(list) ? list : [];
-        setPlans(arr);
-        const selected = arr.find((p) => p.id === planIdParam) || arr[0] || null;
-        setPlan(selected);
-      })
-      .catch(() => setError("মেম্বারশিপ প্লান লোড করা যায়নি"))
-      .finally(() => setLoading(false));
-  }, [planIdParam]);
+    (async () => {
+      try {
+        const [planList, packList] = await Promise.all([
+          membershipApi.plans().catch(() => []),
+          membershipApi.packs().catch(() => []),
+        ]);
+        const pArr = Array.isArray(planList) ? planList : [];
+        const kArr = Array.isArray(packList) ? packList : [];
+        setPlans(pArr);
+        setPacks(kArr);
+        if (orderKind === "PACK") {
+          setPack(kArr.find((p) => p.id === packIdParam) || kArr[0] || null);
+          setPlan(null);
+        } else {
+          setPlan(pArr.find((p) => p.id === planIdParam) || pArr[0] || null);
+          setPack(null);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!tokenStore.getAccess() && !loading) {
     router.replace("/login");
@@ -49,19 +65,20 @@ function CheckoutBody() {
     }
   };
 
-  const discount = coupon && plan ? Math.floor((plan.price * coupon.discountPercent) / 100) : 0;
-  const total = plan ? plan.price - discount : 0;
+  const item = orderKind === "PACK" ? pack : plan;
+  const discount = coupon && item ? Math.floor((item.price * coupon.discountPercent) / 100) : 0;
+  const total = item ? item.price - discount : 0;
 
   const placeOrder = async () => {
-    if (!plan || placing) return;
+    if (!item || placing) return;
     setPlacing(true);
     setError("");
     try {
-      const order = await orderApi.create({
-        kind: "PLAN",
-        planId: plan.id,
-        couponCode: coupon ? coupon.code : null,
-      });
+      const order = await orderApi.create(
+        orderKind === "PACK"
+          ? { kind: "PACK", packId: pack.id, couponCode: coupon ? coupon.code : null }
+          : { kind: "PLAN", planId: plan.id, couponCode: coupon ? coupon.code : null }
+      );
       router.push(`/payment?orderId=${order.id}`);
     } catch (err) {
       setError(err.message || "অর্ডার তৈরি করা যায়নি। লগইন করা আছে কি না দেখুন।");
@@ -96,7 +113,28 @@ function CheckoutBody() {
               {loading && (
                 <p className="text-gray-400 text-sm">প্লান লোড হচ্ছে...</p>
               )}
-              {!loading && plans.length > 0 && (
+              {!loading && orderKind === "PACK" && (
+                <>
+                  <select
+                    value={pack?.id || ""}
+                    onChange={(e) => {
+                      setPack(packs.find((p) => p.id === e.target.value));
+                      setCoupon(null);
+                    }}
+                    className="select select-bordered w-full mb-4 text-sm"
+                  >
+                    {packs.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nameBn || p.name} — ৳{p.price}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-400 mb-3">
+                    কানেক্ট হলো বায়োডাটা পড়ার ক্রেডিট — প্রতিটি পূর্ণ প্রোফাইল দেখতে ১টি লাগে।
+                  </p>
+                </>
+              )}
+              {!loading && orderKind === "PLAN" && plans.length > 0 && (
                 <>
                   <select
                     value={plan?.id || ""}
@@ -114,17 +152,22 @@ function CheckoutBody() {
                   </select>
 
                   {/* Item Row */}
-                  {plan && (
+                  {item && (
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-800 font-bold text-sm">
-                        {plan.nameBn || plan.name}
+                        {item.nameBn || item.name}
+                        {orderKind === "PACK" && item.connectCount ? (
+                          <span className="ml-2 badge badge-sm badge-outline border-red-200 text-red-400">
+                            {item.connectCount} কানেক্ট
+                          </span>
+                        ) : null}
                       </span>
                       <div className="flex items-center gap-24">
                         <span className="text-gray-800 font-bold text-sm">
-                          ৳ {plan.price.toLocaleString("bn-BD")}
+                          ৳ {item.price.toLocaleString("bn-BD")}
                         </span>
                         <button
-                          onClick={() => setPlan(null)}
+                          onClick={() => (orderKind === "PACK" ? setPack(null) : setPlan(null))}
                           className="text-gray-400 hover:text-red-500 transition-colors text-xs font-semibold cursor-pointer"
                         >
                           ✕
@@ -134,9 +177,9 @@ function CheckoutBody() {
                   )}
                 </>
               )}
-              {!loading && plans.length === 0 && (
+              {!loading && ((orderKind === "PLAN" && plans.length === 0) || (orderKind === "PACK" && packs.length === 0)) && (
                 <p className="text-gray-400 text-sm">
-                  কোনো সক্রিয় প্লান নেই।
+                  কোনো সক্রিয় {orderKind === "PACK" ? "প্যাক" : "প্লান"} নেই।
                 </p>
               )}
 
@@ -148,9 +191,13 @@ function CheckoutBody() {
                 >
                   পূর্বে ফিরে যান
                 </Link>
-                {plan && (
+                {item && (
                   <button
-                    onClick={() => setPlan(plans.find((p) => p.id === planIdParam) || plans[0])}
+                    onClick={() =>
+                      orderKind === "PACK"
+                        ? setPack(packs.find((p) => p.id === packIdParam) || packs[0])
+                        : setPlan(plans.find((p) => p.id === planIdParam) || plans[0])
+                    }
                     className="border border-red-200 text-red-400 hover:bg-red-50 text-xs rounded px-4 py-1.5 transition-colors cursor-pointer bg-white"
                   >
                     আপডেট করুন
@@ -214,7 +261,7 @@ function CheckoutBody() {
 
                 <button
                   onClick={placeOrder}
-                  disabled={!plan || placing}
+                  disabled={!item || placing}
                   className="block w-full text-center bg-[#ff6b6b] hover:bg-red-500 text-white font-medium py-2.5 rounded-md mt-6 text-xs transition-colors shadow-sm cursor-pointer disabled:opacity-60"
                 >
                   {placing ? "অর্ডার তৈরি হচ্ছে..." : "Process To Checkout"}

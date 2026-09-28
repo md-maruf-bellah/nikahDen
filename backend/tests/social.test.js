@@ -95,11 +95,19 @@ describe("CONTACTS / NOTIFICATIONS / MESSAGES / SECURITY", () => {
       assert.equal(bobConv.body.pagination.total, 1);
       assert.equal(bobConv.body.data[0].partner.id, alice.user.id);
       assert.equal(bobConv.body.data[0].lastMessage.text.split(" ")[0], "আসসালামু");
+      // unread counter: bob has 1 unread from alice, alice has 0
+      assert.equal(bobConv.body.data[0].unreadCount, 1);
+      const aliceConvBefore = await request.get("/api/v1/conversations").set(auth(alice.accessToken));
+      assert.equal(aliceConvBefore.body.data[0].unreadCount, 0);
 
       // bob reads alice's message → status flips to READ for bob
       const bobMsgs = await request.get(`/api/v1/conversations/${convoId}/messages`).set(auth(bob.accessToken));
       assert.equal(bobMsgs.body.data.length, 1);
       assert.equal(bobMsgs.body.data[0].sender, alice.user.id);
+
+      // after reading, bob's unread counter drops to 0
+      const bobConvAfterRead = await request.get("/api/v1/conversations").set(auth(bob.accessToken));
+      assert.equal(bobConvAfterRead.body.data[0].unreadCount, 0);
 
       const reply = await request
         .post(`/api/v1/conversations/${convoId}/messages`)

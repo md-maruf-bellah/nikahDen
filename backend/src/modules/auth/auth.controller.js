@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/ApiResponse.js";
 import * as authService from "./auth.service.js";
+import * as oauthService from "./oauth.service.js";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -70,4 +71,72 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 export const resetPassword = asyncHandler(async (req, res) => {
   await authService.resetUserPassword(req.body.token, req.body.newPassword);
   return sendSuccess(res, "Password has been reset. You can login now.");
+});
+
+// ---------------------------------------------------------------------------
+// OAuth (Google / Facebook)
+// ---------------------------------------------------------------------------
+
+// GET /auth/oauth/providers — frontend বাটন enable/disable করতে
+export const oauthProviders = asyncHandler(async (_req, res) => {
+  const providers = {
+    google: oauthService.providerConfigured("google"),
+    facebook: oauthService.providerConfigured("facebook"),
+  };
+  return sendSuccess(res, "OAuth providers", providers);
+});
+
+// GET /auth/oauth/:provider/start → 302 প্রোভাইডারে
+export const oauthStart = asyncHandler(async (req, res) => {
+  const { url } = oauthService.buildAuthUrl(req.params.provider);
+  return res.redirect(302, url);
+});
+
+// verifyState কে controller থেকে ব্যবহারের জন্য re-export
+export const verifyStateForController = (state) => oauthService.verifyState(state);
+
+// GET /auth/oauth/:provider/callback → কোড এক্সচেঞ্জ → handoff কোড দিয়ে frontend-এ
+export const oauthCallback = asyncHandler(async (req, res) => {
+  const { provider } = req.params;
+  const { code, state, error, error_description } = req.query;
+
+  // ইউজার প্রোভাইডারে বাতিল করলে
+  if (error) {
+    const desc = error === "access_denied" ? "আপনি অনুমতি দেননি।" : String(error_description || error);
+    return res.redirect(302, `${env.CLIENT_URL}/auth/callback?error=${encodeURIComponent(desc)}`);
+  }
+
+  try {
+    // state আগে যাচাই (CSRF) — provider mismatch ধরা পড়ুক
+    const statePayload = verifyStateForController(state);
+    if (statePayload.provider !== provider) {
+      const e = new Error("state provider mismatch");
+      e.errorCode = "OAUTH_STATE_INVALID";
+      throw e;
+    }
+    if (!code) throw new Error("MISSING_CODE");
+    const session = await oauthService.completeOAuthLogin(provider, code);
+    const handoffCode = oauthService.createHandoffCode(session);
+    return res.redirect(302, `${env.CLIENT_URL}/auth/callback?code=${handoffCode}`);
+  } catch (err) {
+    // অভ্যন্তরীণ বার্তা লিক না করে ব্যবহারকারী-বান্ধব বার্তায় ম্যাপ
+    const map = {
+      STATE_MISMATCH: "নিরাপত্তা যাচাই ব্যর্থ — আবার লগইন করুন।",
+      MISSING_CODE: "লগইন সম্পন্ন হয়নি — আবার চেষ্টা করুন।",
+      OAUTH_STATE_EXPIRED: "সেশনের মেয়াদ শেষ — আবার লগইন করুন।",
+      OAUTH_STATE_INVALID: "নিরাপত্তা যাচাই ব্যর্থ — আবার লগইন করুন।",
+      OAUTH_EMAIL_REQUIRED: "ইমেইল শেয়ার করার অনুমতি দিয়ে আবার চেষ্টা করুন।",
+      ACCOUNT_INACTIVE: "অ্যাকাউন্ট সক্রিয় নয় — সাপোর্টে যোগাযোগ করুন।",
+      OAUTH_EXCHANGE_FAILED: "প্রোভাইডার লগইন গ্রহণ করেনি — আবার চেষ্টা করুন।",
+      OAUTH_PROFILE_FAILED: "প্রোফাইল তথ্য আনা যায়নি — আবার চেষ্টা করুন।",
+    };
+    const msg = map[err?.errorCode] || map[err?.message] || "সোশ্যাল লগইন ব্যর্থ হয়েছে — আবার চেষ্টা করুন।";
+    return res.redirect(302, `${env.CLIENT_URL}/auth/callback?error=${encodeURIComponent(msg)}`);
+  }
+});
+
+// POST /auth/oauth/exchange { code } → session tokens (one-time handoff ভোগ করে)
+export const oauthExchange = asyncHandler(async (req, res) => {
+  const session = oauthService.consumeHandoffCode(req.body?.code);
+  return sendSuccess(res, "OAuth login successful", session);
 });

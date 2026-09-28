@@ -24,10 +24,48 @@ Common query params: `page`, `limit` (max 100), `search`, `sortBy`, `sortOrder`
 | POST   | `/auth/logout`       | public | `{ refreshToken? }` revokes it |
 | GET    | `/auth/me`           | auth   | current user |
 | PATCH  | `/auth/change-password` | auth | `{ currentPassword, newPassword }` |
-| POST   | `/auth/forgot-password` | public | `{ email }` — link emailed (logged in dev) |
+| POST   | `/auth/forgot-password` | public | `{ email }` — link emailed (logged in dev), 30-min token |
 | POST   | `/auth/reset-password` | public | `{ token, newPassword }` |
 
 Refresh tokens are stored **hashed**; rotation invalidates the previous token.
+
+### OAuth (Google / Facebook) `/auth/oauth`
+
+Social login is **env-gated**: a provider is enabled only when its credentials exist,
+otherwise `/start` returns **503 `OAUTH_NOT_CONFIGURED`** and unknown providers return **404**.
+No extra dependencies — handshake is implemented with `fetch` + HMAC-signed state.
+
+| Method | Path | Access | Notes |
+| ------ | ---- | ------ | ----- |
+| GET    | `/auth/oauth/providers` | public | `{ google: bool, facebook: bool }` — frontend uses this to enable/disable the social buttons |
+| GET    | `/auth/oauth/:provider/start` | public | 302 redirect to Google/Facebook consent; `provider` ∈ `google\|facebook` |
+| GET    | `/auth/oauth/:provider/callback` | public | provider redirects here; exchanges code → session, then 302 to `CLIENT_URL/auth/callback?code=<handoff>` (or `?error=<Bangla message>`) |
+| POST   | `/auth/oauth/exchange` | public | `{ code }` → `{ accessToken, refreshToken, user }` — one-time handoff code, 60s expiry |
+
+**Environment variables** (backend/.env):
+
+| Key | Purpose |
+| --- | ------- |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | enables Google login |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | enables Facebook login |
+| `OAUTH_API_ORIGIN` | optional — origin the provider is redirected to (defaults to deriving `:5000` from `CLIENT_URL`) |
+
+Redirect URI to register with the provider: `<OAUTH_API_ORIGIN | CLIENT_URL:5000>/api/v1/auth/oauth/<provider>/callback`
+
+Flow: browser → `/start` → provider consent → `/callback` → backend creates the session
+and redirects to the frontend `/auth/callback` page with a **one-time handoff code**;
+the page POSTs it to `/oauth/exchange` to receive the tokens.
+
+> Note: the handoff-code store is **in-memory** (60s TTL, single-use). Fine for a single
+> backend process; with multiple instances you would need a shared store (e.g. Redis).
+
+Account linking: existing local accounts with the same email are linked automatically
+(role is preserved); brand-new users are created as `USER`/`ACTIVE` with no password
+(`authProvider: google|facebook`). If the provider does not return an email, the login
+fails with `OAUTH_EMAIL_REQUIRED`. For Google, request the `email` scope consent.
+
+---
+
 
 ---
 

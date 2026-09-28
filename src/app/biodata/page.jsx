@@ -14,11 +14,76 @@ import {
   ContactInfo,
   EducationalInfo,
   FamilyInfo,
-  GeneralInfo,
 } from "./AllComponent";
 import { Check } from "lucide-react";
 import { biodataApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+
+// উইজার্ডে সংগৃহীত সব ফিল্ড → ব্যাকএন্ড biodataSchema-এর ফিল্ডে ম্যাপিং।
+// ফাঁকা মানগুলো undefined করা হয় যাতে ব্যাকএন্ড ডিফল্ট প্রয়োগ করতে পারে।
+function buildPayload(all, user) {
+  const num = (v) => (v !== "" && v != null && Number.isFinite(Number(v)) ? Number(v) : undefined);
+  const str = (v) => (v ? v : undefined);
+  return {
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    // সাধারণ তথ্য (স্টেপ ৮)
+    gender: all.gender,
+    maritalStatus: all.maritalStatus,
+    birthYear: num(all.birthYear),
+    division: all.division,
+    district: str(all.district),
+    // স্টেপ ১ — ব্যক্তিগত
+    clothingStyle: str(all.clothingStyle),
+    healthCondition: str(all.healthCondition),
+    entertainmentHabit: str(all.entertainmentHabit),
+    politicalView: str(all.politicalView),
+    favoriteBooksPeople: str(all.favoriteBooksPeople),
+    aboutYourself: str(all.aboutYourself),
+    specialCategories: str(all.specialCategories),
+    phoneNumber: str(all.phoneNumber),
+    // স্টেপ ২ — ধর্মীয়
+    religion: all.religion || undefined,
+    sectOrDenomination: str(all.sectOrDenomination),
+    religiousPracticeLevel: all.religiousPracticeLevel || undefined,
+    placeOfWorshipAttendance: str(all.placeOfWorshipAttendance),
+    holyBookReading: str(all.holyBookReading),
+    religiousEducation: str(all.religiousEducation),
+    religiousDressPreference: str(all.religiousDressPreference),
+    charityActivity: str(all.charityActivity),
+    religiousOrganization: str(all.religiousOrganization),
+    dietaryPractice: str(all.dietaryPractice),
+    futureReligiousGoal: str(all.futureReligiousGoal),
+    partnerReligiousExpectation: str(all.partnerReligiousExpectation),
+    // স্টেপ ৩ — শিক্ষাগত
+    education: str(all.education),
+    degree: str(all.degree),
+    institution: str(all.institution),
+    board: str(all.board),
+    subject: str(all.subject),
+    result: str(all.result),
+    passingYear: str(all.passingYear),
+    deeniEducation: str(all.deeniEducation),
+    // স্টেপ ৪ — পেশাগত
+    occupation: str(all.occupation),
+    occupationDetails: str(all.occupationDetails),
+    monthlyIncome: num(all.monthlyIncome),
+    company: str(all.company),
+    experienceYears: str(all.experienceYears),
+    // স্টেপ ৫ — পারিবারিক
+    fatherName: str(all.fatherName),
+    fatherOccupation: str(all.fatherOccupation),
+    motherName: str(all.motherName),
+    motherOccupation: str(all.motherOccupation),
+    siblings: str(all.siblings),
+    // স্টেপ ৬ — যোগাযোগ
+    mobile: str(all.mobile || all.phoneNumber),
+    presentAddress: str(all.presentAddress),
+    permanentAddress: str(all.permanentAddress),
+    // স্টেপ ৭ — অঙ্গীকার
+    agreed: Boolean(all.agreed),
+  };
+}
 
 const validationSchema = yup.object().shape({
   // স্টেপ ১: ব্যক্তিগত তথ্য
@@ -135,35 +200,27 @@ const validationSchema = yup.object().shape({
         .min(20, "কমপক্ষে ২০ অক্ষর লিখুন"),
   }),
 
-  // স্টেপ ৩: শিক্ষাগত যোগ্যতা
-  education: yup.mixed().when("$activeStep", {
+  // স্টেপ ৩: শিক্ষাগত যোগ্যতা — education ঘরটি আবশ্যক, বাকি ঘরগুলো ঐচ্ছিক
+  education: yup.string().when("$activeStep", {
     is: 3,
-    then: (schema) =>
-      schema.test(
-        "education-filled",
-        "শিক্ষাগত যোগ্যতা আবশ্যক",
-        (v) =>
-          v == null ||
-          (Array.isArray(v)
-            ? v.some((x) => String(x || "").trim() !== "")
-            : String(v).trim() !== "")
-      ),
+    then: (schema) => schema.trim().required("আপনার শিক্ষা মাধ্যম লিখুন"),
+    otherwise: (schema) => schema.notRequired(),
   }),
 
-  // স্টেপ ৪: পেশাগত তথ্য
-  occupation: yup.mixed().when("$activeStep", {
+  // স্টেপ ৪: পেশাগত তথ্য — occupation আবশ্যক, মাসিক আয় ঐচ্ছিক সংখ্যা
+  occupation: yup.string().when("$activeStep", {
     is: 4,
-    then: (schema) =>
-      schema.test(
-        "occupation-filled",
-        "আপনার পেশা লিখুন",
-        (v) =>
-          v == null ||
-          (Array.isArray(v)
-            ? v.some((x) => String(x || "").trim() !== "")
-            : String(v).trim() !== "")
-      ),
+    then: (schema) => schema.trim().required("আপনার পেশা লিখুন"),
+    otherwise: (schema) => schema.notRequired(),
   }),
+
+  monthlyIncome: yup
+    .mixed()
+    .test(
+      "income-number",
+      "সঠিক সংখ্যায় মাসিক আয় লিখুন",
+      (v) => v === "" || v == null || Number.isFinite(Number(v))
+    ),
 
   // স্টেপ ৬: যোগাযোগ (স্টেপ ৫ স্কিপ করা হয়েছে বা অপশনাল রাখা যায়)
   mobile: yup.string().when("$activeStep", {
@@ -288,6 +345,20 @@ function GeneralFields({ register, errors }) {
   );
 }
 
+// স্টেপ কনফিগ — শিরোনাম + রেন্ডারার এক জায়গায়; নতুন স্টেপ যোগ করতে
+// শুধু এখানে এন্ট্রি যোগ করলেই হবে (স্টেপার UI এই অ্যারে থেকেই আঁকা হয়)।
+const STEP_COMPONENTS = {
+  1: { title: "ব্যক্তিগত তথ্য", render: ({ register, errors }) => <PersonalInfo register={register} errors={errors} /> },
+  2: { title: "ধর্মীয় তথ্য", render: ({ register, errors }) => <ReligiousInfo register={register} errors={errors} /> },
+  3: { title: "শিক্ষাগত তথ্য", render: ({ register, errors }) => <EducationalInfo register={register} errors={errors} /> },
+  4: { title: "পেশাগত তথ্য", render: ({ register, errors }) => <ProfessionalInfo register={register} errors={errors} /> },
+  5: { title: "পারিবারিক তথ্য", render: ({ register, errors }) => <FamilyInfo register={register} errors={errors} /> },
+  6: { title: "যোগাযোগ তথ্য", render: ({ register, errors }) => <ContactInfo register={register} errors={errors} /> },
+  7: { title: "অঙ্গীকার", render: ({ register, errors }) => <AgreementInfo register={register} errors={errors} /> },
+  8: { title: "সাধারণ তথ্য", render: ({ register, errors }) => <GeneralFields register={register} errors={errors} /> },
+};
+const TOTAL_STEPS = Object.keys(STEP_COMPONENTS).length;
+
 function FormContent() {
   const [activeStep, setActiveStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
@@ -296,16 +367,7 @@ function FormContent() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const steps = [
-    "ব্যক্তিগত তথ্য",
-    "ধর্মীয় তথ্য",
-    "শিক্ষাগত তথ্য",
-    "পেশাগত তথ্য",
-    "পারিবারিক তথ্য",
-    "যোগাযোগ তথ্য",
-    "অঙ্গীকার",
-    "সাধারণ তথ্য",
-  ];
+  const steps = Object.values(STEP_COMPONENTS).map((s) => s.title);
 
   const {
     register,
@@ -318,14 +380,28 @@ function FormContent() {
     mode: "onChange",
   });
 
+  const goToStep = (next) => {
+    setActiveStep(next);
+    window.scrollTo(0, 0);
+  };
+
+  // ভুল থাকা প্রথম ফিল্ডে ফোকাস করাই স্ক্রল করে দেখায় — ইউজার বুঝতে পারে কোথায় সমস্যা।
+  const onError = (formErrors) => {
+    const firstKey = Object.keys(formErrors)[0];
+    if (firstKey) {
+      const el = document.querySelector(`[name="${firstKey}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.focus?.({ preventScroll: true });
+    }
+  };
+
   const onNext = async (data) => {
     setSubmitError("");
     // ১. প্রথমে গ্লোবাল কনটেক্সট আপডেট করুন
     updateFormData(data);
 
-    if (activeStep < steps.length) {
-      setActiveStep((prev) => prev + 1);
-      window.scrollTo(0, 0);
+    if (activeStep < TOTAL_STEPS) {
+      goToStep(activeStep + 1);
       return;
     }
 
@@ -344,49 +420,7 @@ function FormContent() {
 
     setSubmitting(true);
     try {
-      const payload = {
-        firstName: user?.firstName || "",
-        lastName: user?.lastName || "",
-        gender: all.gender,
-        maritalStatus: all.maritalStatus,
-        birthYear: Number(all.birthYear),
-        division: all.division,
-        district: all.district || "",
-        religion: all.religion || undefined,
-        sectOrDenomination: all.sectOrDenomination || undefined,
-        religiousPracticeLevel: all.religiousPracticeLevel || undefined,
-        placeOfWorshipAttendance: all.placeOfWorshipAttendance || undefined,
-        holyBookReading: all.holyBookReading || undefined,
-        religiousEducation: all.religiousEducation || undefined,
-        religiousDressPreference: all.religiousDressPreference || undefined,
-        charityActivity: all.charityActivity || undefined,
-        religiousOrganization: all.religiousOrganization || undefined,
-        dietaryPractice: all.dietaryPractice || undefined,
-        futureReligiousGoal: all.futureReligiousGoal || undefined,
-        partnerReligiousExpectation: all.partnerReligiousExpectation || undefined,
-        clothingStyle: all.clothingStyle || undefined,
-        healthCondition: all.healthCondition || undefined,
-        entertainmentHabit: all.entertainmentHabit || undefined,
-        politicalView: all.politicalView || undefined,
-        favoriteBooksPeople: all.favoriteBooksPeople || undefined,
-        aboutYourself: all.aboutYourself || undefined,
-        specialCategories: all.specialCategories || undefined,
-        education:
-          (Array.isArray(all.education)
-            ? all.education.find((x) => String(x || "").trim())
-            : all.education) || undefined,
-        occupation:
-          (Array.isArray(all.occupation)
-            ? all.occupation.find((x) => String(x || "").trim())
-            : all.occupation) || undefined,
-        mobile: all.mobile || all.phoneNumber || undefined,
-        phoneNumber: all.phoneNumber || all.mobile || undefined,
-        presentAddress: all.presentAddress || undefined,
-        permanentAddress: all.permanentAddress || undefined,
-        agreed: Boolean(all.agreed),
-      };
-
-      await biodataApi.create(payload);
+      await biodataApi.create(buildPayload(all, user));
       // অনুমোদনের জন্য জমা দিন
       await biodataApi.submit().catch(() => {});
       router.push("/profile");
@@ -397,9 +431,7 @@ function FormContent() {
     }
   };
 
-  const onError = (errors) => {
-    console.log("Validation Errors:", errors);
-  };
+
 
   return (
     <div>
@@ -463,40 +495,11 @@ function FormContent() {
             <form onSubmit={handleSubmit(onNext, onError)}>
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4 border-b-3  border-red-500 inline-block uppercase tracking-wide">
-                  {steps[activeStep - 1]}
+                  {STEP_COMPONENTS[activeStep].title}
                 </h2>
 
                 <div className="mt-2">
-                  {activeStep === 1 && (
-                    <PersonalInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 2 && (
-                    <ReligiousInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 3 && (
-                    <EducationalInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 4 && (
-                    <ProfessionalInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 5 && (
-                    <FamilyInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 6 && (
-                    <ContactInfo register={register} errors={errors} />
-                  )}
-                  {activeStep === 7 && (
-                    <AgreementInfo register={register} errors={errors} />
-                  )}
-
-                  {activeStep === 8 && (
-                    <>
-                      <GeneralInfo register={register} errors={errors} />
-                      <div className="mt-4">
-                        <GeneralFields register={register} errors={errors} />
-                      </div>
-                    </>
-                  )}
+                  {STEP_COMPONENTS[activeStep].render({ register, errors })}
                 </div>
               </div>
 
@@ -516,7 +519,7 @@ function FormContent() {
                 >
                   {submitting
                     ? "জমা হচ্ছে..."
-                    : activeStep === steps.length
+                    : activeStep === TOTAL_STEPS
                       ? "সাবমিট করুন"
                       : "পরবর্তী ধাপ"}
                 </button>

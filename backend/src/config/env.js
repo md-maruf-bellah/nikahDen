@@ -57,6 +57,21 @@ const env = {
   AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "20", 10),
 
   SMTP_HOST: process.env.SMTP_HOST || "",
+
+  // ------------------------------------------------------------------
+  // OAuth (Google / Facebook)। কনফিগার না থাকলে সংশ্লিষ্ট প্রোভাইডারের
+  // বাটন frontend-এ নিষ্ক্রিয় থাকে এবং ব্যাকএন্ড 503 দেয় — ক্র্যাশ নয়।
+  // ------------------------------------------------------------------
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
+  FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || "",
+  FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET || "",
+
+  oauthEnabled(provider) {
+    if (provider === "google") return Boolean(this.GOOGLE_CLIENT_ID && this.GOOGLE_CLIENT_SECRET);
+    if (provider === "facebook") return Boolean(this.FACEBOOK_APP_ID && this.FACEBOOK_APP_SECRET);
+    return false;
+  },
   SMTP_PORT: parseInt(process.env.SMTP_PORT || "587", 10),
   SMTP_USER: process.env.SMTP_USER || "",
   SMTP_PASS: process.env.SMTP_PASS || "",

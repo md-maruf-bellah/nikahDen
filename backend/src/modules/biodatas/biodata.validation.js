@@ -6,7 +6,12 @@ import {
 } from "../../constants/index.js";
 
 export const idParam = z.object({ id: z.string().min(1) });
-export const indexParam = z.object({ index: z.coerce.number().int().min(0) });
+// Combined for routes with both params — validate() replaces req.params, so a
+// second validate() on the same source would drop `id`.
+export const photoIndexParams = z.object({
+  id: z.string().min(1),
+  index: z.coerce.number().int().min(0),
+});
 
 const bdMobile = z
   .string()

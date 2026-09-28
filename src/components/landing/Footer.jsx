@@ -1,28 +1,52 @@
 "use client";
 
+import { useState } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
-import { Heart, Mail, Phone, MapPin, ChevronRight } from "lucide-react";
+import { Heart, Mail, Phone, MapPin, ChevronRight, Loader2, CircleCheck, AlertCircle } from "lucide-react";
+import Link from "next/link";
 import logo from "./../../../assets/navbar/logo.png"; // আপনার লোগো পাথ ঠিক করে নিন
 import Image from "next/image";
+import { contactApi } from "@/lib/api";
 
 const footerLinks = {
   "মূল পেজস্": [
-    "আমাদের গল্প",
-    "কিছু জিজ্ঞাসা",
-    "পাত্র-পাত্রীর বায়োডাটা",
-    "প্রোফাইল",
-    "মেম্বারশিপ প্লান",
-  ],
-  "এডমিন পেজস্": [
-    "যোগাযোগ",
-    "গোপনীয়তা পলিসিস্",
-    "রিফান্ড পলিসিস্",
-    "প্রাইভেসি পলিসিস্",
-    "টামস্ এন্ড কন্ডিশন",
+    { label: "আমাদের গল্প", href: "/about" },
+    { label: "পাত্র-পাত্রীর বায়োডাটা", href: "/list" },
+    { label: "প্রোফাইল", href: "/profile" },
+    { label: "মেম্বারশিপ প্লান", href: "/member" },
+    { label: "যোগাযোগ", href: "/contact" },
   ],
 };
 
 export default function Footer() {
+  const [msg, setMsg] = useState({ firstName: "", email: "", message: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState("");
+  const [err, setErr] = useState("");
+
+  const sendModalMsg = async (e) => {
+    e.preventDefault();
+    setSent("");
+    setErr("");
+    if (!msg.firstName.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(msg.email) || msg.message.trim().length < 10) {
+      setErr("নাম, সঠিক ইমেইল ও কমপক্ষে ১০ অক্ষরের বার্তা লিখুন।");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await contactApi.send({
+        firstName: msg.firstName.trim(),
+        email: msg.email.trim(),
+        message: msg.message.trim(),
+      });
+      setSent(res?.duplicate ? "আপনার আগের বার্তা পর্যালোচনাধীন আছে।" : "বার্তা পাঠানো হয়েছে!");
+      setMsg({ firstName: "", email: "", message: "" });
+    } catch (ex) {
+      setErr(ex.message || "পাঠানো যায়নি।");
+    } finally {
+      setSending(false);
+    }
+  };
   return (
     <footer className="bg-[#4a4a4a] text-white ">
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -73,14 +97,14 @@ export default function Footer() {
               <ul className="space-y-3">
                 {links.map((link, j) => (
                   <li key={j}>
-                    <a className="flex items-center gap-2 text-sm hover:text-[#fd6969] transition-colors cursor-pointer group">
+                    <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-[#fd6969] transition-colors cursor-pointer group">
                       <ChevronRight
                         size={16}
                         className="text-[#fd6969]"
                         strokeWidth={3}
                       />
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -138,34 +162,54 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* --- DaisyUI Modal --- */}
+      {/* --- DaisyUI Modal — সরাসরি মেসেজ (contact API ব্যবহার করে) --- */}
       <dialog id="contact_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box bg-white text-gray-800">
           <h3 className="font-bold text-lg border-b pb-2">যোগাযোগ করুন</h3>
-          <div className="py-4 space-y-3">
+          {sent && (
+            <div className="alert alert-success text-sm py-2 mt-3">
+              <CircleCheck size={15} /> <span>{sent}</span>
+            </div>
+          )}
+          {err && (
+            <div className="alert alert-error text-sm py-2 mt-3">
+              <AlertCircle size={15} /> <span>{err}</span>
+            </div>
+          )}
+          <form onSubmit={sendModalMsg} className="py-4 space-y-3">
             <input
               type="text"
-              placeholder="আপনার নাম"
+              value={msg.firstName}
+              onChange={(e) => setMsg((m) => ({ ...m, firstName: e.target.value }))}
+              placeholder="আপনার নাম *"
               className="input input-bordered w-full"
             />
             <input
               type="email"
-              placeholder="ইমেইল"
+              value={msg.email}
+              onChange={(e) => setMsg((m) => ({ ...m, email: e.target.value }))}
+              placeholder="ইমেইল *"
               className="input input-bordered w-full"
             />
             <textarea
+              value={msg.message}
+              onChange={(e) => setMsg((m) => ({ ...m, message: e.target.value }))}
               className="textarea textarea-bordered w-full h-24"
-              placeholder="আপনার বার্তা..."
-            ></textarea>
-          </div>
-          <div className="modal-action">
-            <form method="dialog" className="flex gap-2">
-              <button className="btn btn-ghost">বন্ধ করুন</button>
-              <button className="btn bg-[#fd6969] text-white border-none">
-                পাঠিয়ে দিন
+              placeholder="আপনার বার্তা (কমপক্ষে ১০ অক্ষর)..."
+            />
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => document.getElementById("contact_modal").close()}
+              >
+                বন্ধ করুন
               </button>
-            </form>
-          </div>
+              <button type="submit" disabled={sending} className="btn bg-[#fd6969] text-white border-none">
+                {sending && <Loader2 size={14} className="animate-spin" />} পাঠিয়ে দিন
+              </button>
+            </div>
+          </form>
         </div>
       </dialog>
     </footer>

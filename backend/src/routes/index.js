@@ -8,6 +8,7 @@ import notificationRoutes from "../modules/notifications/notification.routes.js"
 import messageRoutes from "../modules/messages/message.routes.js";
 import contactRoutes from "../modules/contacts/contact.routes.js";
 import adminRoutes from "../modules/admin/admin.routes.js";
+import preferenceRoutes from "../modules/preferences/preference.routes.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendSuccess } from "../utils/ApiResponse.js";
 import { siteStats } from "../modules/admin/admin.service.js";
@@ -27,6 +28,7 @@ API_V1.use("/orders", orderRoutes);
 API_V1.use("/notifications", notificationRoutes);
 API_V1.use("/conversations", messageRoutes);
 API_V1.use("/contacts", contactRoutes);
+API_V1.use("/preferences", preferenceRoutes);
 API_V1.use("/admin", adminRoutes);
 // Public landing-page counters live under the API namespace too.
 API_V1.get(

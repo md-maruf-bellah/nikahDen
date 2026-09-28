@@ -28,6 +28,7 @@ import "../src/models/notification.model.js";
 import "../src/models/conversation.model.js";
 import "../src/models/message.model.js";
 import "../src/models/contactMessage.model.js";
+import "../src/models/preference.model.js";
 
 let mongod = null;
 let appInstance = null;

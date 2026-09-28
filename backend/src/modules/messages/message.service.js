@@ -57,6 +57,28 @@ export async function myConversations(userId, { page = 1, limit = 20, search } =
         pipeline: [{ $project: { firstName: 1, lastName: 1, avatar: 1, role: 1 } }],
       },
     },
+    {
+      // Unread = messages addressed to me that are still only SENT (not READ).
+      $lookup: {
+        from: "messages",
+        let: { cid: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$conversation", "$$cid"] },
+                  { $eq: ["$recipient", new OID(userId)] },
+                  { $eq: ["$status", "SENT"] },
+                ],
+              },
+            },
+          },
+          { $count: "n" },
+        ],
+        as: "unread",
+      },
+    },
   ]);
 
   const items = conversations.map((c) => {
@@ -69,6 +91,7 @@ export async function myConversations(userId, { page = 1, limit = 20, search } =
       lastMessage: c.allMessages || null,
       lastMessageAt: c.lastMessageAt,
       updatedAt: c.updatedAt,
+      unreadCount: c.unread?.[0]?.n || 0,
     };
   });
   return { items, pagination: buildPagination(total, page, limit) };

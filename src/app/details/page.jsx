@@ -10,6 +10,7 @@ import { FcLike } from "react-icons/fc";
 import man from "./../../../assets/member/alem.png";
 import SimilarBiodataSlider from "./SimilarBiodataSlider";
 import { biodataApi, tokenStore } from "@/lib/api";
+import { CreditCard, LogIn, ArrowLeft } from "lucide-react";
 
 function Section({ title, rows }) {
   const filtered = rows.filter(([, v]) => v);
@@ -44,6 +45,7 @@ function DetailsBody() {
   const [similar, setSimilar] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [like, setLike] = useState(false);
 
   useEffect(() => {
@@ -69,7 +71,10 @@ function DetailsBody() {
         setLike(Boolean(doc.likedByMe));
         setSimilar(Array.isArray(sim) ? sim : []);
       } catch (err) {
-        if (!cancelled) setError(err.message || "বায়োডাটা পাওয়া যায়নি");
+        if (!cancelled) {
+          setError(err.message || "বায়োডাটা পাওয়া যায়নি");
+          setErrorCode(err.errorCode || "");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -106,12 +111,48 @@ function DetailsBody() {
   }
 
   if (error || !biodata) {
+    // কানেক্ট শেষ → কেনার CTA; লগইন নেই → লগইন CTA; বাকি সব ক্ষেত্রে সাধারণ এরর।
+    const isLoggedIn = Boolean(tokenStore.getAccess());
+    const isConnectIssue = errorCode === "CONNECTS_INSUFFICIENT" || isLoggedIn === false;
+    const needsLogin = !isLoggedIn;
     return (
-      <div className="max-w-4xl mx-auto text-center py-32">
-        <p className="text-gray-500 text-lg mb-4">{error || "বায়োডাটা পাওয়া যায়নি"}</p>
-        <Link href="/list" className="btn bg-[#f25f5c] text-white border-none">
-          তালিকায় ফিরে যান
-        </Link>
+      <div className="max-w-md mx-auto text-center py-24 px-4">
+        <div className="bg-base-200 border border-red-100 rounded-2xl p-8">
+          <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            {needsLogin ? <LogIn size={26} className="text-red-500" /> : <CreditCard size={26} className="text-red-500" />}
+          </div>
+          <h2 className="font-bold text-lg mb-2">
+            {needsLogin ? "লগইন করুন" : isConnectIssue ? "কানেক্ট শেষ হয়ে গেছে" : "কিছু সমস্যা হয়েছে"}
+          </h2>
+          <p className="text-gray-500 text-sm mb-6">{error || "বায়োডাটা পাওয়া যায়নি"}</p>
+
+          {needsLogin ? (
+            <Link
+              href={`/login?next=/details?id=${id}`}
+              className="btn bg-[#f25f5c] text-white border-none w-full"
+            >
+              <LogIn size={16} /> লগইন করে দেখুন
+            </Link>
+          ) : isConnectIssue ? (
+            <div className="space-y-2">
+              <Link href="/checkout" className="btn bg-[#f25f5c] text-white border-none w-full">
+                <CreditCard size={16} /> প্যাকেজ কিনুন
+              </Link>
+              <Link href="/checkout?kind=PACK" className="btn btn-outline border-red-300 text-red-500 hover:bg-red-50 w-full">
+                <CreditCard size={16} /> শুধু কানেক্ট আলাদাভাবে কিনুন
+              </Link>
+              <p className="text-xs text-gray-400 pt-1">প্রতিটি পূর্ণ বায়োডাটা দেখতে ১টি কানেক্ট লাগে।</p>
+            </div>
+          ) : (
+            <Link href="/list" className="btn bg-[#f25f5c] text-white border-none w-full">
+              <ArrowLeft size={16} /> তালিকায় ফিরে যান
+            </Link>
+          )}
+
+          <Link href="/list" className="block text-xs text-gray-400 hover:text-red-400 mt-4">
+            তালিকায় ফিরে যান
+          </Link>
+        </div>
       </div>
     );
   }

@@ -12,6 +12,9 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
+// OAuth রিডাইরেক্ট API-র মূল origin-এ যায় (ব্রাউজার থেকে)
+export const API_ORIGIN = API_BASE.replace(/\/api\/v1\/?$/, "");
+
 const ACCESS_KEY = "nk_access";
 const REFRESH_KEY = "nk_refresh";
 
@@ -52,7 +55,8 @@ function buildQuery(params = {}) {
 async function request(path, { method = "GET", body, params, auth = true, retried = false, raw = false } = {}) {
   const url = `${API_BASE}${path}${buildQuery(params)}`;
   const headers = {};
-  if (body) headers["Content-Type"] = "application/json";
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body && !isForm) headers["Content-Type"] = "application/json";
 
   const access = tokenStore.getAccess();
   if (auth && access) headers.Authorization = `Bearer ${access}`;
@@ -62,7 +66,7 @@ async function request(path, { method = "GET", body, params, auth = true, retrie
     res = await fetch(url, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
       credentials: "include",
     });
   } catch {
@@ -105,6 +109,7 @@ const api = {
   list: (path, params) => request(path, { method: "GET", params, raw: true }),
   post: (path, body, opts) => request(path, { method: "POST", body, ...opts }),
   patch: (path, body) => request(path, { method: "PATCH", body }),
+  put: (path, body) => request(path, { method: "PUT", body }),
   del: (path) => request(path, { method: "DELETE" }),
 };
 
@@ -119,6 +124,10 @@ export const authApi = {
   changePassword: (data) => api.patch("/auth/change-password", data),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   resetPassword: (token, newPassword) => api.post("/auth/reset-password", { token, newPassword }),
+  // OAuth — কোন প্রোভাইডার কনফিগার করা আছে + one-time কোড এক্সচেঞ্জ
+  oauthProviders: () => api.get("/auth/oauth/providers"),
+  oauthExchange: (code) => api.post("/auth/oauth/exchange", { code }),
+  oauthStartUrl: (provider) => `${API_ORIGIN}/api/v1/auth/oauth/${provider}/start`,
 };
 
 // ---------------------------------------------------------------------------
@@ -130,6 +139,7 @@ export const biodataApi = {
   get: (id) => api.get(`/biodatas/${id}`),
   similar: (id) => api.get(`/biodatas/${id}/similar`),
   mine: () => api.get("/biodatas/me"),
+  completion: () => api.get("/biodatas/me/completion"),
   create: (body) => api.post("/biodatas", body),
   update: (body) => api.patch("/biodatas/me", body),
   submit: () => api.post("/biodatas/me/submit"),
@@ -137,6 +147,14 @@ export const biodataApi = {
   unlike: (id) => api.del(`/biodatas/${id}/like`),
   likesSent: (params) => api.list("/biodatas/likes/sent", params),
   likesReceived: (params) => api.list("/biodatas/likes/received", params),
+  // photos — multipart upload + main-photo / delete management
+  uploadPhoto: (file) => {
+    const fd = new FormData();
+    fd.append("photo", file);
+    return api.post("/biodatas/me/photos", fd);
+  },
+  setProfilePhoto: (biodataId, url) => api.patch(`/biodatas/${biodataId}/profile-photo`, { url }),
+  deletePhoto: (biodataId, index) => api.del(`/biodatas/${biodataId}/photos/${index}`),
 };
 
 // ---------------------------------------------------------------------------
@@ -167,6 +185,15 @@ export const notificationApi = {
   read: (id) => api.patch(`/notifications/${id}/read`, {}),
   readAll: () => api.patch("/notifications/read-all", {}),
   remove: (id) => api.del(`/notifications/${id}`),
+};
+
+// ---------------------------------------------------------------------------
+// Partner preferences + matching
+// ---------------------------------------------------------------------------
+export const preferencesApi = {
+  mine: () => api.get("/preferences/me"),
+  save: (body) => api.put("/preferences/me", body),
+  matches: (params) => api.list("/preferences/matches", params),
 };
 
 export const conversationApi = {

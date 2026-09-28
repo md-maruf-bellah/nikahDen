@@ -7,6 +7,7 @@ import { parsePagination, buildPagination, parseSort } from "../../utils/paginat
 import { isValidObjectId, ageFrom } from "../../utils/helpers.js";
 import { BIODATA_STATUSES, NOTIFICATION_TYPES, ROLES, GENDERS } from "../../constants/index.js";
 import { getConnectBalance, deductConnectForView, hasViewedBiodata } from "../membership/connect.service.js";
+import { computeCompletion } from "./biodata.completion.js";
 
 // ---------------------------------------------------------------------------
 // Field allow-lists (defense against mass assignment)
@@ -46,7 +47,7 @@ export function sanitizePayload(body) {
 }
 
 const LIST_PROJECTION =
-  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount createdAt updatedAt";
+  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount status rejectionReason createdAt updatedAt";
 
 // ---------------------------------------------------------------------------
 // Public directory
@@ -57,6 +58,10 @@ export async function listBiodatas(query, viewer) {
 
   if (isStaffViewer && (query.all === "1" || query.all === "true")) {
     if (query.status) filter.status = query.status;
+  } else if (query.all === "1" || query.all === "true" || query.status) {
+    // Staff-only params from a non-staff (or unauthenticated/expired) viewer:
+    // refuse instead of silently returning the public approved directory.
+    throw ApiError.unauthorized("Staff authentication required.", "STAFF_AUTH_REQUIRED");
   } else {
     filter.status = BIODATA_STATUSES.APPROVED;
   }
@@ -175,6 +180,10 @@ export function toPublicDoc(doc, { full = false } = {}) {
   delete obj.__v;
   if (!full) {
     for (const f of CONTACT_FIELDS) delete obj[f];
+  }
+  // কমপ্লিশন রিপোর্ট শুধু পূর্ণ/নিজের ভিউতে — পাবলিক সারসংক্ষেপে দরকার নেই।
+  if (full) {
+    obj.completion = computeCompletion(doc);
   }
   return obj;
 }

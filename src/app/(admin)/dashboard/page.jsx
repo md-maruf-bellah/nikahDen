@@ -49,8 +49,9 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && !isStaff) router.replace("/");
-  }, [authLoading, isStaff, router]);
+    if (authLoading) return;
+    if (!isStaff) router.replace(user ? "/profile" : "/login");
+  }, [authLoading, isStaff, user, router]);
 
   if (authLoading || !isStaff) return null;
 

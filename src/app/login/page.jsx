@@ -19,6 +19,15 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [oauthAvailable, setOauthAvailable] = useState({ google: false, facebook: false });
+
+  // কোন প্রোভাইডার সার্ভারে কনফিগার করা আছে — সেই অনুযায়ী বাটন enable/disable
+  React.useEffect(() => {
+    authApi
+      .oauthProviders()
+      .then((p) => setOauthAvailable({ google: Boolean(p?.google), facebook: Boolean(p?.facebook) }))
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,7 +122,7 @@ const Login = () => {
 
             <p className="text-right">
               <Link
-                href="/reset"
+                href="/email"
                 className="text-sm text-red-500 underline font-semibold"
               >
                 পাসওয়ার্ড ভুলে গেছেন?
@@ -141,14 +150,20 @@ const Login = () => {
           <div className="space-y-4">
             <button
               type="button"
-              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+              disabled={!oauthAvailable.google}
+              title={oauthAvailable.google ? "গুগল দিয়ে লগইন" : "গুগল লগইন এখনো কনফিগার করা হয়নি"}
+              onClick={() => { window.location.href = authApi.oauthStartUrl("google"); }}
+              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FcGoogle size={22} />
               Sign in with Google
             </button>
             <button
               type="button"
-              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold"
+              disabled={!oauthAvailable.facebook}
+              title={oauthAvailable.facebook ? "ফেসবুক দিয়ে লগইন" : "ফেসবুক লগইন এখনো কনফিগার করা হয়নি"}
+              onClick={() => { window.location.href = authApi.oauthStartUrl("facebook"); }}
+              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FaFacebook size={22} />
               Sign in with Facebook

@@ -21,11 +21,10 @@ const MessagingApp = () => {
       const arr = Array.isArray(list) ? list : [];
       setConversations(arr);
       if (arr.length && !activeChat) {
+        // প্রথম কথোপকথন শুধু প্রিভিউ — মেসেজ GET করলেই সার্ভার mark-read করে দেয়,
+        // তাই unread ব্যাজ বাঁচাতে এখানে মেসেজ লোড করা হয় না; ক্লিকে লোড হবে।
         setActiveChat(arr[0]);
-        const first = await conversationApi
-          .messages(arr[0].id, { limit: 100 })
-          .catch(() => []);
-        setMessages(Array.isArray(first) ? first : []);
+        setMessages([]);
       }
     } catch {
       setConversations([]);
@@ -51,12 +50,13 @@ const MessagingApp = () => {
       try {
         const list = await conversationApi.messages(conversation.id, { limit: 100 });
         setMessages(Array.isArray(list) ? list : []);
-        conversationApi.markRead(conversation.id).catch(() => {});
+        // GET মেসেজেই সার্ভার mark-read করে; তালিকার ব্যাজ রিফ্রেশ করুন
+        loadConversations();
       } catch {
         setMessages([]);
       }
     },
-    []
+    [loadConversations]
   );
 
   // অটো স্ক্রল টু বটম
@@ -160,9 +160,16 @@ const MessagingApp = () => {
                     {timeLabel(c.lastMessage?.createdAt || c.lastMessageAt)}
                   </span>
                 </div>
-                <p className="text-[11px] text-gray-500 truncate">
-                  {c.lastMessage?.text || "কথোপকথন শুরু করুন"}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] text-gray-500 truncate">
+                    {c.lastMessage?.text || "কথোপকথন শুরু করুন"}
+                  </p>
+                  {c.unreadCount > 0 && (
+                    <span className="badge badge-error badge-sm text-white shrink-0">
+                      {c.unreadCount}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}

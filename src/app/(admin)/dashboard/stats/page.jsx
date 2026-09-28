@@ -10,9 +10,18 @@ import {
   Wallet,
   CreditCard,
   Heart,
+  HeartHandshake,
   RefreshCw,
   Crown,
   MessageSquare,
+  MessageCircle,
+  Mail,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  AlertTriangle,
+  CalendarDays,
+  Hourglass,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 
@@ -93,6 +102,85 @@ const StatsDashboard = () => {
     );
   }
 
+  // Every aggregate field returned by GET /admin/stats, grouped into sections.
+  // Values come straight from the response — no client-side fabrication.
+  const sections = [
+    {
+      title: "ব্যবহারকারী",
+      cards: [
+        { icon: <Users size={20} />, label: "মোট ইউজার", value: bn(stats?.users?.total) },
+        { icon: <UserCheck size={20} />, label: "সক্রিয়", value: bn(stats?.users?.active), tone: "text-green-600" },
+        { icon: <Users size={20} />, label: "অপেক্ষমান", value: bn(stats?.users?.pending), tone: "text-orange-500" },
+        { icon: <Users size={20} />, label: "নিষ্ক্রিয়", value: bn(stats?.users?.inactive), tone: "text-gray-500" },
+        { icon: <Crown size={20} />, label: "স্টাফ অ্যাকাউন্ট", value: bn(stats?.users?.staff), tone: "text-purple-600" },
+        { icon: <CalendarDays size={20} />, label: "আজকের নতুন", value: bn(stats?.users?.newToday), tone: "text-sky-600" },
+        { icon: <UserPlus size={20} />, label: "নতুন (৭ দিন)", value: bn(stats?.users?.newThisWeek), tone: "text-sky-600" },
+        { icon: <UserPlus size={20} />, label: "নতুন (৩০ দিন)", value: bn(stats?.users?.newThisMonth), tone: "text-indigo-600" },
+      ],
+    },
+    {
+      title: "বায়োডাটা",
+      cards: [
+        { icon: <FileText size={20} />, label: "মোট প্রোফাইল", value: bn(stats?.biodatas?.total) },
+        { icon: <CheckCircle2 size={20} />, label: "অনুমোদিত", value: bn(stats?.biodatas?.approved), tone: "text-green-600" },
+        { icon: <Clock size={20} />, label: "অপেক্ষমান রিভিউ", value: bn(stats?.biodatas?.pending), tone: "text-orange-500" },
+        { icon: <FileText size={20} />, label: "বাতিল", value: bn(stats?.biodatas?.rejected), tone: "text-red-600" },
+        { icon: <EyeOff size={20} />, label: "লুকানো", value: bn(stats?.biodatas?.hidden), tone: "text-gray-500" },
+        { icon: <Users size={20} />, label: "পাত্র", value: bn(stats?.biodatas?.grooms), tone: "text-blue-600" },
+        { icon: <Users size={20} />, label: "পাত্রী", value: bn(stats?.biodatas?.brides), tone: "text-pink-600" },
+        { icon: <Eye size={20} />, label: "মোট প্রোফাইল ভিউ", value: bn(stats?.biodatas?.totalViews), tone: "text-cyan-600" },
+        { icon: <FileText size={20} />, label: "নতুন প্রোফাইল (৭ দিন)", value: bn(stats?.biodatas?.newThisWeek), tone: "text-pink-600" },
+      ],
+    },
+    {
+      title: "আগ্রহ ও ম্যাচ",
+      cards: [
+        { icon: <Heart size={20} />, label: "পাঠানো আগ্রহ", value: bn(stats?.interests?.sent), tone: "text-red-500", sub: "মোট লাইক" },
+        { icon: <HeartHandshake size={20} />, label: "মিউচুয়াল ম্যাচ", value: bn(stats?.interests?.accepted), tone: "text-green-600", sub: "দুই পক্ষের আগ্রহ" },
+        { icon: <TrendingUp size={20} />, label: "নতুন আগ্রহ (৭ দিন)", value: bn(stats?.interests?.newThisWeek), tone: "text-sky-600" },
+      ],
+    },
+    {
+      title: "মেসেজিং",
+      cards: [
+        { icon: <MessageSquare size={20} />, label: "মোট কথোপকথন", value: bn(stats?.messaging?.conversations), tone: "text-purple-600" },
+        { icon: <MessageCircle size={20} />, label: "সক্রিয় কথোপকথন (৭ দিন)", value: bn(stats?.messaging?.activeThisWeek), tone: "text-green-600" },
+        { icon: <Mail size={20} />, label: "অপঠিত বার্তা", value: bn(stats?.messaging?.unreadMessages), tone: "text-orange-500" },
+      ],
+    },
+    {
+      title: "আয় ও মেম্বারশিপ",
+      cards: [
+        { icon: <Wallet size={20} />, label: "মোট আয়", value: taka(stats?.revenue?.revenueBdt), tone: "text-green-700" },
+        { icon: <Wallet size={20} />, label: "আজকের আয়", value: taka(stats?.revenue?.todayBdt), tone: "text-emerald-600" },
+        { icon: <Wallet size={20} />, label: "এই সপ্তাহের আয়", value: taka(stats?.revenue?.thisWeekBdt), tone: "text-emerald-600" },
+        { icon: <Wallet size={20} />, label: "এই মাসের আয়", value: taka(stats?.revenue?.thisMonthBdt), tone: "text-green-600" },
+        { icon: <CreditCard size={20} />, label: "পরিশোধিত অর্ডার", value: bn(stats?.revenue?.totalPaidOrders), tone: "text-sky-600" },
+        { icon: <Crown size={20} />, label: "সক্রিয় সাবস্ক্রিপশন", value: bn(stats?.membership?.activeSubscriptions), tone: "text-purple-600" },
+        { icon: <Hourglass size={20} />, label: "মেয়াদোত্তীর্ণ সাবস্ক্রিপশন", value: bn(stats?.membership?.expiredSubscriptions), tone: "text-gray-500" },
+      ],
+    },
+    {
+      title: "পেমেন্ট",
+      cards: [
+        { icon: <Clock size={20} />, label: "পেন্ডিং পেমেন্ট", value: bn(stats?.payments?.pendingOrders), tone: "text-orange-500", sub: "অর্ডার অপেক্ষমান" },
+        { icon: <AlertTriangle size={20} />, label: "ব্যর্থ পেমেন্ট", value: bn(stats?.payments?.failedOrders), tone: "text-red-600", sub: "অর্ডার ব্যর্থ" },
+      ],
+    },
+    {
+      title: "সাপোর্ট",
+      cards: [
+        {
+          icon: <MessageSquare size={20} />,
+          label: "নতুন বার্তা",
+          value: bn(stats?.support?.newMessages),
+          tone: "text-orange-500",
+          sub: "কন্টাক্ট ফর্ম ইনবক্স",
+        },
+      ],
+    },
+  ];
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -109,55 +197,16 @@ const StatsDashboard = () => {
         </button>
       </div>
 
-      {/* Users */}
-      <SectionTitle>ব্যবহারকারী</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatCard icon={<Users size={20} />} label="মোট ইউজার" value={bn(stats.users.total)} />
-        <StatCard icon={<UserCheck size={20} />} label="সক্রিয়" value={bn(stats.users.active)} tone="text-green-600" />
-        <StatCard icon={<Users size={20} />} label="অপেক্ষমান" value={bn(stats.users.pending)} tone="text-orange-500" />
-        <StatCard icon={<Users size={20} />} label="নিষ্ক্রিয়" value={bn(stats.users.inactive)} tone="text-gray-500" />
-        <StatCard icon={<UserPlus size={20} />} label="নতুন (৭ দিন)" value={bn(stats.users.newThisWeek)} tone="text-sky-600" />
-        <StatCard icon={<Crown size={20} />} label="স্টাফ অ্যাকাউন্ট" value={bn(stats.users.staff)} tone="text-purple-600" />
-      </div>
-
-      {/* Biodatas */}
-      <SectionTitle>বায়োডাটা</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <StatCard icon={<FileText size={20} />} label="মোট প্রোফাইল" value={bn(stats.biodatas.total)} />
-        <StatCard icon={<CheckCircle2 size={20} />} label="অনুমোদিত" value={bn(stats.biodatas.approved)} tone="text-green-600" />
-        <StatCard icon={<Clock size={20} />} label="অপেক্ষমান রিভিউ" value={bn(stats.biodatas.pending)} tone="text-orange-500" />
-        <StatCard icon={<FileText size={20} />} label="বাতিল" value={bn(stats.biodatas.rejected)} tone="text-red-600" />
-        <StatCard icon={<Users size={20} />} label="পাত্র" value={bn(stats.biodatas.grooms)} tone="text-blue-600" />
-        <StatCard icon={<Users size={20} />} label="পাত্রী" value={bn(stats.biodatas.brides)} tone="text-pink-600" />
-      </div>
-
-      {/* Revenue & membership */}
-      <SectionTitle>আয় ও মেম্বারশিপ</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        <StatCard icon={<Wallet size={20} />} label="মোট আয়" value={taka(stats.revenue.revenueBdt)} tone="text-green-700" />
-        <StatCard icon={<Wallet size={20} />} label="এই মাসের আয়" value={taka(stats.revenue.thisMonthBdt)} tone="text-green-600" />
-        <StatCard icon={<Wallet size={20} />} label="এই সপ্তাহের আয়" value={taka(stats.revenue.thisWeekBdt)} tone="text-emerald-600" />
-        <StatCard icon={<CreditCard size={20} />} label="পরিশোধিত অর্ডার" value={bn(stats.revenue.totalPaidOrders)} tone="text-sky-600" />
-        <StatCard icon={<Crown size={20} />} label="সক্রিয় সাবস্ক্রিপশন" value={bn(stats.membership.activeSubscriptions)} tone="text-purple-600" />
-      </div>
-
-      {/* Support */}
-      <SectionTitle>সাপোর্ট</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          icon={<MessageSquare size={20} />}
-          label="নতুন বার্তা"
-          value={bn(stats.support.newMessages)}
-          tone="text-orange-500"
-          sub="কন্টাক্ট ফর্ম ইনবক্স"
-        />
-        <StatCard
-          icon={<Heart size={20} />}
-          label="নতুন প্রোফাইল (৭ দিন)"
-          value={bn(stats.biodatas.newThisWeek)}
-          tone="text-pink-600"
-        />
-      </div>
+      {sections.map((section) => (
+        <React.Fragment key={section.title}>
+          <SectionTitle>{section.title}</SectionTitle>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {section.cards.map((card) => (
+              <StatCard key={card.label} {...card} />
+            ))}
+          </div>
+        </React.Fragment>
+      ))}
     </div>
   );
 };

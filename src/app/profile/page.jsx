@@ -5,6 +5,7 @@ import {
   FileText,
   Heart,
   Users,
+  SlidersHorizontal,
   CreditCard,
   Bell,
   MessageSquare,
@@ -16,13 +17,13 @@ import {
 import Image from "next/image";
 import profile from "./../../../assets/member/alem.png";
 import MessagingPage from "./message/MessagingPage";
+import PreferencesPage from "./preferences/page";
 import ProfileData from "./biodata/page";
 import LikeList from "./likeList/page";
 import MemberShip from "./memberShip/page";
 import NotificationList from "./notification/page";
 import MembershipDashboard from "./memberAndPackage/page";
-import LogoutForm from "./logout/page";
-import Navbar from "@/components/landing/Navabar";
+// Navbar এখন root layout-এর SiteChrome থেকে আসে
 import { useAuth } from "@/lib/auth-context";
 import { tokenStore } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -30,27 +31,35 @@ import { useRouter } from "next/navigation";
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
+  // Role-based routing: স্টাফ এখানে এলে অ্যাডমিন ড্যাশবোর্ডে পাঠাই — মেম্বার এলাকা মেম্বারদের জন্য।
   useEffect(() => {
-    if (!loading && !tokenStore.getAccess()) {
+    if (loading) return;
+    if (!tokenStore.getAccess()) {
       router.replace("/login");
+      return;
     }
-  }, [loading, router]);
+    const role = user?.role;
+    if (role && role !== "USER" && tokenStore.getAccess()) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, router]);
 
   const menuItems = [
     { icon: <LayoutDashboard size={18} />, label: "ড্যাশবোর্ড" },
     { icon: <FileText size={18} />, label: "বায়োডাটা" },
     { icon: <Heart size={18} />, label: "পছন্দের তালিকা" },
     { icon: <Users size={18} />, label: "আপনাকে যারা পছন্দ করেছেন" },
+    { icon: <SlidersHorizontal size={18} />, label: "প্রেফারেন্স ও ম্যাচ" },
     { icon: <CreditCard size={18} />, label: "মেম্বারশিপ" },
     { icon: <Bell size={18} />, label: "নোটিফিকেশন" },
     { icon: <MessageSquare size={18} />, label: "মেসেজিং" },
     { icon: <LogOut size={18} />, label: "লগ আউট" },
   ];
 
-  // আলাদা আলাদা কম্পোনেন্ট রেন্ডার করার ফাংশন
+  // মেনু আইটেম → কনটেন্ট ম্যাপিং; লগ আউট আলাদাভাবে হ্যান্ডেল হয়
   const renderContent = () => {
     switch (activeTab) {
       case "ড্যাশবোর্ড":
@@ -73,6 +82,12 @@ const Dashboard = () => {
             <LikeList received />
           </div>
         );
+      case "প্রেফারেন্স ও ম্যাচ":
+        return (
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
+            <PreferencesPage />
+          </div>
+        );
       case "মেম্বারশিপ":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
@@ -93,11 +108,7 @@ const Dashboard = () => {
           </div>
         );
       default:
-        return (
-          <div>
-            <LogoutForm />
-          </div>
-        );
+        return null;
     }
   };
 
@@ -105,9 +116,20 @@ const Dashboard = () => {
     // when i click on the menu item then the sidebar will be closed in mobile view
   }, []);
 
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
+
+  // ড্যাশবোর্ডের কমপ্লিশন-কার্ড থেকে বায়োডাটা ট্যাবে যাওয়ার ইভেন্ট
+  useEffect(() => {
+    const openBiodata = () => setActiveTab("বায়োডাটা");
+    window.addEventListener("open-biodata-tab", openBiodata);
+    return () => window.removeEventListener("open-biodata-tab", openBiodata);
+  }, []);
+
   return (
     <div>
-      <Navbar />
       <div className="min-h-screen p-4 md:p-8">
         {/* Mobile Toggle Button */}
         <div className="lg:hidden flex justify-between items-center mb-4  p-3 rounded-lg border border-red-200">
@@ -155,23 +177,34 @@ const Dashboard = () => {
               <h4 className="px-6 text-sm font-bold mb-4 uppercase tracking-wider">
                 ড্যাশবোর্ড
               </h4>
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setActiveTab(item.label);
-                    setIsSidebarOpen(false); // মোবাইল মেনু বন্ধ করার জন্য
-                  }}
-                  className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
-                    activeTab === item.label
-                      ? "bg-base-200 text-red-500 border-r-4 border-red-500 font-bold"
-                      : " hover:bg-base-200 hover:text-red-500 cursor-pointer"
-                  }`}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
+              {menuItems.map((item, index) =>
+                item.label === "লগ আউট" ? (
+                  <button
+                    key={index}
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors hover:bg-base-200 hover:text-red-500 cursor-pointer"
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                ) : (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setActiveTab(item.label);
+                      setIsSidebarOpen(false); // মোবাইল মেনু বন্ধ করার জন্য
+                    }}
+                    className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
+                      activeTab === item.label
+                        ? "bg-base-200 text-red-500 border-r-4 border-red-500 font-bold"
+                        : " hover:bg-base-200 hover:text-red-500 cursor-pointer"
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                )
+              )}
             </nav>
           </div>
 

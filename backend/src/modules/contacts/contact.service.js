@@ -4,8 +4,14 @@ import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
 
 export async function createMessage(data) {
+  // একই ইমেইলে চলমান NEW আবেদন থাকলে ডুপ্লিকেট স্প্যাম নয় — বিদ্যমানটিই ফেরত (idempotent)।
+  // স্টাফ REPLIED/CLOSED করে দিলে পরের মেসেজ স্বাভাবিকভাবে নতুন টিকেট হিসেবে ঢুকবে।
+  const existing = await ContactMessage.findOne({ email: data.email, status: "NEW" }).lean();
+  if (existing) {
+    return { id: existing._id.toString(), createdAt: existing.createdAt, status: existing.status, duplicate: true };
+  }
   const doc = await ContactMessage.create(data);
-  return { id: doc._id.toString(), createdAt: doc.createdAt, status: doc.status };
+  return { id: doc._id.toString(), createdAt: doc.createdAt, status: doc.status, duplicate: false };
 }
 
 export async function listMessages(query) {

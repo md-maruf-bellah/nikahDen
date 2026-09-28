@@ -25,4 +25,13 @@ router.patch("/change-password", authenticate, validate(changePasswordSchema), a
 router.post("/forgot-password", authLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
 router.post("/reset-password", authLimiter, validate(resetPasswordSchema), authController.resetPassword);
 
+// ---- OAuth (Google / Facebook) ----
+// GET /auth/oauth/providers → { google: true/false, facebook: true/false } (public)
+router.get("/oauth/providers", authController.oauthProviders);
+// start + callback ব্রাউজার-রিডাইরেক্ট; rate-limit রাখা হয়েছে abuse-এর বিরুদ্ধে
+router.get("/oauth/:provider/start", authLimiter, authController.oauthStart);
+router.get("/oauth/:provider/callback", authLimiter, authController.oauthCallback);
+// frontend one-time code → tokens
+router.post("/oauth/exchange", authLimiter, authController.oauthExchange);
+
 export default router;

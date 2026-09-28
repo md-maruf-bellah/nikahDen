@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema(
 
     avatar: { type: String, default: null },
 
+    // OAuth — সোশ্যাল লগইনের উৎস। passwordless অ্যাকাউন্টে passwordHash একটি
+    // অসম্ভব random স্ট্রিং হয় (সরাসরি লগইন অসম্ভব), প্রোভাইডার-ভিত্তিক লগইনই একমাত্র পথ।
+    authProvider: { type: String, enum: ["local", "google", "facebook"], default: "local", index: true },
+    googleId: { type: String, default: null, index: true, sparse: true },
+    facebookId: { type: String, default: null, index: true, sparse: true },
+
     lastLoginAt: { type: Date, default: null },
     // Plain text reason never stored; admins may attach a note.
   },

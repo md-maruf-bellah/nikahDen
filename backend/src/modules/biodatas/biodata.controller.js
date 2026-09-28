@@ -2,6 +2,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/ApiResponse.js";
 import { toPublicUrl } from "../../middleware/upload.middleware.js";
 import * as biodataService from "./biodata.service.js";
+import { computeCompletion, missingRequired } from "./biodata.completion.js";
 
 export const list = asyncHandler(async (req, res) => {
   const { items, pagination } = await biodataService.listBiodatas(req.query, req.user);
@@ -22,6 +23,22 @@ export const similar = asyncHandler(async (req, res) => {
 export const getMine = asyncHandler(async (req, res) => {
   const biodata = await biodataService.getMyBiodata(req.user.id);
   return sendSuccess(res, "My biodata", biodata);
+});
+
+// হালকা এন্ডপয়েন্ট — ড্যাশবোর্ডের প্রগ্রেস রিং প্রতি লোডে পুরো বায়োডাটা না আনিয়ে রিফ্রেশ করতে।
+export const getMineCompletion = asyncHandler(async (req, res) => {
+  const biodata = await biodataService.getMyBiodata(req.user.id);
+  if (!biodata) {
+    return sendSuccess(res, "No biodata yet", { hasBiodata: false, percent: 0, groups: [], missing: [], missingRequired: [] });
+  }
+  const report = computeCompletion(biodata);
+  return sendSuccess(res, "Completion report", {
+    hasBiodata: true,
+    status: biodata.status,
+    biodataNo: biodata.biodataNo,
+    ...report,
+    missingRequired: missingRequired(biodata),
+  });
 });
 
 export const createMine = asyncHandler(async (req, res) => {

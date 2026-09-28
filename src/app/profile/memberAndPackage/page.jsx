@@ -2,17 +2,24 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, CreditCard, Zap } from "lucide-react";
-import { membershipApi } from "@/lib/api";
+import { membershipApi, biodataApi } from "@/lib/api";
+import CompletionCard from "../biodata/CompletionCard";
 
 const MembershipDashboard = () => {
   const router = useRouter();
   const [activeModal, setActiveModal] = useState(null);
   const [data, setData] = useState(null);
+  const [completion, setCompletion] = useState(null);
 
   useEffect(() => {
     membershipApi
       .mine()
       .then(setData)
+      .catch(() => {});
+    // হালকা এন্ডপয়েন্ট — ড্যাশবোর্ডের কমপ্লিশন রিং
+    biodataApi
+      .completion()
+      .then((d) => setCompletion(d.hasBiodata ? d : null))
       .catch(() => {});
   }, []);
 
@@ -31,6 +38,21 @@ const MembershipDashboard = () => {
   return (
     <div className="min-h-screenp-4 ">
       <div className="max-w-7xl mx-auto space-y-10">
+        {/* --- Profile Completion --- */}
+        {completion && (
+          <section>
+            <h2 className="text-xl font-bold mb-4">প্রোফাইল কমপ্লিশন</h2>
+            <CompletionCard
+              report={completion}
+              compact
+              onEditSection={() => {
+                // ড্যাশবোর্ড ট্যাব স্টেট শেয়ার করে না; বায়োডাটা ট্যাবে পাঠাই
+                window.dispatchEvent(new CustomEvent("open-biodata-tab"));
+              }}
+            />
+          </section>
+        )}
+
         {/* --- Membership & Package Section --- */}
         <section>
           <h2 className="text-xl font-bold  mb-4">মেম্বারশীপ এবং প্যাকেজ</h2>

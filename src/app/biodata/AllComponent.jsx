@@ -8,7 +8,7 @@ export const PersonalInfo = ({ register, errors }) => (
       </label>
       <input
         {...register("clothingStyle")}
-        placeholder="পাঞ্জাবি, টি-শার্ট, অফিসিয়াল ড্রেস"
+        placeholder="পাঞ্জাবি, টি-শার্ট, অফিসিয়াল ড্রেস"
         className={`input input-bordered input-lg text-sm w-full focus:outline-none ${
           errors.clothingStyle ? "border-red-500" : ""
         }`}
@@ -40,7 +40,7 @@ export const PersonalInfo = ({ register, errors }) => (
 
     {/* Entertainment Habit */}
     <div className="form-control w-full">
-      <label>নাটক / সিনেমা / সিরিয়াল / গান এসব দেখেন বা শুনেন?</label>
+      <label>নাটক / সিনেমা / সিরিয়াল / গান এসব দেখেন বা শুনেন?</label>
       <input
         {...register("entertainmentHabit")}
         placeholder="হ্যাঁ/না এবং কী ধরনের পছন্দ করেন"
@@ -111,7 +111,7 @@ export const PersonalInfo = ({ register, errors }) => (
 
     {/* About Yourself */}
     <div className="form-control w-full  md:col-span-2">
-      <label>নিজের শখ, পছন্দ-অপছন্দ, রুচিবোধ, স্বপ্ন ইত্যাদি বিষয়ে লিখুন</label>
+      <label>নিজের শখ, পছন্দ-অপছন্দ, রুচিবোধ, স্বপ্ন ইত্যাদি বিষয়ে লিখুন</label>
       <textarea
         {...register("aboutYourself")}
         placeholder="নিজের সম্পর্কে লিখুন"
@@ -128,7 +128,7 @@ export const PersonalInfo = ({ register, errors }) => (
 
     {/* Special Categories */}
     <div className="form-control w-full  md:col-span-2">
-      <label>আপনার ক্ষেত্রে প্রযোজ্য হয় এমন ক্যাটাগরি সিলেক্ট করুন।</label>
+      <label>আপনার ক্ষেত্রে প্রযোজ্য হয় এমন ক্যাটাগরি সিলেক্ট করুন।</label>
       <textarea
         {...register("specialCategories")}
         placeholder="আপনার জন্য প্রযোজ্য ক্যাটাগরি লিখুন"
@@ -174,10 +174,10 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Denomination */}
       <div className="form-control w-full">
-        <label className="label">মাজহাব / সম্প্রদায় / Denomination</label>
+        <label className="label">মাজহাব / সম্প্রদায় / Denomination</label>
         <input
           {...register("sectOrDenomination")}
-          placeholder="উদাহরণ: সুন্নি, শিয়া, ক্যাথলিক"
+          placeholder="উদাহরণ: সুন্নি, শিয়া, ক্যাথলিক"
           className={`input input-bordered input-lg text-sm w-full focus:outline-none ${
             errors.sectOrDenomination ? "border-red-500" : ""
           }`}
@@ -192,7 +192,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Practice Level */}
       <div className="form-control w-full">
-        <label className="label">ধর্মীয় চর্চার স্তর</label>
+        <label className="label">ধর্মীয় চর্চার স্তর</label>
 
         <select
           {...register("religiousPracticeLevel")}
@@ -201,8 +201,8 @@ export const ReligiousInfo = ({ register, errors }) => {
           }`}
         >
           <option value="">নির্বাচন করুন</option>
-          <option value="Very Practicing">খুবই নিয়মিত</option>
-          <option value="Practicing">নিয়মিত</option>
+          <option value="Very Practicing">খুবই নিয়মিত</option>
+          <option value="Practicing">নিয়মিত</option>
           <option value="Moderate">মাঝারি</option>
           <option value="Occasional">মাঝেমধ্যে</option>
         </select>
@@ -216,7 +216,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Place of Worship */}
       <div className="form-control w-full">
-        <label className="label">উপাসনালয়ে কতটা নিয়মিত যান?</label>
+        <label className="label">উপাসনালয়ে কতটা নিয়মিত যান?</label>
 
         <input
           {...register("placeOfWorshipAttendance")}
@@ -254,11 +254,11 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Religious Education */}
       <div className="form-control w-full">
-        <label className="label">ধর্মীয় শিক্ষা</label>
+        <label className="label">ধর্মীয় শিক্ষা</label>
 
         <input
           {...register("religiousEducation")}
-          placeholder="ধর্মীয় শিক্ষার বিবরণ"
+          placeholder="ধর্মীয় শিক্ষার বিবরণ"
           className={`input input-bordered input-lg text-sm w-full focus:outline-none ${
             errors.religiousEducation ? "border-red-500" : ""
           }`}
@@ -273,7 +273,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Religious Dress */}
       <div className="form-control w-full">
-        <label className="label">ধর্মীয় পোশাক বা বিধান অনুসরণ করেন?</label>
+        <label className="label">ধর্মীয় পোশাক বা বিধান অনুসরণ করেন?</label>
 
         <input
           {...register("religiousDressPreference")}
@@ -313,7 +313,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Organization */}
       <div className="form-control w-full">
-        <label className="label">কোনো ধর্মীয় সংগঠনের সাথে যুক্ত?</label>
+        <label className="label">কোনো ধর্মীয় সংগঠনের সাথে যুক্ত?</label>
 
         <input
           {...register("religiousOrganization")}
@@ -332,7 +332,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Dietary Practice */}
       <div className="form-control w-full">
-        <label className="label">ধর্মীয় খাদ্যনীতি অনুসরণ করেন?</label>
+        <label className="label">ধর্মীয় খাদ্যনীতি অনুসরণ করেন?</label>
 
         <input
           {...register("dietaryPractice")}
@@ -351,7 +351,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Future Goal */}
       <div className="form-control w-full md:col-span-2">
-        <label className="label">ধর্মীয় বিষয়ে ভবিষ্যৎ পরিকল্পনা</label>
+        <label className="label">ধর্মীয় বিষয়ে ভবিষ্যৎ পরিকল্পনা</label>
 
         <textarea
           {...register("futureReligiousGoal")}
@@ -369,7 +369,7 @@ export const ReligiousInfo = ({ register, errors }) => {
 
       {/* Partner Expectation */}
       <div className="form-control w-full md:col-span-2">
-        <label className="label">জীবনসঙ্গীর ধর্মীয় বিষয়ে প্রত্যাশা</label>
+        <label className="label">জীবনসঙ্গীর ধর্মীয় বিষয়ে প্রত্যাশা</label>
 
         <textarea
           {...register("partnerReligiousExpectation")}
@@ -389,13 +389,15 @@ export const ReligiousInfo = ({ register, errors }) => {
 };
 
 // ৩. শিক্ষাগত যোগ্যতা
+// প্রতিটি ইনপুটের নিজস্ব নাম আছে; ব্যাকএন্ড ফিল্ডে যেগুলো পাঠানো হয়:
+// education, degree, institution, board, subject, result, passingYear, deeniEducation
 export const EducationalInfo = ({ register, errors }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div className="form-control w-full">
       <label className="label">আপনার শিক্ষা মাধ্যম</label>
       <input
         {...register("education")}
-        placeholder="আপনার শিক্ষা মাধ্যম"
+        placeholder="সাধারণ / মাদ্রাসা / ইংরেজি মাধ্যম"
         className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
           errors.education ? "border-red-500" : ""
         }`}
@@ -409,205 +411,145 @@ export const EducationalInfo = ({ register, errors }) => (
     <div className="form-control w-full">
       <label className="label">সর্বোচ্চ শিক্ষাগত যোগ্যতা</label>
       <input
-        {...register("education")}
-        placeholder="সর্বোচ্চ শিক্ষাগত যোগ্যতা"
+        {...register("degree")}
+        placeholder="যেমন: স্নাতক (সম্মান), এম.এ."
         className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
+          errors.degree ? "border-red-500" : ""
         }`}
       />
 
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
+      {errors.degree && (
+        <p className="text-red-500 text-xs mt-1">{errors.degree.message}</p>
       )}
     </div>
 
     <div className="form-control w-full">
       <label className="label">এস.এস.সি / দাখিল / সমমান পাসের সন</label>
       <input
-        {...register("education")}
-        placeholder="এস.এস.সি / দাখিল / সমমান পাসের সন"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("sscYear")}
+        placeholder="যেমন: ২০১৫"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
 
     <div className="form-control w-full">
-      <label className="label">বিভাগ</label>
+      <label className="label">বিভাগ (এস.এস.সি / দাখিল)</label>
       <input
-        {...register("education")}
-        placeholder="বিভাগ"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("sscGroup")}
+        placeholder="বিজ্ঞান / মানবিক / ব্যবশায় শিক্ষা"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
 
     <div className="form-control w-full">
       <label className="label">ফলাফল</label>
       <input
-        {...register("education")}
-        placeholder="ফলাফল"
+        {...register("result")}
+        placeholder="জিপিএ / গ্রেড"
         className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
+          errors.result ? "border-red-500" : ""
         }`}
       />
 
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
+      {errors.result && (
+        <p className="text-red-500 text-xs mt-1">{errors.result.message}</p>
       )}
     </div>
 
     <div className="form-control w-full">
       <label className="label">SSC পরে কোন মাধ্যমে পড়াশুনা করেছেন?</label>
       <input
-        {...register("education")}
-        placeholder="SSC পরে কোন মাধ্যমে পড়াশুনা করেছেন?"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("hscMedium")}
+        placeholder="সাধারণ / আলিম / এ-লেভেল"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
+
     <div className="form-control w-full">
       <label className="label">এইচ.এস.সি / আলিম / সমমান পাসের সন</label>
       <input
-        {...register("education")}
-        placeholder="এইচ.এস.সি / আলিম / সমমান পাসের সন"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("hscYear")}
+        placeholder="যেমন: ২০১৭"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
 
     <div className="form-control w-full">
-      <label className="label">বিভাগ</label>
+      <label className="label">বিভাগ (এইচ.এস.সি / আলিম)</label>
       <input
-        {...register("education")}
-        placeholder="বিভাগ"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("hscGroup")}
+        placeholder="বিজ্ঞান / মানবিক / ব্যবশায় শিক্ষা"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
 
     <div className="form-control w-full">
-      <label className="label">ফলাফল</label>
+      <label className="label">ফলাফল (এইচ.এস.সি / আলিম)</label>
       <input
-        {...register("education")}
-        placeholder="ফলাফল"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("hscResult")}
+        placeholder="জিপিএ / গ্রেড"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
+
     <div className="form-control w-full">
       <label className="label">
-        স্নাতক / স্নাতক (সম্মান) / ফাজিল অধ্যয়নের বিষয়
+        স্নাতক / স্নাতক (সম্মান) / ফাজিল অধ্যয়নের বিষয়
       </label>
       <input
-        {...register("education")}
-        placeholder="স্নাতক / স্নাতক (সম্মান) / ফাজিল অধ্যয়নের বিষয়"
+        {...register("subject")}
+        placeholder="যেমন: ইংরেজি, ফিকহ"
         className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
+          errors.subject ? "border-red-500" : ""
         }`}
       />
 
-      <label>আপনি যে ডিপার্টমেন্টে পড়ছেন/পড়েছেন সেটি লিখুন।</label>
+      <label>আপনি যে ডিপার্টমেন্টে পড়ছেন/পড়েছেন সেটি লিখুন।</label>
 
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
+      {errors.subject && (
+        <p className="text-red-500 text-xs mt-1">{errors.subject.message}</p>
       )}
     </div>
+
     <div className="form-control w-full">
-      <label className="label">আপনার শিক্ষা মাধ্যম</label>
+      <label className="label">বিশ্ববিদ্যালয় / প্রতিষ্ঠানের নাম</label>
       <input
-        {...register("education")}
-        placeholder="আপনার শিক্ষা মাধ্যম"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("institution")}
+        placeholder="যেমন: ঢাকা বিশ্ববিদ্যালয়"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
+
     <div className="form-control w-full">
-      <label className="label">শিক্ষাপ্রতিষ্ঠানের নাম</label>
+      <label className="label">বোর্ড / মাদ্রাসা বোর্ড</label>
       <input
-        {...register("education")}
-        placeholder="শিক্ষাপ্রতিষ্ঠানের নাম"
-        className={`input input-lg input-bordered text-sm w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("board")}
+        placeholder="যেমন: ঢাকা, মাদ্রাসা বোর্ড"
+        className="input input-lg input-bordered text-sm w-full focus:outline-none"
       />
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
+
     <div className="form-control w-full">
-      <label className="label">কোন বর্ষে পড়ছেন?</label>
+      <label className="label">কোন বর্ষে পড়ছেন / পাস করেছেন?</label>
       <textarea
-        {...register("education")}
-        placeholder="কোন বর্ষে পড়ছেন?"
-        className={`textarea input-bordered w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("passingYear")}
+        placeholder="শিক্ষাপ্রতিষ্ঠানের নাম, বিষয়, পাসের সন সহ বিস্তারিত লিখুন। কিছু না থাকলে ঘরটি ফাঁকা রাখুন।"
+        className="textarea input-bordered w-full focus:outline-none"
       />
-
-      <label>
-        শিক্ষাপ্রতিষ্ঠানের নাম, বিষয়, পাসের সন সহ বিস্তারিত লিখবেন। কিছু না
-        থাকলে ঘরটি ফাঁকা রাখবেন।
-      </label>
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
+
     <div className="form-control w-full">
       <label className="label">দ্বীনি শিক্ষাগত পদবী সমূহ</label>
       <textarea
-        {...register("education")}
-        placeholder="দ্বীনি শিক্ষাগত পদবী সমূহ
-
-"
-        className={`textarea input-bordered w-full focus:outline-none ${
-          errors.education ? "border-red-500" : ""
-        }`}
+        {...register("deeniEducation")}
+        placeholder="দ্বীনি শিক্ষাগত পদবী সমূহ"
+        className="textarea input-bordered w-full focus:outline-none"
       />
 
       <label>
         আপনার কোনো পদবী না থাকলে ঘরটি ফাঁকা রাখুন। থাকলে এক বা একাধিক নির্বাচন
         করতে পারবেন।{" "}
       </label>
-
-      {errors.education && (
-        <p className="text-red-500 text-xs mt-1">{errors.education.message}</p>
-      )}
     </div>
   </div>
 );
@@ -619,7 +561,7 @@ export const ProfessionalInfo = ({ register, errors }) => (
       <label className="label">পেশা</label>
       <input
         {...register("occupation")}
-        placeholder="পেশা"
+        placeholder="যেমন: শিক্ষক, ব্যবসায়ী, চাকুরীজীবী"
         className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
           errors.occupation ? "border-red-500" : ""
         }`}
@@ -629,28 +571,43 @@ export const ProfessionalInfo = ({ register, errors }) => (
         <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
       )}
     </div>
-    <div className="form-control w-full">
-      <label className="label">মাসিক আয়</label>
-      <input
-        {...register("occupation")}
-        placeholder="মাসিক আয়
-"
-        className={`input input-lg input-bordered w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
-      />
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
+    <div className="form-control w-full">
+      <label className="label">মাসিক আয় (টাকায়)</label>
+      <input
+        {...register("monthlyIncome")}
+        type="number"
+        min={0}
+        placeholder="যেমন: ৩০০০০"
+        className="input input-lg input-bordered w-full text-sm focus:outline-none"
+      />
+    </div>
+
+    <div className="form-control w-full">
+      <label className="label">প্রতিষ্ঠানের নাম</label>
+      <input
+        {...register("company")}
+        placeholder="কোম্পানি / অফিস / প্রতিষ্ঠানের নাম"
+        className="input input-lg input-bordered w-full text-sm focus:outline-none"
+      />
+    </div>
+
+    <div className="form-control w-full">
+      <label className="label">অভিজ্ঞতা (বছর)</label>
+      <input
+        {...register("experienceYears")}
+        placeholder="যেমন: ৫"
+        className="input input-lg input-bordered w-full text-sm focus:outline-none"
+      />
+    </div>
+
     <div className="form-control w-full md:col-span-2">
       <label className="label">পেশার বিস্তারিত বিবরণ</label>
       <textarea
-        {...register("occupation")}
+        {...register("occupationDetails")}
         placeholder="পেশার বিস্তারিত বিবরণ"
         className={`textarea input-lg input-bordered w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
+          errors.occupationDetails ? "border-red-500" : ""
         }`}
       />
 
@@ -659,10 +616,12 @@ export const ProfessionalInfo = ({ register, errors }) => (
         হালাল কি না ইত্যাদি লিখতে পারেন।
       </label>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
+      {errors.occupationDetails && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.occupationDetails.message}
+        </p>
       )}
-    </div>{" "}
+    </div>
   </div>
 );
 
@@ -670,116 +629,79 @@ export const ProfessionalInfo = ({ register, errors }) => (
 export const FamilyInfo = ({ register, errors }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">বাবার নাম</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("fatherName")}
+        placeholder="বাবার নাম"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
-
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
     </div>
-    <div className="form-control w-full">
-      <label className="label">পেশা</label>
-      <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
-      />
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">বাবার পেশা</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("fatherOccupation")}
+        placeholder="যেমন: অবসরপ্রাপ্ত সরকারি চাকুরীজীবী"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">মায়ের নাম</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("motherName")}
+        placeholder="মায়ের নাম"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">মায়ের পেশা</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("motherOccupation")}
+        placeholder="যেমন: গৃহিণী"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">ভাইয়ের সংখ্যা</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("brotherCount")}
+        type="number"
+        min={0}
+        placeholder="০"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
     <div className="form-control w-full">
-      <label className="label">পেশা</label>
+      <label className="label">বোনের সংখ্যা</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("sisterCount")}
+        type="number"
+        min={0}
+        placeholder="০"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
-    </div>{" "}
-    <div className="form-control w-full">
-      <label className="label">পেশা</label>
+    <div className="form-control w-full md:col-span-2">
+      <label className="label">সহোদর ভাই-বোনদের বিবরণ</label>
       <input
-        {...register("occupation")}
-        placeholder="পেশা"
-        className={`input input-lg input-bordered  w-full text-sm focus:outline-none ${
-          errors.occupation ? "border-red-500" : ""
-        }`}
+        {...register("siblings")}
+        placeholder="ভাই-বোনদের সংখ্যা ও অবস্থা (যেমন: ১ ভাই বিবাহিত, ২ বোন অবিবাহিত)"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
       />
+    </div>
 
-      {errors.occupation && (
-        <p className="text-red-500 text-xs mt-1">{errors.occupation.message}</p>
-      )}
+    <div className="form-control w-full md:col-span-2">
+      <label className="label">পারিবারিক বিবরণ</label>
+      <input
+        {...register("familyDetails")}
+        placeholder="পারিবারিক অর্থনৈতিক ও সামাজিক অবস্থা সম্পর্কে লিখুন"
+        className="input input-lg input-bordered  w-full text-sm focus:outline-none"
+      />
     </div>
   </div>
 );
@@ -799,7 +721,7 @@ export const ContactInfo = ({ register, errors }) => (
     />
     <textarea
       {...register("permanentAddress")}
-      placeholder="স্থায়ী ঠিকানা"
+      placeholder="স্থায়ী ঠিকানা"
       className="textarea textarea-bordered w-full focus:outline-none"
     />
   </div>
@@ -825,22 +747,5 @@ export const AgreementInfo = ({ register, errors }) => (
   </div>
 );
 
-export const GeneralInfo = ({ register, errors }) => (
-  <div className="space-y-4">
-    <input
-      {...register("mobile")}
-      placeholder="মোবাইল নম্বর"
-      className="input input-bordered input-lg text-sm w-full"
-    />
-    <textarea
-      {...register("presentAddress")}
-      placeholder="বর্তমান ঠিকানা"
-      className="textarea textarea-bordered w-full"
-    />
-    <textarea
-      {...register("permanentAddress")}
-      placeholder="স্থায়ী ঠিকানা"
-      className="textarea textarea-bordered w-full"
-    />
-  </div>
-);
+// স্টেপ ৮-এর সাধারণ তথ্য GeneralFields-এ page.jsx-এ রয়েছে; ContactInfo-ও সেখানেই
+// পুনর্ব্যবহৃত হয় — তাই GeneralInfo-এর ডুপ্লিকেট কপি বাদ।
