@@ -14,7 +14,7 @@
     "seed": "node scripts/seed.js",
     "seed:reset": "node scripts/seed.js --reset",
     "verify:lifecycle": "node scripts/verify-lifecycle.js",
-    "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
+    "test": "node --test --test-concurrency=1 tests/auth.test.js tests/biodata.test.js tests/completion.test.js tests/oauth.test.js tests/preference.test.js tests/shop.test.js tests/social.test.js",
     "check": "node --check src/server.js"
   },
   "dependencies": {
