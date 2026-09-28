@@ -102,7 +102,22 @@ export async function stopServer() {
 export async function clearDb() {
   const { db } = mongoose.connection;
   const collections = await db.collections();
-  await Promise.all(collections.map((c) => c.deleteMany({})));
+  await Promise.all(
+    collections.map(async (c) => {
+      // capped collection-এ deleteMany নিষিদ্ধ (Mongo limitation) — drop → recreate
+      const opts = await db.command({ listCollections: 1, filter: { name: c.collectionName } });
+      const info = opts?.cursor?.firstBatch?.[0]?.options;
+      if (info?.capped) {
+        await db.dropCollection(c.collectionName);
+        if (c.collectionName === "oauth_events") {
+          const { ensureOauthEventCapped } = await import("../src/models/oauthEvent.model.js");
+          await ensureOauthEventCapped(mongoose.connection);
+        }
+        return;
+      }
+      return c.deleteMany({});
+    })
+  );
 }
 
 // ---------------------------------------------------------------------------

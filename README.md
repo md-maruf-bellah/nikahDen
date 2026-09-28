@@ -112,7 +112,8 @@ MONGOMS_VERSION=7.0.24 npm test
 - **Abuse প্রতিরোধ:** OAuth এন্ডপয়েন্টে ডেডিকেটেড limiter (10/15min) + **fail2ban guard** —
   ব্যর্থ exchange/state-চেষ্টায় ৫ বারে IP ব্লক (429 + Retry-After); সফল লগইনে কাউন্টার রিসেট
 - **Contact ফর্ম:** honeypot + time-trap স্প্যাম ডিফেন্স (বট সাইলেন্টলি ফেলা হয়) + 10/hr limiter
-- সব রেট-লিমিট ও OAuth কাউন্টার অ্যাডমিন `GET /admin/stats`-এ দৃশ্যমান
+- সব রেট-লিমিট ও OAuth কাউন্টার অ্যাডমিন `GET /admin/stats`-এ দৃশ্যমান;
+  ইভেন্ট-হিস্ট্রি Mongo capped collection-এ persist হয় — `GET /admin/oauth/events`-এ রিস্টার্টের পরেও পাওয়া যায়
 
 ---
 

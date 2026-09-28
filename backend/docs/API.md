@@ -59,9 +59,16 @@ state tamper/replay, ভুয়া exchange কোড, অজানা প্�
 `exchange_success`, `login_success`, `rate_limited`, `failure_blocked`. Failures are also logged as
 `[oauth] ...` console warnings with IP + error code (no PII/tokens). Staff can read the
 counters from `GET /admin/stats` under the `oauth` key (`counts` + `totalFailed`).
-Counters reset on process restart; plug the `oauthMonitor.js` `recordOAuthEvent` calls
-into a persistent sink (e.g. Mongo capped collection) if restart-persistent history is
-needed.
+Counters reset on process restart.
+
+**পারসিস্টেন্ট হিস্ট্রি:** প্রতিটি ইভেন্ট Mongo **capped collection**
+(`oauth_events`, ২৫৬KB / max ৫০০ ডক — পুরনোগুলো অটো-ওভাররাইট, কোনো ক্লিনআপ
+জব লাগে না)-তেও fire-and-forget লেখা হয়, তাই রিস্টার্টের পরেও abuse-হিস্ট্রি
+পাওয়া যায়। Staff endpoint:
+
+| Method | Path | Access | Notes |
+| ------ | ---- | ------ | ----- |
+| GET | `/admin/oauth/events` | ADMIN/SUPERADMIN | `?event=&ip=&limit=` (max 500) — নতুনগুলো আগে; capped collection থেকে |
 
 **Environment variables** (backend/.env):
 

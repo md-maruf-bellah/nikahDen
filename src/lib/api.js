@@ -226,6 +226,8 @@ export const usersApi = {
 
 export const adminApi = {
   stats: () => api.get("/admin/stats"),
+  // OAuth ইভেন্ট হিস্ট্রি (Mongo capped collection — restart-persistent)
+  oauthEvents: (params) => api.get("/admin/oauth/events", params),
   moderate: (id, status, rejectionReason) =>
     api.patch(`/biodatas/${id}/status`, rejectionReason ? { status, rejectionReason } : { status }),
 };

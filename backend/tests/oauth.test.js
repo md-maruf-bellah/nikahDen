@@ -13,7 +13,14 @@ import {
   auth,
 } from "./helpers.js";
 import * as oauth from "../src/modules/auth/oauth.service.js";
-import { recordOAuthEvent, resetOAuthMonitorForTests, oauthMonitorStats } from "../src/modules/auth/oauthMonitor.js";
+import OauthEvent, { OAUTH_EVENT_CAP } from "../src/models/oauthEvent.model.js";
+import {
+  recordOAuthEvent,
+  resetOAuthMonitorForTests,
+  oauthMonitorStats,
+  recentOAuthEventsFromDb,
+  clearOAuthEventsForTests,
+} from "../src/modules/auth/oauthMonitor.js";
 import {
   recordOAuthFailure,
   clearOAuthFailures,
@@ -186,7 +193,10 @@ describe("OAUTH (Google / Facebook)", () => {
   });
 
   describe("oauth monitoring + rate limit", () => {
-    beforeEach(() => resetOAuthMonitorForTests());
+    beforeEach(async () => {
+      resetOAuthMonitorForTests();
+      await clearOAuthEventsForTests();
+    });
 
     it("records exchange success/failure and computes totalFailed", async () => {
       recordOAuthEvent("exchange_success", { ip: "t" });
@@ -229,9 +239,10 @@ describe("OAUTH (Google / Facebook)", () => {
   });
 
   describe("failure guard (fail2ban)", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       resetOAuthMonitorForTests();
       resetOAuthFailureGuardForTests();
+      await clearOAuthEventsForTests();
     });
     // স্যুট শেষে ব্লক অবস্থা পরের স্যুটে লেক না হয়
     afterEach(() => {
@@ -290,6 +301,65 @@ describe("OAUTH (Google / Facebook)", () => {
       // ব্লক হওয়ার পর বৈধ google start-ও guard-এ আটকায় (৪২৯, হ্যান্ডলারে যায় না)
       const res = await requestObj.get("/api/v1/auth/oauth/google/start").redirects(0);
       assert.equal(res.status, 429);
+    });
+  });
+
+  describe("persistent event history (capped collection)", () => {
+    beforeEach(async () => {
+      resetOAuthMonitorForTests();
+      await clearOAuthEventsForTests();
+    });
+
+    it("persists events to Mongo (survives in-memory monitor reset)", async () => {
+      recordOAuthEvent("exchange_failed", { ip: "persist-ip", errorCode: "OAUTH_CODE_INVALID" });
+      recordOAuthEvent("login_success", { ip: "persist-ip", provider: "google" });
+      // fire-and-forget লেখা — ছোট অপেক্ষা
+      await new Promise((r) => setTimeout(r, 100));
+      const docs = await recentOAuthEventsFromDb({ ip: "persist-ip" });
+      assert.ok(docs.length >= 2, `expected >=2 persisted, got ${docs.length}`);
+      assert.ok(docs.some((d) => d.event === "exchange_failed" && d.errorCode === "OAUTH_CODE_INVALID"));
+      assert.ok(docs.some((d) => d.event === "login_success"));
+      // natural order নতুন-আগে
+      assert.ok(docs[0].at >= docs[docs.length - 1].at);
+    });
+
+    it("capped collection rolls over at max documents (no growth)", { timeout: 30000 }, async () => {
+      // সিকোয়েনশিয়াল লেখা — ক্যাপ-মেকানিজম ডিটারমিনিস্টিক যাচাই
+      for (let i = 0; i < OAUTH_EVENT_CAP.max + 25; i++) {
+        await OauthEvent.create({ event: "state_failed", ip: `cap-ip-${i % 3}`, errorCode: "OAUTH_STATE_INVALID" });
+      }
+      const total = await OauthEvent.countDocuments();
+      assert.equal(total, OAUTH_EVENT_CAP.max, "exactly capped at max");
+      // সবচেয়ে পুরনোগুলো overwrite হয়েছে — সর্বশেষ লেখাটা আছে
+      const latest = await recentOAuthEventsFromDb({ limit: 1 });
+      assert.equal(latest[0].ip, `cap-ip-${(OAUTH_EVENT_CAP.max + 24) % 3}`);
+    });
+
+    it("monitor's concurrent fire-and-forget writes stay bounded", { timeout: 30000 }, async () => {
+      // বাস্তব আচরণ: বৃহ্তি কনকারেন্সিতে count-cap সামান্য overshoot করতে পারে —
+      // তবে কখনোই unbounded হয় না (size-cap + ইন-ফ্লাইট সীমিত)
+      for (let i = 0; i < OAUTH_EVENT_CAP.max + 25; i++) {
+        recordOAuthEvent("state_failed", { ip: `burst-ip-${i % 3}`, errorCode: "OAUTH_STATE_INVALID" });
+      }
+      await new Promise((r) => setTimeout(r, 400));
+      const total = await OauthEvent.countDocuments();
+      assert.ok(total < OAUTH_EVENT_CAP.max * 1.1, `bounded (≈cap), got ${total}`);
+    });
+
+    it("GET /admin/oauth/events serves the persisted history (staff-only)", async () => {
+      recordOAuthEvent("provider_denied", { ip: "admin-test-ip", provider: "facebook", errorCode: "access_denied" });
+      await new Promise((r) => setTimeout(r, 100));
+      const staff = await createStaff(requestObj, { role: "ADMIN" });
+      const res = await requestObj
+        .get("/api/v1/admin/oauth/events?event=provider_denied&limit=10")
+        .set(auth(staff.accessToken));
+      assert.equal(res.status, 200);
+      assert.equal(res.body.data.count >= 1, true);
+      assert.ok(res.body.data.items.every((d) => d.event === "provider_denied"));
+      // non-staff পায় না
+      const member = await registerUser(requestObj);
+      const denied = await requestObj.get("/api/v1/admin/oauth/events").set(auth(member.accessToken));
+      assert.equal(denied.status, 403);
     });
   });
 

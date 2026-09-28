@@ -15,4 +15,13 @@ router.get(
   adminController.stats
 );
 
+// Staff-only OAuth event history (Mongo capped collection — restart-persistent)
+router.get(
+  "/oauth/events",
+  authenticate,
+  authorize(ROLES.ADMIN, ROLES.SUPERADMIN),
+  requirePermission(PERMISSIONS.STATS_READ),
+  adminController.oauthEvents
+);
+
 export default router;

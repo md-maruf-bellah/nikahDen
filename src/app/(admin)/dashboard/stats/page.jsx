@@ -22,6 +22,12 @@ import {
   AlertTriangle,
   CalendarDays,
   Hourglass,
+  ShieldAlert,
+  ShieldCheck,
+  Ban,
+  KeyRound,
+  LogIn,
+  Ban as BanIcon,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 
@@ -53,10 +59,106 @@ function SectionTitle({ children }) {
   );
 }
 
+// স্টাফ ইনবক্স টেবিলের তারিখ-স্টাইলের মতো করে ইভেন্ট-টাইম ফরম্যাট
+const timeBn = (iso) => {
+  try {
+    return new Date(iso).toLocaleString("bn-BD", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+};
+
+// OAuth ইভেন্ট-নাম → বাংলা লেবেল + টোন (কার্ড ও টেবিল দুজায়গায় ব্যবহৃত)
+const OAUTH_EVENT_META = {
+  start: { label: "কনসেন্ট শুরু", tone: "text-sky-600" },
+  start_failed: { label: "শুরু ব্যর্থ", tone: "text-red-600" },
+  provider_denied: { label: "অনুমতি ফিরিয়ে দেওয়া", tone: "text-orange-500" },
+  state_failed: { label: "CSRF state ব্যর্থ", tone: "text-red-600" },
+  exchange_failed: { label: "কোড এক্সচেঞ্জ ব্যর্থ", tone: "text-red-600" },
+  exchange_success: { label: "এক্সচেঞ্জ সফল", tone: "text-green-600" },
+  login_success: { label: "সফল লগইন", tone: "text-green-600" },
+  rate_limited: { label: "রেট-লিমিট (429)", tone: "text-amber-600" },
+  failure_blocked: { label: "ফেইল২ব্যান ব্লক", tone: "text-red-700" },
+};
+
+function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload }) {
+  const counts = stats?.oauth?.counts || {};
+  const totalFailed = stats?.oauth?.totalFailed || 0;
+  const totalAttempts = Object.values(counts).reduce((a, b) => a + Number(b || 0), 0);
+  const failureRate = totalAttempts ? Math.round((totalFailed / totalAttempts) * 100) : 0;
+
+  const cards = [
+    { icon: <LogIn size={20} />, label: "সফল লগইন (OAuth)", value: bn(counts.login_success + counts.exchange_success), tone: "text-green-600", sub: "login_success + exchange_success" },
+    { icon: <KeyRound size={20} />, label: "ব্যর্থ এক্সচেঞ্জ", value: bn(counts.exchange_failed), tone: "text-red-600", sub: "ভুয়া/পুরনো/রিপ্লে কোড" },
+    { icon: <ShieldAlert size={20} />, label: "State ব্যর্থ (CSRF)", value: bn(counts.state_failed), tone: "text-red-600", sub: "tamper/expired/replay" },
+    { icon: <BanIcon size={20} />, label: "ফেইল২ব্যান ব্লক", value: bn(counts.failure_blocked), tone: "text-red-700", sub: "ব্লকড IP-এর চেষ্টা" },
+    { icon: <ShieldCheck size={20} />, label: "মোট ব্যর্থতা", value: bn(totalFailed), tone: "text-orange-500", sub: `চেষ্টার ${failureRate}% (এই রানে)` },
+  ];
+
+  return (
+    <div className="mt-8">
+      <SectionTitle>OAuth মনিটর (সোশ্যাল লগইন স্বাস্থ্য)</SectionTitle>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        {cards.map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
+      </div>
+
+      {/* পারসিস্টেড রিসেন্ট ইভেন্ট (Mongo capped collection — রিস্টার্ট-সহনশীল) */}
+      <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
+        <div className="flex items-center justify-between px-4 py-2 bg-base-200/60">
+          <p className="text-xs font-bold text-gray-500">
+            রিসেন্ট ইভেন্ট — সার্ভার রিস্টার্টের পরেও থাকে (সর্বশেষ ২০)
+          </p>
+          <button onClick={reload} className="btn btn-ghost btn-xs gap-1">
+            <RefreshCw size={12} /> রিফ্রেশ
+          </button>
+        </div>
+        <table className="table table-sm">
+          <thead>
+            <tr className="text-[11px] text-gray-400">
+              <th>সময়</th><th>ইভেন্ট</th><th>IP</th><th>প্রোভাইডার</th><th>এরর কোড</th>
+            </tr>
+          </thead>
+          <tbody>
+            {eventsLoading && (
+              <tr><td colSpan={5} className="text-center py-6"><span className="loading loading-spinner loading-sm text-red-400" /></td></tr>
+            )}
+            {!eventsLoading && eventsError && (
+              <tr><td colSpan={5} className="text-center py-6 text-xs text-red-500">{eventsError}</td></tr>
+            )}
+            {!eventsLoading && !eventsError && events.length === 0 && (
+              <tr><td colSpan={5} className="text-center py-6 text-xs text-gray-400">এখনো কোনো OAuth ইভেন্ট নেই</td></tr>
+            )}
+            {!eventsLoading && !eventsError && events.map((ev, i) => {
+              const meta = OAUTH_EVENT_META[ev.event] || { label: ev.event, tone: "text-gray-500" };
+              return (
+                <tr key={`${ev.at}-${i}`} className="text-xs">
+                  <td className="whitespace-nowrap text-gray-400">{timeBn(ev.at)}</td>
+                  <td className={`font-bold ${meta.tone}`}>{meta.label}</td>
+                  <td className="font-mono text-[11px]">{ev.ip || "—"}</td>
+                  <td>{ev.provider || "—"}</td>
+                  <td className="font-mono text-[11px] text-gray-400">{ev.errorCode || "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const StatsDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // OAuth ইভেন্ট-হিস্ট্রি (capped collection) — আলাদা লোড, আলাদা রিফ্রেশ
+  const [oauthEvents, setOauthEvents] = useState([]);
+  const [oauthEventsLoading, setOauthEventsLoading] = useState(true);
+  const [oauthEventsError, setOauthEventsError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,6 +173,19 @@ const StatsDashboard = () => {
     }
   }, []);
 
+  const loadOauthEvents = useCallback(async () => {
+    setOauthEventsLoading(true);
+    setOauthEventsError("");
+    try {
+      const data = await adminApi.oauthEvents({ limit: 20 });
+      setOauthEvents(data?.items || []);
+    } catch (err) {
+      setOauthEventsError(err.message || "OAuth ইভেন্ট লোড করা যায়নি।");
+    } finally {
+      setOauthEventsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     Promise.resolve().then(() => {
@@ -80,6 +195,16 @@ const StatsDashboard = () => {
       cancelled = true;
     };
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) return loadOauthEvents();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadOauthEvents]);
 
   if (loading) {
     return (
@@ -207,6 +332,15 @@ const StatsDashboard = () => {
           </div>
         </React.Fragment>
       ))}
+
+      {/* OAuth সোশ্যাল লগইনের স্বাস্থ্য — কাউন্টার + পারসিস্টেড রিসেন্ট ইভেন্ট */}
+      <OAuthMonitorSection
+        stats={stats}
+        events={oauthEvents}
+        eventsLoading={oauthEventsLoading}
+        eventsError={oauthEventsError}
+        reload={loadOauthEvents}
+      />
     </div>
   );
 };

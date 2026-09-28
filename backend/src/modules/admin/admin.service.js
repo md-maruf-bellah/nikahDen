@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import User from "../../models/user.model.js";
 import Biodata from "../../models/biodata.model.js";
 import Order from "../../models/order.model.js";
-import { oauthCountersForAdmin } from "../auth/oauthMonitor.js";
+import { oauthCountersForAdmin, recentOAuthEventsFromDb } from "../auth/oauthMonitor.js";
 import Subscription from "../../models/subscription.model.js";
 import ContactMessage from "../../models/contactMessage.model.js";
 import Like from "../../models/like.model.js";
@@ -180,6 +180,15 @@ async function revenueSince(since) {
     { $group: { _id: null, total: { $sum: "$total" } } },
   ]);
   return singleTotal(res);
+}
+
+/**
+ * OAuth ইভেন্ট হিস্ট্রি (Mongo capped collection থেকে) — রিস্টার্টের পরেও থাকে।
+ * ফিল্টার: ?event=exchange_failed&ip=::1&limit=50
+ */
+export async function oauthEventHistory({ event, ip, limit } = {}) {
+  const items = await recentOAuthEventsFromDb({ event, ip, limit });
+  return { items, count: items.length };
 }
 
 /** Public landing counters (accounts, grooms, brides, marriages). */
