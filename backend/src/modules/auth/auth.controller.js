@@ -4,6 +4,8 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/ApiResponse.js";
 import * as authService from "./auth.service.js";
 import * as oauthService from "./oauth.service.js";
+import { recordOAuthEvent } from "./oauthMonitor.js";
+import { recordOAuthFailure, clearOAuthFailures } from "../../middleware/oauthFailureGuard.middleware.js";
 
 const COOKIE_OPTS = {
   httpOnly: true,
@@ -88,12 +90,22 @@ export const oauthProviders = asyncHandler(async (_req, res) => {
 
 // GET /auth/oauth/:provider/start → 302 প্রোভাইডারে
 export const oauthStart = asyncHandler(async (req, res) => {
-  const { url } = oauthService.buildAuthUrl(req.params.provider);
-  return res.redirect(302, url);
+  const provider = req.params.provider;
+  try {
+    const { url } = await oauthService.buildAuthUrl(provider);
+    recordOAuthEvent("start", { ip: req.ip, provider });
+    return res.redirect(302, url);
+  } catch (err) {
+    // অকনফিগার্ড (503) / অজানা প্রোভাইডার (404) — monitoring-এ গোনা হয়;
+    // অজানা প্রোভাইডার প্রোবিং (404) ব্যর্থ-চেষ্টা হিসেবেও গোনা হয় (fail2ban)
+    recordOAuthEvent("start_failed", { ip: req.ip, provider, errorCode: err?.errorCode || "UNKNOWN" });
+    if (err?.errorCode === "OAUTH_PROVIDER_UNKNOWN") recordOAuthFailure(req.ip, "OAUTH_PROVIDER_UNKNOWN");
+    throw err;
+  }
 });
 
 // verifyState কে controller থেকে ব্যবহারের জন্য re-export
-export const verifyStateForController = (state) => oauthService.verifyState(state);
+export const verifyStateForController = async (state) => oauthService.verifyState(state);
 
 // GET /auth/oauth/:provider/callback → কোড এক্সচেঞ্জ → handoff কোড দিয়ে frontend-এ
 export const oauthCallback = asyncHandler(async (req, res) => {
@@ -103,22 +115,49 @@ export const oauthCallback = asyncHandler(async (req, res) => {
   // ইউজার প্রোভাইডারে বাতিল করলে
   if (error) {
     const desc = error === "access_denied" ? "আপনি অনুমতি দেননি।" : String(error_description || error);
+    recordOAuthEvent("provider_denied", { ip: req.ip, provider, errorCode: String(error) });
     return res.redirect(302, `${env.CLIENT_URL}/auth/callback?error=${encodeURIComponent(desc)}`);
   }
 
   try {
     // state আগে যাচাই (CSRF) — provider mismatch ধরা পড়ুক
-    const statePayload = verifyStateForController(state);
+    let statePayload;
+    try {
+      statePayload = await verifyStateForController(state);
+    } catch (stateErr) {
+      // state tamper/expired/replay — fail2ban-এ গোনা হয় (CSRF প্রোবিং)
+      recordOAuthFailure(req.ip, stateErr?.errorCode || "OAUTH_STATE_INVALID");
+      throw stateErr;
+    }
     if (statePayload.provider !== provider) {
       const e = new Error("state provider mismatch");
       e.errorCode = "OAUTH_STATE_INVALID";
+      // state-এ সই আছে কিন্তু অন্য প্রোভাইডারে ব্যবহারের চেষ্টা — fail2ban-এ যায়
+      recordOAuthFailure(req.ip, "OAUTH_STATE_MISMATCH");
       throw e;
     }
-    if (!code) throw new Error("MISSING_CODE");
+    if (!code) {
+      recordOAuthFailure(req.ip, "MISSING_CODE");
+      throw new Error("MISSING_CODE");
+    }
     const session = await oauthService.completeOAuthLogin(provider, code);
-    const handoffCode = oauthService.createHandoffCode(session);
+    const handoffCode = await oauthService.createHandoffCode(session);
+    // সফল লগইন — এই IP-এর ব্যর্থতা-কাউন্টার মুছে যায় (ভুল করা সাধারণ ইউজার রক্ষা)
+    clearOAuthFailures(req.ip);
+    recordOAuthEvent("login_success", { ip: req.ip, provider });
     return res.redirect(302, `${env.CLIENT_URL}/auth/callback?code=${handoffCode}`);
   } catch (err) {
+    if (String(err?.errorCode || "").startsWith("OAUTH_STATE_") || err?.errorCode === "STATE_MISMATCH" || err?.message === "state provider mismatch") {
+      // ব্যর্থতা-কাউন্টার ইতিমধ্যে ভেতরের ট্রাই-এ গোনা হয়েছে — এখানে শুধু monitor event
+      recordOAuthEvent("state_failed", { ip: req.ip, provider, errorCode: err?.errorCode || "OAUTH_STATE_INVALID" });
+    } else if (err?.errorCode !== "OAUTH_EXCHANGE_FAILED") {
+      // provider প্রত্যাখ্যান (OAUTH_EXCHANGE_FAILED) সাধারণ ইউজারের ভুলও হতে পারে —
+      // সেটা শুধু monitor-এ; বাকি অপ্রত্যাশিত ব্যর্থতা fail2ban-এও যায়
+      recordOAuthFailure(req.ip, err?.errorCode || "UNKNOWN");
+      recordOAuthEvent("start_failed", { ip: req.ip, provider, errorCode: err?.errorCode || "UNKNOWN" });
+    } else {
+      recordOAuthEvent("start_failed", { ip: req.ip, provider, errorCode: err?.errorCode || "UNKNOWN" });
+    }
     // অভ্যন্তরীণ বার্তা লিক না করে ব্যবহারকারী-বান্ধব বার্তায় ম্যাপ
     const map = {
       STATE_MISMATCH: "নিরাপত্তা যাচাই ব্যর্থ — আবার লগইন করুন।",
@@ -137,6 +176,17 @@ export const oauthCallback = asyncHandler(async (req, res) => {
 
 // POST /auth/oauth/exchange { code } → session tokens (one-time handoff ভোগ করে)
 export const oauthExchange = asyncHandler(async (req, res) => {
-  const session = oauthService.consumeHandoffCode(req.body?.code);
-  return sendSuccess(res, "OAuth login successful", session);
+  try {
+    const session = await oauthService.consumeHandoffCode(req.body?.code);
+    // সফল exchange — brute-force কাউন্টার রিসেট
+    clearOAuthFailures(req.ip);
+    recordOAuthEvent("exchange_success", { ip: req.ip });
+    return sendSuccess(res, "OAuth login successful", session);
+  } catch (err) {
+    // ভুয়া/পুরনো/রিপ্লে কোড — brute-force প্যাটার্ন monitoring-এ ধরা পড়ে;
+    // fail2ban-এও যায় — কয়েকবার ভুয়া কোড দিলেই IP ব্লক
+    recordOAuthFailure(req.ip, err?.errorCode || "UNKNOWN");
+    recordOAuthEvent("exchange_failed", { ip: req.ip, errorCode: err?.errorCode || "UNKNOWN" });
+    throw err;
+  }
 });

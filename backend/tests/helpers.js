@@ -74,6 +74,10 @@ export async function startServer({ transactions = true } = {}) {
   process.env.RATE_LIMIT_MAX = "100000";
   process.env.AUTH_RATE_LIMIT_MAX = "100000";
   process.env.CONTACT_RATE_LIMIT_MAX = "100000";
+  process.env.OAUTH_RATE_LIMIT_MAX = "100000"; // OAuth এন্ডপয়েন্ট টেস্টগুলো একই IP থেকে চলে
+  process.env.OAUTH_FAILURE_LIMIT = "5"; // fail2ban guard টেস্টে সচেতনে ব্যবহারের জন্য
+  process.env.OAUTH_FAILURE_WINDOW_MS = "900000";
+  process.env.OAUTH_FAILURE_BLOCK_MS = "900000";
   const { createApp } = await import("../src/app.js");
   appInstance = createApp();
 

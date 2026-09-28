@@ -42,6 +42,27 @@ No extra dependencies — handshake is implemented with `fetch` + HMAC-signed st
 | GET    | `/auth/oauth/:provider/callback` | public | provider redirects here; exchanges code → session, then 302 to `CLIENT_URL/auth/callback?code=<handoff>` (or `?error=<Bangla message>`) |
 | POST   | `/auth/oauth/exchange` | public | `{ code }` → `{ accessToken, refreshToken, user }` — one-time handoff code, 60s expiry |
 
+All three interactive endpoints (`/start`, `/callback`, `/exchange`) share a dedicated
+strict limiter — **10 requests / 15 min / IP per path** (tunable via `OAUTH_RATE_LIMIT_MAX`),
+tighter than the general auth limiter.
+
+**Fail2ban guard:** এর উপরে `oauthFailureGuard` শুধু *ব্যর্য* চেষ্টা গোনে —
+state tamper/replay, ভুয়া exchange কোড, অজানা প্রোভাইডার প্রোবিং। window-এ
+`OAUTH_FAILURE_LIMIT` (default 5) ব্যর্থতা হলে সেই IP সব OAuth এন্ডপয়েন্টে
+`OAUTH_FAILURE_BLOCK_MS` (default 15min) সময়ের 429 পায় (Retry-After সহ);
+ব্লকড প্রতিটি চেষ্টা monitor-এ `failure_blocked` হিসেবে যায়। সফল লগইন/exchange
+হলে IP-এর কাউন্টার মুছে যায়। knobs: `OAUTH_FAILURE_LIMIT`, `OAUTH_FAILURE_WINDOW_MS`,
+`OAUTH_FAILURE_BLOCK_MS`।
+
+**Monitoring:** OAuth activity is counted in-process — `start`, `start_failed`,
+`provider_denied`, `state_failed` (tamper/expired/**replay**), `exchange_failed`,
+`exchange_success`, `login_success`, `rate_limited`, `failure_blocked`. Failures are also logged as
+`[oauth] ...` console warnings with IP + error code (no PII/tokens). Staff can read the
+counters from `GET /admin/stats` under the `oauth` key (`counts` + `totalFailed`).
+Counters reset on process restart; plug the `oauthMonitor.js` `recordOAuthEvent` calls
+into a persistent sink (e.g. Mongo capped collection) if restart-persistent history is
+needed.
+
 **Environment variables** (backend/.env):
 
 | Key | Purpose |
@@ -56,13 +77,19 @@ Flow: browser → `/start` → provider consent → `/callback` → backend crea
 and redirects to the frontend `/auth/callback` page with a **one-time handoff code**;
 the page POSTs it to `/oauth/exchange` to receive the tokens.
 
-> Note: the handoff-code store is **in-memory** (60s TTL, single-use). Fine for a single
-> backend process; with multiple instances you would need a shared store (e.g. Redis).
+The handoff code is stored in **MongoDB** (`oauthhandoffs` collection, one-time use via
+atomic find-and-delete, 60s TTL index auto-expires). It survives restarts and works
+across multiple backend instances — any instance can serve the exchange.
 
 Account linking: existing local accounts with the same email are linked automatically
 (role is preserved); brand-new users are created as `USER`/`ACTIVE` with no password
 (`authProvider: google|facebook`). If the provider does not return an email, the login
 fails with `OAUTH_EMAIL_REQUIRED`. For Google, request the `email` scope consent.
+
+**CSRF state is single-use**: each `/start` issues an HMAC-signed state whose nonce is
+recorded in MongoDB (`oauthstatenonces`, 10-min TTL) and atomically consumed at the
+callback — a replayed state fails with `OAUTH_STATE_INVALID`. Both state nonces and
+handoff codes are therefore restart- and multi-instance-safe.
 
 ---
 
@@ -185,8 +212,12 @@ Pricing response example:
 
 ## Contacts `/contacts`
 
+| Method | Path | Access | Notes |
+| ------ | ---- | ------ | ----- |
+| GET | `/contacts/new-count` | staff (ADMIN/SUPERADMIN/EDITOR) | `{ count }` — NEW স্ট্যাটাসের মেসেজ; 10s মাইক্রো-ক্যাশড, admin dashboard-এর লাইভ ব্যাজ এটা 30s-এ পোল করে |
+
 `POST /contacts` (public, rate-limited) `{ firstName, lastName?, phone?, email, message }`.
-Staff: `GET /`, `GET /:id`, `PATCH /:id` (`status: NEW|REPLIED|CLOSED`, `reply?`), `DELETE /:id`.
+স্প্যাম প্রতিরোধ: optional `website` (honeypot — লুকানো ফিল্ড, পূরণ হলেই বট) + `formElapsedMs` (ফর্ম মাউন্ট থেকে সাবমিট; 0 < ms < 2500 হলে বট) — ধরা পড়লে সাইলেন্ট ড্রপ: 201 + `{ id: null, spam: true }`, রেকর্ড সেভ হয় না; সার্ভার লগে `[contact] spam dropped`।
 
 ---
 

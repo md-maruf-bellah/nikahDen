@@ -20,6 +20,12 @@ router.post("/", contactLimiter, validate(createContactSchema), contactControlle
 // Staff inbox
 router.use(authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN, ROLES.EDITOR));
 
+// লাইভ ব্যাজ — :id-র আগে রাখতে হবে যাতে "new-count" কে id ভুল না হয়
+router.get(
+  "/new-count",
+  requirePermission(PERMISSIONS.CONTACT_READ),
+  contactController.newCount
+);
 router.get(
   "/",
   requirePermission(PERMISSIONS.CONTACT_READ),

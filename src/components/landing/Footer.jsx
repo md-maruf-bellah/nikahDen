@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from "react-icons/fa";
 import { Heart, Mail, Phone, MapPin, ChevronRight, Loader2, CircleCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -16,6 +16,11 @@ const footerLinks = {
     { label: "মেম্বারশিপ প্লান", href: "/member" },
     { label: "যোগাযোগ", href: "/contact" },
   ],
+  "পলিসি ও শর্তাবলী": [
+    { label: "প্রাইভেসি পলিসি", href: "/privacy" },
+    { label: "শর্তাবলী", href: "/terms" },
+    { label: "রিফান্ড পলিসি", href: "/refund" },
+  ],
 };
 
 export default function Footer() {
@@ -23,6 +28,9 @@ export default function Footer() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState("");
   const [err, setErr] = useState("");
+  // স্প্যাম প্রতিরোধ — মোডাল ফর্মেও honeypot + টাইম-ট্র্যাপ
+  const modalOpenedAt = useRef(Date.now());
+  const [honeypot, setHoneypot] = useState("");
 
   const sendModalMsg = async (e) => {
     e.preventDefault();
@@ -38,6 +46,8 @@ export default function Footer() {
         firstName: msg.firstName.trim(),
         email: msg.email.trim(),
         message: msg.message.trim(),
+        formElapsedMs: Date.now() - modalOpenedAt.current,
+        website: honeypot,
       });
       setSent(res?.duplicate ? "আপনার আগের বার্তা পর্যালোচনাধীন আছে।" : "বার্তা পাঠানো হয়েছে!");
       setMsg({ firstName: "", email: "", message: "" });
@@ -177,6 +187,19 @@ export default function Footer() {
             </div>
           )}
           <form onSubmit={sendModalMsg} className="py-4 space-y-3">
+            {/* Honeypot — স্ক্রিন-রিডার ও ট্যাব থেকে লুকানো */}
+            <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+              <label htmlFor="footer-website">Website</label>
+              <input
+                id="footer-website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
             <input
               type="text"
               value={msg.firstName}

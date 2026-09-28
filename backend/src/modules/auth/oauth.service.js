@@ -6,13 +6,15 @@
  *      → কোড এক্সচেঞ্জ → প্রোফাইল → ইউজার আপসার্ট → আমাদের JWT issue
  *      → সংক্ষিপ্ত একবার-ব্যবহারযোগ্য কোডে frontend /auth/callback?code=...-এ রিডাইরেক্ট।
  *
- * নোট: টোকেন URL-এ যায় না; ৬০ সেকেন্ডে মেয়াদোত্তীর্ণ একক-ব্যবহার কোড হয়,
- * আর state HMAC-স্বাক্ষরিত (CSRF প্রতিরোধ)।
+ * নোট: টোকেন URL-এ যায় না; ৬০ সেকেন্ডে মেয়াদোত্তীর্ণ একক-ব্যবহার কোড হয় (Mongo-তে
+ * সংরক্ষিত — restart ও multi-instance safe), আর state HMAC-স্বাক্ষরিত (CSRF প্রতিরোধ)।
  */
 import crypto from "node:crypto";
 import env from "../../config/env.js";
 import User from "../../models/user.model.js";
 import RefreshToken from "../../models/refreshToken.model.js";
+import OauthHandoff from "../../models/oauthHandoff.model.js";
+import OauthStateNonce from "../../models/oauthStateNonce.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { ROLES, USER_STATUSES } from "../../constants/index.js";
 import { issueSession } from "./auth.service.js";
@@ -56,13 +58,20 @@ export function callbackUrl(provider) {
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 
-function signState(payload) {
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+/** নতুন state — নোন্স Mongo-তে রেকর্ড + HMAC স্বাক্ষর (integrity layer) */
+async function issueState(provider) {
+  const nonce = crypto.randomBytes(16).toString("hex");
+  await OauthStateNonce.create({ nonce, expiresAt: new Date(Date.now() + STATE_TTL_MS) });
+  const body = Buffer.from(JSON.stringify({ provider, t: Date.now(), nonce })).toString("base64url");
   const sig = crypto.createHmac("sha256", env.JWT_ACCESS_SECRET).update(body).digest("base64url");
   return `${body}.${sig}`;
 }
 
-function verifyState(state) {
+/**
+ * state যাচাই — ৩ স্তর: (১) HMAC স্বাক্ষর (integrity), (২) TTL, (৩) নোন্স
+ * একবারই ব্যবহারযোগ্য (atomic findAndDelete — replay হলে OAUTH_STATE_INVALID)।
+ */
+export async function verifyState(state) {
   if (!state || typeof state !== "string" || !state.includes(".")) {
     throw ApiError.badRequest("Invalid OAuth state", "OAUTH_STATE_INVALID");
   }
@@ -73,22 +82,30 @@ function verifyState(state) {
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     throw ApiError.badRequest("Invalid OAuth state", "OAUTH_STATE_INVALID");
   }
-  const payload = JSON.parse(Buffer.from(body, "base64url").toString());
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(body, "base64url").toString());
+  } catch {
+    throw ApiError.badRequest("Invalid OAuth state", "OAUTH_STATE_INVALID");
+  }
   if (Date.now() - payload.t > STATE_TTL_MS) {
     throw ApiError.badRequest("OAuth state expired — try again.", "OAUTH_STATE_EXPIRED");
+  }
+  // একবারই ব্যবহারযোগ্য: নোন্স consume (atomic) — দ্বিতীয়বার replay হলে invalid
+  const consumed = await OauthStateNonce.findOneAndDelete({ nonce: payload.nonce }).lean();
+  if (!consumed) {
+    throw ApiError.badRequest("OAuth state already used.", "OAUTH_STATE_INVALID");
   }
   return payload;
 }
 
-export { verifyState };
+/** test helper — Mongo collection (TTL মেয়াদ টেস্টে সরাসরি সেট করার জন্য) */
+export function handoffCollectionForTests() { return OauthHandoff.collection; }
 
-/** test helper */
-export function handoffMapForTests() { return handoff; }
-
-export function buildAuthUrl(provider) {
+export async function buildAuthUrl(provider) {
   assertProvider(provider);
   const conf = PROVIDERS[provider];
-  const state = signState({ provider, t: Date.now(), nonce: crypto.randomBytes(8).toString("hex") });
+  const state = await issueState(provider);
   const params = new URLSearchParams({
     client_id: provider === "google" ? env.GOOGLE_CLIENT_ID : env.FACEBOOK_APP_ID,
     redirect_uri: callbackUrl(provider),
@@ -215,24 +232,19 @@ export async function upsertOAuthUser(provider, profile) {
 // One-time handoff code (backend → frontend without tokens in URL)
 // ---------------------------------------------------------------------------
 
-const handoff = new Map(); // code → { session, expiresAt }
+const HANDOFF_TTL_MS = 60_000;
 
-export function createHandoffCode(session) {
+export async function createHandoffCode(session) {
   const code = crypto.randomBytes(24).toString("base64url");
-  handoff.set(code, { session, expiresAt: Date.now() + 60_000 });
-  if (handoff.size > 500) {
-    // পুরনোগুলো ঝাড়ু
-    const now = Date.now();
-    for (const [k, v] of handoff) if (v.expiresAt < now) handoff.delete(k);
-  }
+  await OauthHandoff.create({ code, session, expiresAt: new Date(Date.now() + HANDOFF_TTL_MS) });
   return code;
 }
 
-export function consumeHandoffCode(code) {
-  const entry = handoff.get(code);
+export async function consumeHandoffCode(code) {
+  // findOneAndDelete = অ্যাটমিক — দুই ইনস্ট্যান্স একসাথে আসলেও কোড একবারই ভোগ হয়
+  const entry = await OauthHandoff.findOneAndDelete({ code }).lean();
   if (!entry) throw ApiError.badRequest("Login code invalid or already used.", "OAUTH_CODE_INVALID");
-  handoff.delete(code);
-  if (entry.expiresAt < Date.now()) {
+  if (new Date(entry.expiresAt).getTime() < Date.now()) {
     throw ApiError.badRequest("Login code expired — please login again.", "OAUTH_CODE_EXPIRED");
   }
   return entry.session;

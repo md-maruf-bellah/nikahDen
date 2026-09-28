@@ -67,6 +67,14 @@ const env = {
   FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID || "",
   FACEBOOK_APP_SECRET: process.env.FACEBOOK_APP_SECRET || "",
 
+  // OAuth এন্ডপয়েন্টের নিজস্ব রেট-লিমিট (প্রতি ১৫ মিনিটে, প্রতি IP + path)
+  OAUTH_RATE_LIMIT_MAX: parseInt(process.env.OAUTH_RATE_LIMIT_MAX || "10", 10),
+
+  // OAuth fail2ban — window-এ এত ব্যর্থ চেষ্টা হলে IP ব্লক (start/callback/exchange সব)
+  OAUTH_FAILURE_LIMIT: parseInt(process.env.OAUTH_FAILURE_LIMIT || "5", 10),
+  OAUTH_FAILURE_WINDOW_MS: parseInt(process.env.OAUTH_FAILURE_WINDOW_MS || "900000", 10),
+  OAUTH_FAILURE_BLOCK_MS: parseInt(process.env.OAUTH_FAILURE_BLOCK_MS || "900000", 10),
+
   oauthEnabled(provider) {
     if (provider === "google") return Boolean(this.GOOGLE_CLIENT_ID && this.GOOGLE_CLIENT_SECRET);
     if (provider === "facebook") return Boolean(this.FACEBOOK_APP_ID && this.FACEBOOK_APP_SECRET);

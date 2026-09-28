@@ -207,6 +207,7 @@ export const conversationApi = {
 export const contactApi = {
   send: (body) => api.post("/contacts", body, { auth: false }),
   // staff inbox
+  newCount: () => api.get("/contacts/new-count"),
   list: (params) => api.list("/contacts", params),
   get: (id) => api.get(`/contacts/${id}`),
   update: (id, body) => api.patch(`/contacts/${id}`, body),

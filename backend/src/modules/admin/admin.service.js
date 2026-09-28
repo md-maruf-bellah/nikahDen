@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import User from "../../models/user.model.js";
 import Biodata from "../../models/biodata.model.js";
 import Order from "../../models/order.model.js";
+import { oauthCountersForAdmin } from "../auth/oauthMonitor.js";
 import Subscription from "../../models/subscription.model.js";
 import ContactMessage from "../../models/contactMessage.model.js";
 import Like from "../../models/like.model.js";
@@ -35,6 +36,7 @@ async function mutualMatchCount() {
 }
 
 export async function dashboardStats() {
+  // OAuth abuse/success monitoring — ব্যর্য এক্সচেঞ্জ, replay ইত্যাদির কাউন্টার
   const today = startOfDay();
   const weekAgo = startOfDay(7);
   const monthAgo = startOfDay(30);
@@ -167,6 +169,8 @@ export async function dashboardStats() {
       expiredSubscriptions: expiredSubs,
     },
     support: { newMessages: contactNew },
+    // OAuth সোশ্যাল লগইনের স্বাস্থ্য — ব্যর্য exchange/replay/rate-limit কাউন্টার
+    oauth: oauthCountersForAdmin(),
   };
 }
 

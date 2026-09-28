@@ -37,17 +37,73 @@ describe("CONTACTS / NOTIFICATIONS / MESSAGES / SECURITY", () => {
       assert.equal(list.status, 200);
       assert.equal(list.body.pagination.total, 1);
 
+      // সাইডবার লাইভ ব্যাজ — নতুন মেসেজে কাউন্ট ১
+      const count1 = await request.get("/api/v1/contacts/new-count").set(auth(adminToken));
+      assert.equal(count1.status, 200);
+      assert.equal(count1.body.data.count, 1);
+
       const id = list.body.data[0].id;
       const update = await request.patch(`/api/v1/contacts/${id}`).set(auth(adminToken)).send({ status: "REPLIED", reply: "যোগাযোগ করুন" });
       assert.equal(update.status, 200);
       assert.equal(update.body.data.status, "REPLIED");
 
+      // উত্তর দেওয়ার পরে কাউন্ট শূন্য
+      const count2 = await request.get("/api/v1/contacts/new-count").set(auth(adminToken));
+      assert.equal(count2.body.data.count, 0);
+
       // members cannot open the inbox
       const member = await registerUser(request);
       const denied = await request.get("/api/v1/contacts").set(auth(member.accessToken));
       assert.equal(denied.status, 403);
+      const deniedCount = await request.get("/api/v1/contacts/new-count").set(auth(member.accessToken));
+      assert.equal(deniedCount.status, 403);
+    });
 
-      const del = await request.delete(`/api/v1/contacts/${id}`).set(auth(adminToken));
+    it("spam defenses: honeypot and too-fast submits are silently dropped", async () => {
+      // honeypot ফিল্ডে মান (বট অটো-ফিল) — সাইলেন্ট 201, ডাটাবেসে ঢোকে না
+      const honey = await request.post("/api/v1/contacts").send({
+        firstName: "Bot",
+        lastName: "Spam",
+        email: "bot-spam@test.dev",
+        message: "Buy my wonderful product right now please!!!",
+        website: "http://spam.example",
+      });
+      assert.equal(honey.status, 201);
+      assert.equal(honey.body.data.spam, true);
+      assert.equal(honey.body.data.id, null);
+
+      // অসম্ভব দ্রুত সাবমিট (২.৫ সেকেন্ডের কম) — একইভাবে সাইলেন্ট ড্রপ
+      const fast = await request.post("/api/v1/contacts").send({
+        firstName: "Fast",
+        lastName: "Bot",
+        email: "fast-bot@test.dev",
+        message: "Another automated spam message body.",
+        formElapsedMs: 120,
+      });
+      assert.equal(fast.status, 201);
+      assert.equal(fast.body.data.spam, true);
+
+      // স্বাভাবিক মানুষের মতো সাবমিট — স্বাভাবিকভাবে ঢোকে
+      const human = await request.post("/api/v1/contacts").send({
+        firstName: "Human",
+        lastName: "User",
+        email: "human@test.dev",
+        message: "এটি একটি স্বাভাবিক বার্তা, স্প্যাম নয়।",
+        formElapsedMs: 15000,
+      });
+      assert.equal(human.status, 201);
+      assert.ok(!human.body.data.spam, "human submit stored");
+      assert.ok(human.body.data.id, "has real id");
+
+      // inbox-এ শুধু মানুষের বার্তাটাই ঢুকেছে
+      const list = await request.get("/api/v1/contacts").set(auth(adminToken));
+      const emails = list.body.data.map((m) => m.email);
+      assert.ok(!emails.includes("bot-spam@test.dev"), "honeypot dropped");
+      assert.ok(!emails.includes("fast-bot@test.dev"), "fast submit dropped");
+      assert.ok(emails.includes("human@test.dev"), "human stored");
+
+      // সব ঠিকঠাক — মেসেজ ডিলিট
+      const del = await request.delete(`/api/v1/contacts/${human.body.data.id}`).set(auth(adminToken));
       assert.equal(del.status, 200);
     });
   });

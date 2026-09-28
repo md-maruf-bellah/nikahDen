@@ -1,17 +1,29 @@
-import { describe, it, before, after, beforeEach } from "node:test";
+import { describe, it, before, after, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import mongoose from "mongoose";
+import crypto from "node:crypto";
 import {
   startServer,
   stopServer,
   clearDb,
   createSuperAdmin,
   registerUser,
+  createStaff,
   auth,
 } from "./helpers.js";
 import * as oauth from "../src/modules/auth/oauth.service.js";
+import { recordOAuthEvent, resetOAuthMonitorForTests, oauthMonitorStats } from "../src/modules/auth/oauthMonitor.js";
+import {
+  recordOAuthFailure,
+  clearOAuthFailures,
+  isOAuthFailureBlocked,
+  resetOAuthFailureGuardForTests,
+  oauthBlockedIpsForTests,
+} from "../src/middleware/oauthFailureGuard.middleware.js";
 import User from "../src/models/user.model.js";
+import OauthStateNonce from "../src/models/oauthStateNonce.model.js";
+import env from "../src/config/env.js";
 
 describe("OAUTH (Google / Facebook)", () => {
   let requestObj;
@@ -103,16 +115,181 @@ describe("OAUTH (Google / Facebook)", () => {
   describe("handoff codes", () => {
     it("one-time use: second consume fails, expired consume fails", async () => {
       const session = { accessToken: "a", refreshToken: "r", user: { id: "u" } };
-      const code = oauth.createHandoffCode(session);
-      const got = oauth.consumeHandoffCode(code);
+      const code = await oauth.createHandoffCode(session);
+      const got = await oauth.consumeHandoffCode(code);
       assert.equal(got.accessToken, "a");
-      assert.throws(() => oauth.consumeHandoffCode(code), /invalid or already used/i);
+      await assert.rejects(() => oauth.consumeHandoffCode(code), /invalid or already used/i);
 
-      const expired = oauth.createHandoffCode(session);
-      // সরাসরি Map-এ মেয়াদ পুরনো করা
-      const map = oauth.handoffMapForTests?.() ?? null;
-      if (map) map.get(expired).expiresAt = Date.now() - 1000;
-      if (map) assert.throws(() => oauth.consumeHandoffCode(expired), /expired/i);
+      const expired = await oauth.createHandoffCode(session);
+      // Mongo-তে সরাসরি মেয়াদ পুরনো করা (TTL-এর অপেক্ষা না করে)
+      const coll = oauth.handoffCollectionForTests();
+      await coll.updateOne(
+        { code: expired },
+        { $set: { expiresAt: new Date(Date.now() - 1000) } },
+      );
+      await assert.rejects(() => oauth.consumeHandoffCode(expired), /expired/i);
+    });
+
+    it("codes survive a restart and are consumable by any process (Mongo-backed)", async () => {
+      const session = { accessToken: "a2", refreshToken: "r2", user: { id: "u2" } };
+      const code = await oauth.createHandoffCode(session);
+      // সরাসরি নতুন কালেকশন অ্যাক্সেস করে দেখি ডকুমেন্ট Mongo-তেই আছে
+      const coll = oauth.handoffCollectionForTests();
+      const doc = await coll.findOne({ code });
+      assert.ok(doc, "handoff document persisted in Mongo");
+      assert.equal(doc.session.accessToken, "a2");
+      const got = await oauth.consumeHandoffCode(code);
+      assert.equal(got.user.id, "u2");
+    });
+  });
+
+  describe("state (CSRF) nonce", () => {
+    /** স্যুটের নিজস্ব স্কিমে সই করা state বানায় — প্রোভাইডার ক্রেড ছাড়াই নোন্স-লজিক টেস্টে */
+    async function makeState({ provider = "google", ageMs = 0, nonce = crypto.randomBytes(16).toString("hex") } = {}) {
+      await OauthStateNonce.create({
+        nonce,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      });
+      const body = Buffer.from(JSON.stringify({ provider, t: Date.now() - ageMs, nonce })).toString("base64url");
+      const sig = crypto.createHmac("sha256", env.JWT_ACCESS_SECRET).update(body).digest("base64url");
+      return `${body}.${sig}`;
+    }
+
+    it("valid state verifies once, then replay is rejected (single-use nonce)", async () => {
+      const state = await makeState();
+      const payload = await oauth.verifyState(state);
+      assert.equal(payload.provider, "google");
+      await assert.rejects(() => oauth.verifyState(state), /already used/i);
+    });
+
+    it("expired state is rejected with OAUTH_STATE_EXPIRED", async () => {
+      const state = await makeState({ ageMs: 11 * 60 * 1000 });
+      await assert.rejects(() => oauth.verifyState(state), (e) => e.errorCode === "OAUTH_STATE_EXPIRED");
+    });
+
+    it("tampered signature is rejected with OAUTH_STATE_INVALID", async () => {
+      const state = await makeState();
+      const [body] = state.split(".");
+      await assert.rejects(
+        () => oauth.verifyState(`${body}.forged-signature`),
+        (e) => e.errorCode === "OAUTH_STATE_INVALID",
+      );
+    });
+
+    it("provider mismatch after valid signature is still caught by the controller", async () => {
+      // state google-এর, callback facebook-এর — controller-এর provider-mismatch চেক
+      const state = await makeState({ provider: "google" });
+      const payload = await oauth.verifyState(state);
+      assert.equal(payload.provider, "google");
+      assert.notEqual(payload.provider, "facebook");
+    });
+  });
+
+  describe("oauth monitoring + rate limit", () => {
+    beforeEach(() => resetOAuthMonitorForTests());
+
+    it("records exchange success/failure and computes totalFailed", async () => {
+      recordOAuthEvent("exchange_success", { ip: "t" });
+      recordOAuthEvent("exchange_failed", { ip: "t", errorCode: "OAUTH_CODE_INVALID" });
+      recordOAuthEvent("exchange_failed", { ip: "t", errorCode: "OAUTH_CODE_EXPIRED" });
+      recordOAuthEvent("state_failed", { ip: "t", errorCode: "OAUTH_STATE_INVALID" });
+
+      const s = oauthMonitorStats();
+      assert.equal(s.counts.exchange_success, 1);
+      assert.equal(s.counts.exchange_failed, 2);
+      assert.equal(s.counts.state_failed, 1);
+      assert.equal(s.totalFailed, 3);
+      // সাম্প্রতিক ইভেন্টে IP ও errorCode থাকে (PII নয়), নতুনটা আগে থাকে
+      assert.equal(s.recentEvents[0].event, "state_failed");
+      assert.equal(s.recentEvents[0].errorCode, "OAUTH_STATE_INVALID");
+    });
+
+    it("unknown events are ignored silently", () => {
+      assert.equal(recordOAuthEvent("bogus_event", { ip: "t" }), null);
+      assert.equal(oauthMonitorStats().counts.start, 0);
+    });
+
+    it("POST /oauth/exchange with a bad code still responds (and is counted)", async () => {
+      const res = await requestObj
+        .post("/api/v1/auth/oauth/exchange")
+        .send({ code: "not-a-real-code" });
+      assert.equal(res.status, 400);
+      assert.equal(res.body.errorCode, "OAUTH_CODE_INVALID");
+      assert.ok(oauthMonitorStats().counts.exchange_failed >= 1, "failure counted in monitor");
+    });
+
+    it("GET /admin/stats exposes the oauth counters for staff", async () => {
+      const staff = await createStaff(requestObj, { role: "ADMIN" });
+      const res = await requestObj.get("/api/v1/admin/stats").set(auth(staff.accessToken));
+      assert.equal(res.status, 200);
+      assert.ok(res.body.data.oauth, "oauth block present in admin stats");
+      assert.equal(typeof res.body.data.oauth.counts.exchange_failed, "number");
+      assert.equal(typeof res.body.data.oauth.totalFailed, "number");
+    });
+  });
+
+  describe("failure guard (fail2ban)", () => {
+    beforeEach(() => {
+      resetOAuthMonitorForTests();
+      resetOAuthFailureGuardForTests();
+    });
+    // স্যুট শেষে ব্লক অবস্থা পরের স্যুটে লেক না হয়
+    afterEach(() => {
+      resetOAuthFailureGuardForTests();
+      resetOAuthMonitorForTests();
+    });
+
+    it("threshold crossed → IP blocked; successful login clears the counter", () => {
+      const ip = "unit-test-ip";
+      for (let i = 0; i < 4; i++) recordOAuthFailure(ip, "OAUTH_CODE_INVALID");
+      assert.ok(!isOAuthFailureBlocked(ip), "4 failures — still allowed");
+      recordOAuthFailure(ip, "OAUTH_CODE_INVALID"); // ৫ম — থ্রেশহোল্ড
+      assert.ok(isOAuthFailureBlocked(ip), "5 failures — blocked");
+      // সফল লগইন/exchange হলে কাউন্টার মুছে যায় — ভুল করা সাধারণ ইউজার রক্ষা
+      clearOAuthFailures(ip);
+      assert.ok(!isOAuthFailureBlocked(ip), "success clears the block");
+    });
+
+    it("blocks an IP after 5 bad exchange codes — next requests get 429 + Retry-After", async () => {
+      let last;
+      for (let i = 0; i < 5; i++) {
+        last = await requestObj.post("/api/v1/auth/oauth/exchange").send({ code: `bogus-${i}` });
+      }
+      // ৫ম ব্যর্থতায় ব্লক শুরু হয়েছে, কিন্তু ওই রিকোয়েস্ট এখনো হ্যান্ডলারে ছিল — 400
+      assert.equal(last.status, 400);
+      assert.ok(oauthBlockedIpsForTests().length >= 1, "ip registered as blocked");
+      // এরপর থেকে guard হ্যান্ডলারেই ঢুকতে দেয় না
+      const blocked = await requestObj.post("/api/v1/auth/oauth/exchange").send({ code: "anything" });
+      assert.equal(blocked.status, 429);
+      assert.equal(blocked.body.errorCode, "RATE_LIMITED");
+      assert.ok(Number(blocked.headers["retry-after"]) > 0, "Retry-After header set");
+      // প্রতিটি ব্লকড চেষ্টা monitor-এ গোনা হয়
+      assert.ok(oauthMonitorStats().counts.failure_blocked >= 1, "failure_blocked counted");
+      assert.equal(oauthMonitorStats().counts.exchange_failed, 5, "5 real failures counted");
+    });
+
+    it("state tampering on callback counts toward the threshold", async () => {
+      for (let i = 0; i < 5; i++) {
+        await requestObj
+          .get("/api/v1/auth/oauth/google/callback")
+          .query({ code: "x", state: `tampered-${i}.forged-sig` })
+          .redirects(0);
+      }
+      const res = await requestObj
+        .get("/api/v1/auth/oauth/google/callback")
+        .query({ code: "x", state: "tampered-x.forged-sig" })
+        .redirects(0);
+      assert.equal(res.status, 429, "blocked after 5 state failures");
+    });
+
+    it("unknown provider probing counts toward the threshold and then blocks even valid routes", async () => {
+      for (let i = 0; i < 5; i++) {
+        const res = await requestObj.get(`/api/v1/auth/oauth/twitter-${i}/start`).redirects(0);
+        assert.equal(res.status, 404, "unknown provider still 404");
+      }
+      // ব্লক হওয়ার পর বৈধ google start-ও guard-এ আটকায় (৪২৯, হ্যান্ডলারে যায় না)
+      const res = await requestObj.get("/api/v1/auth/oauth/google/start").redirects(0);
+      assert.equal(res.status, 429);
     });
   });
 

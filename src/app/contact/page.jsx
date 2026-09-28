@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { Smartphone, Mail, MapPin, Send, Loader2, CircleCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +14,9 @@ export default function ContactSection() {
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  // স্প্যাম প্রতিরোধ: ফর্ম রেন্ডার হওয়ার সময় মনে রাখা হয় (টাইম-ট্র্যাপ) + লুকানো honeypot ফিল্ড
+  const openedAt = useRef(Date.now());
+  const [honeypot, setHoneypot] = useState("");
 
   const set = (key) => (e) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -43,6 +46,8 @@ export default function ContactSection() {
         phone: form.phone.trim(),
         email: form.email.trim(),
         message: form.message.trim(),
+        formElapsedMs: Date.now() - openedAt.current,
+        website: honeypot,
       });
       if (res?.duplicate) {
         setSuccess("আপনার আগের বার্তাটি এখনো পর্যালোচনাধীন — আমরা শিগগিরই যোগাযোগ করব।");
@@ -125,6 +130,20 @@ export default function ContactSection() {
               )}
 
               <form onSubmit={onSubmit} noValidate className="space-y-6">
+                {/* Honeypot — স্ক্রিন-রিডার ও ট্যাব থেকে লুকানো; বট অটো-ফিল করে ফাঁস হয় */}
+                <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
+                  <label htmlFor="website">Website</label>
+                  <input
+                    id="website"
+                    name="website"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
+
                 {/* Name Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="form-control">

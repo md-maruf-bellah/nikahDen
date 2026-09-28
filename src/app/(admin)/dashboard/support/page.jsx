@@ -42,6 +42,8 @@ const SupportInbox = () => {
       });
       setItems(res?.data || []);
       setPagination(res?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 });
+      // তালিকা বদলালেই সাইডবার ব্যাজ সাথে সাথে সিঙ্ক হোক
+      window.dispatchEvent(new CustomEvent("support:changed"));
     } catch (err) {
       setError(err.message || "বার্তা লোড করা যায়নি।");
       setItems([]);

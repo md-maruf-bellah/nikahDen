@@ -171,10 +171,17 @@ const Register = () => {
                 className="text-sm text-gray-600 cursor-pointer"
               >
                 আমি আপনাদের সকল{" "}
-                <span className="text-red-500 underline">
-                  ট্রামস্ এন্ড কন্ডিশন
-                </span>{" "}
-                এর সাথে সহমত পোষন করতেছি।
+                <Link href="/terms" className="text-red-500 underline hover:text-[#e85a5a]">
+                  শর্তাবলী
+                </Link>,{" "}
+                <Link href="/privacy" className="text-red-500 underline hover:text-[#e85a5a]">
+                  প্রাইভেসি পলিসি
+                </Link>{" "}
+                ও{" "}
+                <Link href="/refund" className="text-red-500 underline hover:text-[#e85a5a]">
+                  রিফান্ড পলিসি
+                </Link>{" "}
+                পড়েছি এবং সম্মত।
               </label>
             </div>
 

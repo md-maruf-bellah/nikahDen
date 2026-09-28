@@ -18,6 +18,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import profile from "./../../../../assets/member/alem.png";
 import { useAuth } from "@/lib/auth-context";
+import { contactApi } from "@/lib/api";
 import NotificationList from "../../profile/notification/page";
 import MessagingPage from "../../message/page";
 import UserManagement from "./table/page";
@@ -35,8 +36,36 @@ const AdminDashboard = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+  const [newMessages, setNewMessages] = useState(0);
 
   const isStaff = ["SUPERADMIN", "ADMIN", "EDITOR"].includes(user?.role);
+
+  // সাপোর্ট ইনবক্সে নতুন বার্তার লাইভ কাউন্টার — ৩০ সেকেন্ডে পোল + ট্যাব ফোকাসে সাথে সাথে
+  React.useEffect(() => {
+    if (!isStaff) return undefined;
+    let cancelled = false;
+    let timer = null;
+    const refresh = async () => {
+      try {
+        const res = await contactApi.newCount();
+        if (!cancelled) setNewMessages(Number(res?.count) || 0);
+      } catch {
+        /* নীরব — ব্যাজ পুরনো মানেই থাকবে */
+      }
+    };
+    refresh();
+    timer = setInterval(refresh, 30_000);
+    const onFocus = () => refresh();
+    // সাপোর্ট পেজে উত্তর/স্ট্যাটাস/ডিলিট হলে ব্যাজ সাথে সাথে সিঙ্ক
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("support:changed", refresh);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("support:changed", refresh);
+    };
+  }, [isStaff]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -60,7 +89,7 @@ const AdminDashboard = () => {
     { icon: <Users size={20} />, label: "ইউজার ম্যানেজমেন্ট" },
     { icon: <FileText size={20} />, label: "বায়োডাটা মডারেশন" },
     { icon: <CreditCard size={20} />, label: "ইনভয়েস" },
-    { icon: <Bell size={20} />, label: "সাপোর্ট" },
+    { icon: <Bell size={20} />, label: "সাপোর্ট", badge: newMessages },
     { icon: <Bell size={20} />, label: "নোটিফিকেশন" },
     { icon: <MessageSquare size={20} />, label: "মেসেজিং" },
     { icon: <LogOut size={20} />, label: "লগ আউট" },
@@ -151,6 +180,17 @@ const AdminDashboard = () => {
                   {!isCollapsed && (
                     <span className="text-[15px] font-medium whitespace-nowrap">
                       {item.label}
+                    </span>
+                  )}
+                  {/* নতুন সাপোর্ট মেসেজের লাইভ কাউন্টার ব্যাজ */}
+                  {item.badge > 0 && (
+                    <span
+                      className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black leading-none ${
+                        isCollapsed ? "absolute top-1.5 right-2" : "ml-auto"
+                      }`}
+                      title={`${item.badge} টি নতুন বার্তা`}
+                    >
+                      {item.badge > 99 ? "99+" : item.badge}
                     </span>
                   )}
                 </button>
