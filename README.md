@@ -28,7 +28,7 @@ assets/, public/ → স্ট্যাটিক অ্যাসেট
 
 | জব                            | কী চলে                                                              | স্থানীয় সমতুল্য            |
 | ----------------------------- | ------------------------------------------------------------------- | --------------------------- |
-| **Backend tests (Node 22)**   | `npm ci && npm test` — ৯০টি integration টেস্ট (in-memory MongoDB)   | `cd backend && npm test`    |
+| **Backend tests (Node 22)**   | `npm ci && npm test` — ১০২টি integration টেস্ট (in-memory MongoDB)  | `cd backend && npm test`    |
 | **Frontend build**            | `npm ci && npm run build` — Next.js প্রোডাকশন বিল্ড                 | `npm run build`             |
 
 > **নোট:** রানারে mongodb-memory-server-এর ডিফল্ট mongod বাইনারি ব্যর্থ হয় বলে
@@ -99,8 +99,36 @@ MONGOMS_VERSION=7.0.24 npm test
 - `node --test` + supertest — আসল Express অ্যাপ, in-memory MongoDB
   (replica set পেলে আসল ট্রানজ্যাকশন, না পেলে স্বয়ংক্রিয় fallback)
 - কভারেজ: auth + OAuth, biodata, membership/orders, social (like/message/contact),
-  preferences, completion — **৯০ টেস্ট**
+  preferences, completion, messaging guard — **১০২ টেস্ট**
 - প্রথম রানে mongod বাইনারি ডাউনলোড হয় (একবারই)
+
+---
+
+## মেসেজিং নিয়মাবলী (guard)
+
+সব মেসেজ-এন্ট্রি পয়েন্টে একটাই চৌকাঠ — `assertMessagingPermission`
+(`backend/src/modules/messages/messagingGuard.service.js`)। প্রিসিডেন্স ক্রমে:
+
+1. **ম্যাচ** — দুজনে একে অপরকে পছন্দ করলে (mutual like) সীমাহীন কথা।
+2. **প্যাকেজ** — প্রেরকের active plan-এ `messagingEnabled: false` হলে 403
+   `NO_MESSAGING_PACKAGE`; `messagingLimit: 0` হলে 402 `MESSAGING_UPGRADE_REQUIRED`;
+   ধনাত্মক সীমা হলে sender→recipient জোড়া-প্রতি গণনা, শেষ হলে 403 `MESSAGING_LIMIT_REACHED`।
+3. **ব্লক** — যেকোনো দিক থেকে block থাকলে নীরব দেয়াল: উভয় পক্ষই নিরপেক্ষ 403
+   `BLOCKED` দেখে, তাই কেউ অন্যের block-state অনুমান করতে পারে না।
+
+UI-ও নিয়মগুলো আগে থেকেই দেখায় — মেসেঞ্জার সার্চে guard-প্রিভিউসহ নিষ্ক্রিয় রো,
+বায়োডাটা কার্ডের Message বোতামে `?chat=` ডিপ-লিংক (লগইন না থাকলে `?next=` দিয়ে ফেরত),
+আর guard-এররে বাংলা নোটিস + আপগ্রেড লিংক।
+
+**সংশ্লিষ্ট এন্ডপয়েন্ট** (বিস্তারিত [backend/docs/API.md](backend/docs/API.md)):
+
+| এন্ডপয়েন্ট                      | কাজ                                                         |
+| ------------------------------- | ----------------------------------------------------------- |
+| `GET /users/search`             | সদস্য-খোঁজা (ACTIVE only, নিজে বাদ, নাম/ছবিই শুধু ফেরে)      |
+| `GET /users/search-intent`      | guard-প্রিভিউ — `canMessage`, `blocked`, `reason`            |
+| `POST /blocks`                  | সদস্য ব্লক (নীরব — পক্ষ জানে না)                            |
+| `DELETE /blocks/:userId`        | আনব্লক                                                      |
+| `GET /blocks`                   | আমার ব্লক তালিকা                                            |
 
 ---
 
