@@ -6,6 +6,7 @@ import { useState } from "react";
 import { FcLike, FcLikePlaceholder } from "react-icons/fc";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import boy from "./../../../assets/member/alem.png";
+import StartChatButton from "@/components/StartChatButton";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -92,12 +93,20 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
                     </div>
                   </div>
 
-                  <Link
-                    href={`/details?id=${item.id}`}
-                    className="btn btn-outline text-xs md:text-lg w-5/6 mt-3"
-                  >
-                    বায়োডাটা দেখুন
-                  </Link>
+                  <div className="w-5/6 flex flex-col gap-2 mt-3">
+                    <Link
+                      href={`/details?id=${item.id}`}
+                      className="btn btn-outline text-xs md:text-base p-2"
+                    >
+                      বায়োডাটা দেখুন
+                    </Link>
+                    <StartChatButton
+                      userId={item.ownerId}
+                      className="btn text-xs md:text-base p-2 border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white"
+                    >
+                      মেসেজ পাঠান
+                    </StartChatButton>
+                  </div>
                 </div>
               </div>
             </div>

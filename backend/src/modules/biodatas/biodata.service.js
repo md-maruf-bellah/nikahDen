@@ -46,8 +46,9 @@ export function sanitizePayload(body) {
   return out;
 }
 
+// user → কার্ডগুলোতে ownerId দরকার (মেসেঞ্জার deep-link)
 const LIST_PROJECTION =
-  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount status rejectionReason createdAt updatedAt";
+  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount status rejectionReason user createdAt updatedAt";
 
 // ---------------------------------------------------------------------------
 // Public directory
@@ -108,7 +109,12 @@ export async function listBiodatas(query, viewer) {
     likedSet = new Set(likes.map((l) => l.biodata.toString()));
   }
 
-  const items = docs.map((d) => ({ ...d, id: d._id.toString(), likedByMe: likedSet.has(d._id.toString()) }));
+  // ownerId → কার্ড থেকে সরাসরি মেসেঞ্জার চ্যাট (?chat=) শুরু করার জন্য; ব্যবহারকারী-আইডি ছাড়া কোনো সংবেদনশীল তথ্য নয়।
+  // raw `user` ফিল্ড আগের মতোই বাদ — পাবলিক শেপ অপরিবর্তিত রাখতে।
+  const items = docs.map((d) => {
+    const { user, ...rest } = d;
+    return { ...rest, id: d._id.toString(), ownerId: user ? user.toString() : null, likedByMe: likedSet.has(d._id.toString()) };
+  });
 
   return { items, pagination: buildPagination(total, page, limit) };
 }
@@ -202,7 +208,10 @@ export async function similarBiodatas(id, viewer, limit = 8) {
   if (base.division) filter.division = base.division;
 
   const docs = await Biodata.find(filter).sort({ createdAt: -1 }).limit(limit).select(LIST_PROJECTION).lean();
-  return docs.map((d) => ({ ...d, id: d._id.toString() }));
+  return docs.map((d) => {
+    const { user, ...rest } = d;
+    return { ...rest, id: d._id.toString(), ownerId: user ? user.toString() : null };
+  });
 }
 
 // ---------------------------------------------------------------------------

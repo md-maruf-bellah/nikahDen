@@ -17,6 +17,8 @@ export const planSchema = z.object({
   price: z.coerce.number().int().min(0),
   connectCount: z.coerce.number().int().min(0),
   acceptProposalLimit: z.coerce.number().int().min(-1).optional(),
+  messagingEnabled: z.boolean().optional(),
+  messagingLimit: z.coerce.number().int().min(-1).optional(),
   canCreateBiodata: z.boolean().optional(),
   canSendBiodata: z.boolean().optional(),
   canReceiveBiodata: z.boolean().optional(),

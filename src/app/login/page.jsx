@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
@@ -10,10 +10,12 @@ import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
 import { authApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useSearchParams } from "next/navigation";
 
 const Login = () => {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,9 +41,12 @@ const Login = () => {
       tokenStore.set(data.accessToken, data.refreshToken);
       await refreshUser();
       // Staff go to the admin dashboard, members to the member dashboard.
+      // ?next= থাকলে (বায়োডাটা কার্ডের Message বোতাম থেকে আসা) সেখানেই ফেরত যাই —
+      // staff-এর next এড়িয়ে যাওয়া নিরাপদ (member-এলাকাতে staff যাবেই না)।
+      const next = searchParams?.get("next");
       const role = data.user?.role;
       const isStaff = role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
-      router.push(isStaff ? "/dashboard" : "/profile");
+      router.push(isStaff ? "/dashboard" : next && next.startsWith("/") ? next : "/profile");
     } catch (err) {
       setError(err.message || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
     } finally {
@@ -183,4 +188,11 @@ const Login = () => {
   );
 };
 
-export default Login;
+// useSearchParams()-এর (?next=) জন্য Suspense boundary বাধ্যতামূলক — নইলে prerender ব্যর্থ হয়
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <Login />
+    </Suspense>
+  );
+}

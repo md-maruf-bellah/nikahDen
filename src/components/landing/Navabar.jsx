@@ -9,6 +9,7 @@ import LanguageSelect from "../LanguageSelect";
 import logoImage from "./../../../assets/navbar/logo.png";
 import ThemeSwitcher from "../ThemeSwitcher";
 import { useAuth } from "@/lib/auth-context";
+import NotificationBell from "../NotificationBell";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -55,6 +56,8 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-4">
               <ThemeSwitcher />
               <LanguageSelect />
+
+              {isLoggedIn && <NotificationBell />}
 
               {isLoggedIn ? (
                 <>
@@ -135,6 +138,12 @@ export default function Navbar() {
 
         {/* Mobile Links */}
         <div className="p-6 flex flex-col gap-4">
+          {isLoggedIn && (
+            <div className="flex items-center gap-3 pb-2 border-b border-gray-50">
+              <NotificationBell />
+              <span className="text-sm font-semibold text-gray-600">নোটিফিকেশন</span>
+            </div>
+          )}
           {navLinks.map((link) => (
             <Link
               key={link.name}

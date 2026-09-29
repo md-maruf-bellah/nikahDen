@@ -9,8 +9,9 @@ import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
 import man from "./../../../assets/member/alem.png";
 import SimilarBiodataSlider from "./SimilarBiodataSlider";
-import { biodataApi, tokenStore } from "@/lib/api";
-import { CreditCard, LogIn, ArrowLeft } from "lucide-react";
+import { biodataApi, blockApi, tokenStore } from "@/lib/api";
+import { CreditCard, LogIn, ArrowLeft, Ban, CheckCircle2, MessageCircle } from "lucide-react";
+import StartChatButton from "@/components/StartChatButton";
 
 function Section({ title, rows }) {
   const filtered = rows.filter(([, v]) => v);
@@ -47,6 +48,8 @@ function DetailsBody() {
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [like, setLike] = useState(false);
+  const [blockedByMe, setBlockedByMe] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +73,15 @@ function DetailsBody() {
         setBiodata(doc);
         setLike(Boolean(doc.likedByMe));
         setSimilar(Array.isArray(sim) ? sim : []);
+        // এই বায়োডাটা-মালিক আমি ব্লক করেছি কি না (নীরব চেক — এররে বাটন আগের অবস্থায়)
+        if (doc.ownerId) {
+          blockApi
+            .statusFor(doc.ownerId)
+            .then((s) => {
+              if (!cancelled) setBlockedByMe(Boolean(s?.blockedByMe));
+            })
+            .catch(() => {});
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err.message || "বায়োডাটা পাওয়া যায়নি");
@@ -99,6 +111,31 @@ function DetailsBody() {
       }
     } catch {
       /* keep state */
+    }
+  };
+
+  // প্রোফাইল থেকেই ব্লক/আনব্লক — নীরব দেয়াল: ব্লকড পক্ষ কিছুই জানে না
+  const handleBlockToggle = async () => {
+    if (!tokenStore.getAccess()) {
+      router.push("/login");
+      return;
+    }
+    if (!biodata?.ownerId || blockBusy) return;
+    setBlockBusy(true);
+    try {
+      if (blockedByMe) {
+        await blockApi.unblock(biodata.ownerId);
+        setBlockedByMe(false);
+      } else {
+        await blockApi.block(biodata.ownerId);
+        setBlockedByMe(true);
+      }
+      // ব্লক-তালিকা পেজ খোলা থাকলে সেটি লাইভ আপডেট হবে
+      window.dispatchEvent(new Event("blocks-changed"));
+    } catch {
+      /* নীরব — বাটন আগের স্টেটেই থাকবে */
+    } finally {
+      setBlockBusy(false);
     }
   };
 
@@ -210,6 +247,29 @@ function DetailsBody() {
                 </>
               )}
             </button>
+            {/* Message — সরাসরি মেসেঞ্জারে কথোপকথন (নিজের বায়োডাটায় দেখায় না) */}
+            <StartChatButton
+              userId={biodata.ownerId}
+              className="btn btn-sm mt-3 ml-2 border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white gap-1"
+            >
+              <MessageCircle size={16} /> মেসেজ পাঠান
+            </StartChatButton>
+            {/* Block / Unblock — নিজের বায়োডাটায় দেখানো হয় না */}
+            {!biodata.isOwner && biodata.ownerId && (
+              <button
+                onClick={handleBlockToggle}
+                disabled={blockBusy}
+                title={blockedByMe ? "আনব্লক করুন" : "এই সদস্যকে ব্লক করুন — তিনি জানতে পারবেন না"}
+                className={`btn btn-sm mt-3 ml-2 border-none gap-1 ${
+                  blockedByMe
+                    ? "bg-green-50 text-green-600 hover:bg-green-100"
+                    : "bg-red-50 text-red-500 hover:bg-red-100"
+                }`}
+              >
+                {blockedByMe ? <CheckCircle2 size={16} /> : <Ban size={16} />}
+                {blockedByMe ? "আনব্লক" : "ব্লক"}
+              </button>
+            )}
           </div>
         </div>
 

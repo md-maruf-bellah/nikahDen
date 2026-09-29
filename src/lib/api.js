@@ -181,7 +181,8 @@ export const orderApi = {
 // Social
 // ---------------------------------------------------------------------------
 export const notificationApi = {
-  list: (params) => api.get("/notifications", params),
+  // raw envelope: { data: { items, unreadCount }, pagination } — bell ব্যাজ unreadCount পড়ে
+  list: (params) => api.list("/notifications", params),
   read: (id) => api.patch(`/notifications/${id}/read`, {}),
   readAll: () => api.patch("/notifications/read-all", {}),
   remove: (id) => api.del(`/notifications/${id}`),
@@ -196,12 +197,29 @@ export const preferencesApi = {
   matches: (params) => api.list("/preferences/matches", params),
 };
 
+export const userApi = {
+  // member-directory search (messenger-এ নতুন কথোপকথন শুরুর জন্য)
+  search: (q, limit) => api.get("/users/search", { q, limit }),
+  // guard-পূর্ব প্রিভিউ — rows-এ block/limit নিষ্ক্রিয় দেখানোর জন্য
+  searchIntent: (ids) => api.get("/users/search-intent", { ids: ids.join(",") }),
+};
+
 export const conversationApi = {
   list: (params) => api.get("/conversations", params),
   start: (body) => api.post("/conversations", body),
   messages: (id, params) => api.get(`/conversations/${id}/messages`, params),
   send: (id, text) => api.post(`/conversations/${id}/messages`, { text }),
   markRead: (id) => api.patch(`/conversations/${id}/read`, {}),
+};
+
+// ---------------------------------------------------------------------------
+// Block / Unblock (messaging gate)
+// ---------------------------------------------------------------------------
+export const blockApi = {
+  list: (params) => api.list("/blocks", params),
+  block: (userId, reason) => api.post("/blocks", { userId, reason }),
+  unblock: (userId) => api.del(`/blocks/${userId}`),
+  statusFor: (userId) => api.get(`/blocks/${userId}/status`),
 };
 
 export const contactApi = {
@@ -228,6 +246,8 @@ export const adminApi = {
   stats: () => api.get("/admin/stats"),
   // OAuth ইভেন্ট হিস্ট্রি (Mongo capped collection — restart-persistent)
   oauthEvents: (params) => api.get("/admin/oauth/events", params),
+  // Contact spam-drop হিস্ট্রি (capped collection — restart-persistent)
+  contactEvents: (params) => api.get("/admin/contact/events", params),
   moderate: (id, status, rejectionReason) =>
     api.patch(`/biodatas/${id}/status`, rejectionReason ? { status, rejectionReason } : { status }),
 };

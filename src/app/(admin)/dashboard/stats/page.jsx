@@ -27,6 +27,7 @@ import {
   Ban,
   KeyRound,
   LogIn,
+  X,
   Ban as BanIcon,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
@@ -83,7 +84,7 @@ const OAUTH_EVENT_META = {
   failure_blocked: { label: "ফেইল২ব্যান ব্লক", tone: "text-red-700" },
 };
 
-function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload }) {
+function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload, eventFilter, setEventFilter, ipFilter, setIpFilter }) {
   const counts = stats?.oauth?.counts || {};
   const totalFailed = stats?.oauth?.totalFailed || 0;
   const totalAttempts = Object.values(counts).reduce((a, b) => a + Number(b || 0), 0);
@@ -108,10 +109,38 @@ function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload
 
       {/* পারসিস্টেড রিসেন্ট ইভেন্ট (Mongo capped collection — রিস্টার্ট-সহনশীল) */}
       <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
-        <div className="flex items-center justify-between px-4 py-2 bg-base-200/60">
-          <p className="text-xs font-bold text-gray-500">
+        <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-base-200/60">
+          <p className="text-xs font-bold text-gray-500 mr-auto">
             রিসেন্ট ইভেন্ট — সার্ভার রিস্টার্টের পরেও থাকে (সর্বশেষ ২০)
           </p>
+          {/* ফিল্টার: ইভেন্ট-ধরন + IP — পরিবর্তনেই সার্ভারে নতুন কুয়েরি যায় */}
+          <select
+            className="select select-xs text-xs"
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            aria-label="ইভেন্ট ফিল্টার"
+          >
+            <option value="">সব ইভেন্ট</option>
+            {Object.entries(OAUTH_EVENT_META).map(([value, meta]) => (
+              <option key={value} value={value}>{meta.label}</option>
+            ))}
+          </select>
+          <input
+            type="text"
+            className="input input-xs w-32 font-mono text-xs"
+            placeholder="IP ফিল্টার…"
+            value={ipFilter}
+            onChange={(e) => setIpFilter(e.target.value)}
+            aria-label="IP ফিল্টার"
+          />
+          {(eventFilter || ipFilter) && (
+            <button
+              className="btn btn-ghost btn-xs text-gray-400"
+              onClick={() => { setEventFilter(""); setIpFilter(""); }}
+            >
+              <X size={12} /> মুছুন
+            </button>
+          )}
           <button onClick={reload} className="btn btn-ghost btn-xs gap-1">
             <RefreshCw size={12} /> রিফ্রেশ
           </button>
@@ -151,14 +180,73 @@ function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload
   );
 }
 
+// Contact spam-drop ইভেন্ট — পারসিস্টেড টেবিল (OAuth মনিটরের নিচে)
+function ContactSpamSection({ events, loading, error, reload }) {
+  const reasonMeta = {
+    honeypot: { label: "Honeypot ফিল্ড", tone: "text-red-600" },
+    time_trap: { label: "অসম্ভব দ্রুত সাবমিট", tone: "text-orange-500" },
+  };
+  return (
+    <div className="mt-8">
+      <SectionTitle>Contact স্প্যাম ডিফেন্স</SectionTitle>
+      <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <div className="flex items-center justify-between px-4 py-2 bg-base-200/60">
+          <p className="text-xs font-bold text-gray-500">
+            স্প্যাম-ড্রপ ইভেন্ট — রিস্টার্টের পরেও থাকে (সর্বশেষ ২০)
+          </p>
+          <button onClick={reload} className="btn btn-ghost btn-xs gap-1">
+            <RefreshCw size={12} /> রিফ্রেশ
+          </button>
+        </div>
+        <table className="table table-sm">
+          <thead>
+            <tr className="text-[11px] text-gray-400">
+              <th>সময়</th><th>কারণ</th><th>IP</th><th>বিস্তারিত</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && (
+              <tr><td colSpan={4} className="text-center py-6"><span className="loading loading-spinner loading-sm text-red-400" /></td></tr>
+            )}
+            {!loading && error && (
+              <tr><td colSpan={4} className="text-center py-6 text-xs text-red-500">{error}</td></tr>
+            )}
+            {!loading && !error && events.length === 0 && (
+              <tr><td colSpan={4} className="text-center py-6 text-xs text-gray-400">এখনো কোনো স্প্যাম ধরা পড়েনি</td></tr>
+            )}
+            {!loading && !error && events.map((ev, i) => {
+              const meta = reasonMeta[ev.reason] || { label: ev.reason || "—", tone: "text-gray-500" };
+              return (
+                <tr key={`${ev.at}-${i}`} className="text-xs">
+                  <td className="whitespace-nowrap text-gray-400">{timeBn(ev.at)}</td>
+                  <td className={`font-bold ${meta.tone}`}>{meta.label}</td>
+                  <td className="font-mono text-[11px]">{ev.ip || "—"}</td>
+                  <td className="font-mono text-[11px] text-gray-400">{ev.detail || "—"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 const StatsDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // OAuth ইভেন্ট-হিস্ট্রি (capped collection) — আলাদা লোড, আলাদা রিফ্রেশ
+  // OAuth ইভেন্ট-হিস্ট্রি (capped collection) — আলাদা লোড, আলাদা রিফ্রেশ + ফিল্টার
   const [oauthEvents, setOauthEvents] = useState([]);
   const [oauthEventsLoading, setOauthEventsLoading] = useState(true);
   const [oauthEventsError, setOauthEventsError] = useState("");
+  const [eventFilter, setEventFilter] = useState("");
+  const [ipFilter, setIpFilter] = useState("");
+  const [ipFilterDebounced, setIpFilterDebounced] = useState("");
+  // Contact spam-drop ইভেন্ট — আলাদা লোড
+  const [contactEvents, setContactEvents] = useState([]);
+  const [contactEventsLoading, setContactEventsLoading] = useState(true);
+  const [contactEventsError, setContactEventsError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -177,12 +265,35 @@ const StatsDashboard = () => {
     setOauthEventsLoading(true);
     setOauthEventsError("");
     try {
-      const data = await adminApi.oauthEvents({ limit: 20 });
+      const data = await adminApi.oauthEvents({
+        limit: 20,
+        event: eventFilter || undefined,
+        ip: ipFilterDebounced.trim() || undefined,
+      });
       setOauthEvents(data?.items || []);
     } catch (err) {
       setOauthEventsError(err.message || "OAuth ইভেন্ট লোড করা যায়নি।");
     } finally {
       setOauthEventsLoading(false);
+    }
+  }, [eventFilter, ipFilterDebounced]);
+
+  // IP ফিল্টার টাইপিং-এ প্রতি কীপ্রেসে রিকোয়েস্ট না যায় — ৪০০ms ডিবাউন্স
+  useEffect(() => {
+    const t = setTimeout(() => setIpFilterDebounced(ipFilter), 400);
+    return () => clearTimeout(t);
+  }, [ipFilter]);
+
+  const loadContactEvents = useCallback(async () => {
+    setContactEventsLoading(true);
+    setContactEventsError("");
+    try {
+      const data = await adminApi.contactEvents({ limit: 20 });
+      setContactEvents(data?.items || []);
+    } catch (err) {
+      setContactEventsError(err.message || "স্প্যাম ইভেন্ট লোড করা যায়নি।");
+    } finally {
+      setContactEventsLoading(false);
     }
   }, []);
 
@@ -205,6 +316,16 @@ const StatsDashboard = () => {
       cancelled = true;
     };
   }, [loadOauthEvents]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) return loadContactEvents();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadContactEvents]);
 
   if (loading) {
     return (
@@ -340,6 +461,18 @@ const StatsDashboard = () => {
         eventsLoading={oauthEventsLoading}
         eventsError={oauthEventsError}
         reload={loadOauthEvents}
+        eventFilter={eventFilter}
+        setEventFilter={setEventFilter}
+        ipFilter={ipFilter}
+        setIpFilter={setIpFilter}
+      />
+
+      {/* Contact ফর্মের স্প্যাম-ড্রপ হিস্ট্রি (capped collection — রিস্টার্ট-সহনশীল) */}
+      <ContactSpamSection
+        events={contactEvents}
+        loading={contactEventsLoading}
+        error={contactEventsError}
+        reload={loadContactEvents}
       />
     </div>
   );

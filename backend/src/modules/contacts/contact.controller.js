@@ -5,7 +5,11 @@ import * as contactService from "./contact.service.js";
 export const create = asyncHandler(async (req, res) => {
   // honeypot / টাইম-ট্র্যাপে ধরা পড়লে বট-কে সফল রেসপন্সেরই অনুকরণ করে সাইলেন্টি ফেলে দিই —
   // বট পার্থক্য বুঝতে পারে না, তাই টিউনিং করতে পারে না। লগ থাকে server-এ।
-  if (contactService.looksLikeSpam(req.body)) {
+  const verdict = contactService.looksLikeSpam(req.body);
+  if (verdict.spam) {
+    // বট-প্রতারণা: সফল-রেসপন্সের অনুকরণে সাইলেন্ট ড্রপ; ইভেন্ট persist হয় যেন
+    // অ্যাডমিন রিস্টার্টের পরেও abuse-প্যাটার্ন দেখতে পারে
+    contactService.recordSpamDrop(req.ip, verdict);
     console.warn(
       `[contact] spam dropped ip=${req.ip} honeypot=${req.body.website ? "yes" : "no"} elapsed=${req.body.formElapsedMs ?? 0}ms`
     );

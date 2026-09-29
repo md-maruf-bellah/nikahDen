@@ -45,6 +45,8 @@ const PLANS = [
     price: 899,
     connectCount: 15,
     acceptProposalLimit: 15,
+    messagingEnabled: true,
+    messagingLimit: 3, // ম্যাচ না হলে প্রতি জোড়ায় ৩টি মেসেজ
     isPopular: false,
     sortOrder: 2,
   },
@@ -57,6 +59,8 @@ const PLANS = [
     price: 1099,
     connectCount: 25,
     acceptProposalLimit: 25,
+    messagingEnabled: true,
+    messagingLimit: 10, // ম্যাচ না হলে প্রতি জোড়ায় ১০টি মেসেজ
     isPopular: true, // landing page "পপুলার প্লান - ২০% ছাড়"
     discountPercent: 20,
     sortOrder: 3,
@@ -70,6 +74,8 @@ const PLANS = [
     price: 1299,
     connectCount: 50,
     acceptProposalLimit: -1, // অসংখ্য (unlimited)
+    messagingEnabled: true,
+    messagingLimit: -1, // সীমাহীন
     isPopular: false,
     sortOrder: 4,
   },

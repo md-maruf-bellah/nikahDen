@@ -13,6 +13,8 @@ import {
   adminCreateUserSchema,
   adminUpdateUserSchema,
   listUsersSchema,
+  memberSearchSchema,
+  messagingIntentSchema,
 } from "./user.validation.js";
 import * as userController from "./user.controller.js";
 
@@ -20,6 +22,10 @@ const router = Router();
 
 // -------------------- Self --------------------
 router.get("/me", authenticate, userController.getMyProfile);
+// member-directory search — অবশ্যই /:id-এর আগে বসাতে হবে
+router.get("/search", authenticate, validate(memberSearchSchema, "query"), userController.searchMembers);
+// messenger rows-এর guard-প্রিভিও — একইভাবে /:id-এর আগে
+router.get("/search-intent", authenticate, validate(messagingIntentSchema, "query"), userController.messagingIntent);
 router.patch("/me", authenticate, validate(updateProfileSchema), userController.updateMyProfile);
 router.post("/me/avatar", authenticate, uploadAvatar, userController.uploadMyAvatar);
 router.get("/me/dashboard", authenticate, userController.myDashboard);

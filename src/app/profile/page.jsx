@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -13,6 +13,7 @@ import {
   Edit3,
   Menu,
   X,
+  Ban,
 } from "lucide-react";
 import Image from "next/image";
 import profile from "./../../../assets/member/alem.png";
@@ -23,16 +24,18 @@ import LikeList from "./likeList/page";
 import MemberShip from "./memberShip/page";
 import NotificationList from "./notification/page";
 import MembershipDashboard from "./memberAndPackage/page";
+import BlockedList from "./blocked/page";
 // Navbar এখন root layout-এর SiteChrome থেকে আসে
 import { useAuth } from "@/lib/auth-context";
 import { tokenStore } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Role-based routing: স্টাফ এখানে এলে অ্যাডমিন ড্যাশবোর্ডে পাঠাই — মেম্বার এলাকা মেম্বারদের জন্য।
   useEffect(() => {
@@ -56,6 +59,7 @@ const Dashboard = () => {
     { icon: <CreditCard size={18} />, label: "মেম্বারশিপ" },
     { icon: <Bell size={18} />, label: "নোটিফিকেশন" },
     { icon: <MessageSquare size={18} />, label: "মেসেজিং" },
+    { icon: <Ban size={18} />, label: "ব্লক তালিকা" },
     { icon: <LogOut size={18} />, label: "লগ আউট" },
   ];
 
@@ -107,6 +111,12 @@ const Dashboard = () => {
             <MessagingPage />
           </div>
         );
+      case "ব্লক তালিকা":
+        return (
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
+            <BlockedList />
+          </div>
+        );
       default:
         return null;
     }
@@ -127,6 +137,15 @@ const Dashboard = () => {
     window.addEventListener("open-biodata-tab", openBiodata);
     return () => window.removeEventListener("open-biodata-tab", openBiodata);
   }, []);
+
+  // ?tab= query — notification bell-এর "সব দেখুন" গভীর-লিংক
+  useEffect(() => {
+    const tab = searchParams?.get("tab");
+    if (tab && menuItems.some((m) => m.label === tab)) {
+      setActiveTab(tab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div>
@@ -224,4 +243,11 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+// useSearchParams()-এর জন্য Suspense boundary দরকার (?tab= deep-link)
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  );
+}

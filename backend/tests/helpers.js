@@ -112,6 +112,9 @@ export async function clearDb() {
         if (c.collectionName === "oauth_events") {
           const { ensureOauthEventCapped } = await import("../src/models/oauthEvent.model.js");
           await ensureOauthEventCapped(mongoose.connection);
+        } else if (c.collectionName === "contact_events") {
+          const { ensureContactEventCapped } = await import("../src/models/contactEvent.model.js");
+          await ensureContactEventCapped(mongoose.connection);
         }
         return;
       }

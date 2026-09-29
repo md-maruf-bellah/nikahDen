@@ -24,4 +24,13 @@ router.get(
   adminController.oauthEvents
 );
 
+// Staff-only contact spam-drop history (Mongo capped collection — restart-persistent)
+router.get(
+  "/contact/events",
+  authenticate,
+  authorize(ROLES.ADMIN, ROLES.SUPERADMIN),
+  requirePermission(PERMISSIONS.STATS_READ),
+  adminController.contactEvents
+);
+
 export default router;

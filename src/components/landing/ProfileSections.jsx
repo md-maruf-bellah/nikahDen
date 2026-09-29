@@ -19,6 +19,7 @@ import boy from "./../../../assets/member/alem.png";
 import girl from "./../../../assets/member/alema.png";
 
 import { biodataApi, tokenStore } from "@/lib/api";
+import StartChatButton from "../StartChatButton";
 
 export const maleProfiles = [];
 export const femaleProfiles = [];
@@ -87,12 +88,20 @@ function ProfileCard({ profile }) {
           </div>
         </div>
 
-        <Link
-          href={`/details?id=${profile.id}`}
-          className="btn btn-outline text-xs md:text-lg w-5/6 p-4"
-        >
-          বায়োডাটা দেখুন
-        </Link>
+        <div className="w-5/6 flex flex-col gap-2">
+          <Link
+            href={`/details?id=${profile.id}`}
+            className="btn btn-outline text-xs md:text-base p-2"
+          >
+            বায়োডাটা দেখুন
+          </Link>
+          <StartChatButton
+            userId={profile.ownerId}
+            className="btn text-xs md:text-base p-2 border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white"
+          >
+            মেসেজ পাঠান
+          </StartChatButton>
+        </div>
       </div>
     </div>
   );

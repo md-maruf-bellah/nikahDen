@@ -5,6 +5,7 @@ import Order from "../../models/order.model.js";
 import { oauthCountersForAdmin, recentOAuthEventsFromDb } from "../auth/oauthMonitor.js";
 import Subscription from "../../models/subscription.model.js";
 import ContactMessage from "../../models/contactMessage.model.js";
+import * as contactService from "../contacts/contact.service.js";
 import Like from "../../models/like.model.js";
 import Conversation from "../../models/conversation.model.js";
 import Message from "../../models/message.model.js";
@@ -188,6 +189,15 @@ async function revenueSince(since) {
  */
 export async function oauthEventHistory({ event, ip, limit } = {}) {
   const items = await recentOAuthEventsFromDb({ event, ip, limit });
+  return { items, count: items.length };
+}
+
+/**
+ * Contact spam/abuse ইভেন্ট হিস্ট্রি (Mongo capped collection থেকে) — রিস্টার্ট-সহনশীল।
+ * ফিল্টার: ?ip=::1&limit=50
+ */
+export async function contactSpamHistory({ ip, limit } = {}) {
+  const items = await contactService.recentSpamEvents({ ip, limit });
   return { items, count: items.length };
 }
 

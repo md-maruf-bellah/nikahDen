@@ -7,6 +7,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
 import { NOTIFICATION_TYPES, USER_STATUSES } from "../../constants/index.js";
+import { assertMessagingPermission } from "./messagingGuard.service.js";
 
 const OID = mongoose.Types.ObjectId;
 
@@ -99,6 +100,8 @@ export async function myConversations(userId, { page = 1, limit = 20, search } =
 
 export async function startConversation(userId, { recipientId, text }) {
   await assertRecipient(recipientId, userId);
+  // মেসেজিং চৌকাঠ — block + match + package সব নিয়ম এক জায়গায় (নতুন conversation)
+  await assertMessagingPermission(userId, recipientId);
 
   let conversation = await Conversation.findOne({
     participants: { $all: [userId, recipientId], $size: 2 },
@@ -171,6 +174,9 @@ async function sendMessageTo(userId, conversationId, text) {
 
   const recipientId = conversation.participants.find((p) => p.toString() !== userId);
   if (!recipientId) throw ApiError.badRequest("Conversation is corrupted.", "BAD_CONVERSATION");
+
+  // মেসেজিং চৌকাঠ — পুরনো conversation-এও একই নিয়ম (block-এর নীরব দেয়াল সহ)
+  await assertMessagingPermission(userId, recipientId.toString());
 
   const message = await Message.create({
     conversation: conversationId,

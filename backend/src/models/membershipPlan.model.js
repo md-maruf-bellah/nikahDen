@@ -15,6 +15,13 @@ const membershipPlanSchema = new mongoose.Schema(
     //   monthly ✗ , bimonthly 15, quarterly 25, semi-annual -1 (unlimited)
     acceptProposalLimit: { type: Number, default: 0 }, // -1 = unlimited
 
+    // Messaging entitlement (messagingGuard.service.js-এ প্রয়োগ হয়):
+    //   messagingEnabled false ⇒ প্ল্যানে মেসেজিং পুরোপুরি বন্ধ (৪০৩ NO_MESSAGING_PACKAGE)
+    //   messagingLimit: -1 সীমাহীন, 0 ⇒ ম্যাচ-পূর্ব মেসেজও নয় (৪০২ MESSAGING_UPGRADE_REQUIRED),
+    //   n>0 ⇒ ম্যাচ না হলে প্রতি sender+recipient জোড়ায় সর্বোচ্চ n-টি মেসেজ
+    messagingEnabled: { type: Boolean, default: true },
+    messagingLimit: { type: Number, default: -1 }, // -1 = unlimited (match হলে সবসময় সীমাহীন)
+
     canCreateBiodata: { type: Boolean, default: true },
     canSendBiodata: { type: Boolean, default: true },
     canReceiveBiodata: { type: Boolean, default: true },

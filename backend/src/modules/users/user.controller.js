@@ -8,6 +8,22 @@ export const listUsers = asyncHandler(async (req, res) => {
   return sendSuccess(res, "Users fetched", items, pagination);
 });
 
+// Member-directory search (messenger-এ নতুন কথোপকথন শুরুর জন্য)
+export const searchMembers = asyncHandler(async (req, res) => {
+  const { items } = await userService.searchMembers(req.query.q, req.query);
+  return sendSuccess(res, "Members fetched", items);
+});
+
+// messenger rows-এর guard-পূর্ব প্রিভিউ (?ids=a,b,c — সর্বোচ্চ ২৫)
+export const messagingIntent = asyncHandler(async (req, res) => {
+  const ids = String(req.query.ids || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const { items } = await userService.previewMessagingIntent(req.user.id, ids);
+  return sendSuccess(res, "Messaging intent preview", items);
+});
+
 export const getUser = asyncHandler(async (req, res) => {
   const user = await userService.getUserById(req.params.id);
   return sendSuccess(res, "User fetched", user);

@@ -9,6 +9,7 @@
  * সর্বোচ্চ OAUTH_EVENT_CAP.max (৫০০) ডক / ২৫৬KB — কোনো PII নেই (শুধু IP + কোড)।
  */
 import mongoose from "mongoose";
+import { defineCappedModel, ensureCappedCollection } from "../utils/cappedCollection.js";
 
 /** টেস্ট-হেল্পারও একই ক্যাপ ব্যবহার করে (drop → recreate)। */
 export const OAUTH_EVENT_CAP = { size: 256 * 1024, max: 500 };
@@ -25,19 +26,14 @@ const oauthEventSchema = new mongoose.Schema(
   { versionKey: false },
 );
 
-const OauthEvent = mongoose.models.OauthEvent
-  ? mongoose.models.OauthEvent
-  : mongoose.model("OauthEvent", oauthEventSchema, "oauth_events", { capped: OAUTH_EVENT_CAP });
+const OauthEvent = defineCappedModel("OauthEvent", oauthEventSchema, "oauth_events", OAUTH_EVENT_CAP);
 
 /**
  * কালেকশনটা capped হিসেবে আছে কি না নিশ্চিত করে — না থাকলে (যেমন টেস্টে drop
  * করার পর) ঠিক একই ক্যাপ অপশনে আবার বানায়।
  */
 export async function ensureOauthEventCapped(conn = mongoose.connection) {
-  const names = await conn.db.listCollections({ name: "oauth_events" }).toArray();
-  if (names.length === 0) {
-    await conn.createCollection("oauth_events", { capped: true, ...OAUTH_EVENT_CAP });
-  }
+  return ensureCappedCollection("oauth_events", OAUTH_EVENT_CAP, conn);
 }
 
 export default OauthEvent;

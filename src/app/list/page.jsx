@@ -10,6 +10,7 @@ import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
 import boy from "./../../../assets/member/alem.png";
 import { biodataApi, tokenStore } from "@/lib/api";
+import StartChatButton from "@/components/StartChatButton";
 
 function FilterSelect({ value, onChange, children, className = "" }) {
   return (
@@ -530,12 +531,20 @@ function BiodataGridBody() {
                             <p>গাত্রবর্ণ - {item.skinColor || "—"}</p>
                           </div>
                         </div>
-                        <Link
-                          href={`/details?id=${item.id}`}
-                          className="btn btn-outline text-xs md:text-lg w-5/6 p-4"
-                        >
-                          বায়োডাটা দেখুন
-                        </Link>
+                        <div className="w-5/6 flex flex-col gap-2">
+                          <Link
+                            href={`/details?id=${item.id}`}
+                            className="btn btn-outline text-xs md:text-base p-2"
+                          >
+                            বায়োডাটা দেখুন
+                          </Link>
+                          <StartChatButton
+                            userId={item.ownerId}
+                            className="btn text-xs md:text-base p-2 border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white"
+                          >
+                            মেসেজ পাঠান
+                          </StartChatButton>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -618,6 +627,13 @@ function BiodataGridBody() {
                           >
                             দেখুন
                           </Link>
+
+                          <StartChatButton
+                            userId={item.ownerId}
+                            className="btn btn-xs border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white"
+                          >
+                            মেসেজ
+                          </StartChatButton>
                         </div>
                       </td>
                     </tr>

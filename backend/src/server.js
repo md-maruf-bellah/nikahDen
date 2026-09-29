@@ -2,17 +2,19 @@ import { createApp } from "./app.js";
 import env from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { ensureOauthEventCapped } from "./models/oauthEvent.model.js";
+import { ensureContactEventCapped } from "./models/contactEvent.model.js";
 
 async function bootstrap() {
   const app = createApp();
 
   await connectDB(env.MONGODB_URI);
 
-  // OAuth ইভেন্ট-হিস্ট্রির capped collection আছে কি না নিশ্চিত করা
+  // মনিটর ইভেন্ট-হিস্ট্রির capped collection আছে কি না নিশ্চিত করা
   try {
     await ensureOauthEventCapped();
+    await ensureContactEventCapped();
   } catch (err) {
-    console.warn("[server] oauth_events capped collection ensure failed:", err.message);
+    console.warn("[server] monitor capped collections ensure failed:", err.message);
   }
 
   const server = app.listen(env.PORT, () => {

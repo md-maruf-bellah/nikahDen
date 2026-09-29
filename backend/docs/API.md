@@ -69,6 +69,7 @@ Counters reset on process restart.
 | Method | Path | Access | Notes |
 | ------ | ---- | ------ | ----- |
 | GET | `/admin/oauth/events` | ADMIN/SUPERADMIN | `?event=&ip=&limit=` (max 500) — নতুনগুলো আগে; capped collection থেকে |
+| GET | `/admin/contact/events` | ADMIN/SUPERADMIN | `?ip=&limit=` — contact ফর্মের spam-drop হিস্ট্রি (honeypot/time_trap), একই capped প্যাটার্ন |
 
 **Environment variables** (backend/.env):
 
@@ -215,6 +216,40 @@ Pricing response example:
 | PATCH  | `/conversations/:id/read` | mark read |
 | DELETE | `/conversations/:id` | delete for me |
 
+### Messaging permission guard (একটাই চৌকাঠ)
+
+প্রতিটি মেসেজ-রাইট (`POST /conversations`, `POST /conversations/:id/messages`)
+`assertMessagingPermission(sender, recipient)` দিয়ে যায় — block + match +
+package limit এক জায়গায়, স্থিতিশীল প্রিসিডেন্সে:
+
+1. **Match** — দুজনের মধ্যে mutual like থাকলে **সর্বদা সীমাহীন** (নিচের সব নিয়ম বাইপাস)।
+2. **Package** — প্রেরকের *active subscription* থাকলে প্ল্যানের `messagingEnabled: false`
+   হলে 403 `NO_MESSAGING_PACKAGE`; ম্যাচ না থাকা অবস্থায় `messagingLimit: 0` হলে
+   402 `MESSAGING_UPGRADE_REQUIRED`। কোনো active subscription না থাকলে
+   প্যাকেজ-সীমা **নেই** (ফ্রি মেসেজিং plan-এর মূল আকর্ষণ)।
+3. **Pair limit** — ম্যাচ না থাকা অবস্থায় প্ল্যানের `messagingLimit: n > 0` হলে
+   sender→recipient জোড়ায় সর্বোচ্চ n-টি মেসেজ (conversation ভিন্ন হলেও গণনা হয়);
+   শেষ হলে 403 `MESSAGING_LIMIT_REACHED`। ম্যাচ হলে সাথে সাথে আনলক।
+4. **Block (নীরব দেয়াল)** — দুই দিকের যেকোনো block থাকলে 403 `BLOCKED`,
+   **উভয় পক্ষই একই নিরপেক্ষ বার্তা পায়** — তাই blocked পক্ষ নিজের state অনুমান করতে পারে না।
+
+প্ল্যান ফিল্ড (admin `POST/PATCH /membership/plans`):
+`messagingEnabled` (boolean, default true), `messagingLimit` (-1 unlimited,
+0 none, n>0 per-pair)। Seed: bimonthly=3, quarterly=10, semi-annual=-1।
+
+### Blocks `/blocks` (auth)
+
+| Method | Path | Notes |
+| ------ | ---- | ----- |
+| GET    | `/blocks` | আমার block-তালিকা (`?page&limit`) — প্রতিটিতে `{ id, blockedAt, user: { id, name, avatar } }` |
+| POST   | `/blocks` | `{ userId, reason? }` → 201; self-block 400 `SELF_BLOCK`, অজানা/নিষ্ক্রিয় ইউজার 404 `USER_NOT_FOUND`; পুনরায় block idempotent |
+| DELETE | `/blocks/:userId` | unblock; ব্লক না থাকলে 404 `BLOCK_NOT_FOUND` |
+| GET    | `/blocks/:userId/status` | `{ blockedByMe, userId }` — messenger UI-র টগল-স্টেট |
+
+নীতি: block **একমুখী ও নীরব** — blocked পক্ষ কোনো নোটিফিকেশন/তালিকায় অন্তর্ভুক্তি
+পায় না; কিন্তু মেসেজিং **দুই দিকেই** বন্ধ (উপরের চৌকাঠ)। পুরনো conversation-এর
+মেসেজ-হিস্ট্রি অক্ষত থাকে; unblock করলে সেখানেই কথা চালু হয়।
+
 ---
 
 ## Contacts `/contacts`
@@ -224,7 +259,7 @@ Pricing response example:
 | GET | `/contacts/new-count` | staff (ADMIN/SUPERADMIN/EDITOR) | `{ count }` — NEW স্ট্যাটাসের মেসেজ; 10s মাইক্রো-ক্যাশড, admin dashboard-এর লাইভ ব্যাজ এটা 30s-এ পোল করে |
 
 `POST /contacts` (public, rate-limited) `{ firstName, lastName?, phone?, email, message }`.
-স্প্যাম প্রতিরোধ: optional `website` (honeypot — লুকানো ফিল্ড, পূরণ হলেই বট) + `formElapsedMs` (ফর্ম মাউন্ট থেকে সাবমিট; 0 < ms < 2500 হলে বট) — ধরা পড়লে সাইলেন্ট ড্রপ: 201 + `{ id: null, spam: true }`, রেকর্ড সেভ হয় না; সার্ভার লগে `[contact] spam dropped`।
+স্প্যাম প্রতিরোধ: optional `website` (honeypot — লুকানো ফিল্ড, পূরণ হলেই বট) + `formElapsedMs` (ফর্ম মাউন্ট থেকে সাবমিট; 0 < ms < 2500 হলে বট) — ধরা পড়লে সাইলেন্ট ড্রপ: 201 + `{ id: null, spam: true }`, রেকর্ড সেভ হয় না; সার্ভার লগে `[contact] spam dropped` + ইভেন্ট capped collection-এ persist (`/admin/contact/events`-এ দেখা যায়)।
 
 ---
 

@@ -1,16 +1,19 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
-import { Calendar, Clock, Mail, MailOpen, X } from "lucide-react";
+import { Calendar, CheckCheck, Clock, Mail, MailOpen, X } from "lucide-react";
 import { notificationApi } from "@/lib/api";
 
 const NotificationList = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [markAllBusy, setMarkAllBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await notificationApi.list({ limit: 50 });
-      setNotifications(res?.items || []);
+      // list() raw envelope: { data: { items, unreadCount }, pagination }
+      const items = res?.data?.items ?? res?.items ?? [];
+      setNotifications(Array.isArray(items) ? items : []);
     } catch {
       setNotifications([]);
     } finally {
@@ -28,14 +31,6 @@ const NotificationList = () => {
     };
   }, [load]);
 
-  const removeNotification = async (id) => {
-    try {
-      await notificationApi.remove(id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    } catch {
-      /* keep */
-    }
-  };
 
   const toggleReadStatus = async (item) => {
     try {
@@ -43,14 +38,64 @@ const NotificationList = () => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
       );
+      window.dispatchEvent(new Event("notifications-changed"));
     } catch {
       /* keep */
     }
   };
 
+  const removeNotification = async (id) => {
+    try {
+      await notificationApi.remove(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      window.dispatchEvent(new Event("notifications-changed"));
+    } catch {
+      /* keep */
+    }
+  };
+
+  // সব একসাথে পড়া হিসেবে মার্ক — bell ব্যাজও সাথে সাথে শূন্য হয়
+  const markAllRead = async () => {
+    setMarkAllBusy(true);
+    try {
+      await notificationApi.readAll();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      window.dispatchEvent(new Event("notifications-changed"));
+    } catch {
+      /* keep */
+    } finally {
+      setMarkAllBusy(false);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
   return (
     <div className="min-h-screen p-4 ">
       <div className="max-w-4xl mx-auto space-y-4">
+        {!loading && notifications.length > 0 && (
+          <div className="flex items-center justify-between px-1">
+            <p className="text-sm text-gray-500">
+              {unreadCount > 0
+                ? `${unreadCount.toLocaleString("bn-BD")}টি অপঠিত নোটিফিকেশন`
+                : "সব নোটিফিকেশন পড়া হয়েছে"}
+            </p>
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllRead}
+                disabled={markAllBusy}
+                className="btn btn-sm btn-outline border-[#fd6969] text-[#fd6969] hover:bg-[#fd6969] hover:text-white gap-1"
+              >
+                {markAllBusy ? (
+                  <span className="loading loading-spinner loading-xs"></span>
+                ) : (
+                  <CheckCheck size={16} />
+                )}
+                সব পড়া হয়েছে মার্ক করুন
+              </button>
+            )}
+          </div>
+        )}
         {loading && (
           <div className="text-center py-16">
             <span className="loading loading-spinner loading-md text-red-400"></span>
@@ -61,7 +106,9 @@ const NotificationList = () => {
           notifications.map((item) => (
             <div
               key={item.id}
-              className="  p-5 md:p-6  border-b-1 border-gray-500 relative group transition-all hover:border-b-2"
+              className={`p-5 md:p-6 border-b-1 border-gray-500 relative group transition-all hover:border-b-2 ${
+                item.isRead ? "opacity-70" : "bg-red-50/40"
+              }`}
             >
               {/* Remove Button */}
               <button
