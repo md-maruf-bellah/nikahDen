@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 import { corsOptions } from "./config/cors.js";
 import env from "./config/env.js";
-import { apiLimiter } from "./middleware/rateLimiter.middleware.js";
+import { apiLimiter, readLimiter } from "./middleware/rateLimiter.middleware.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import { ensureUploadDirs, UPLOAD_ROOT } from "./middleware/upload.middleware.js";
 import routes from "./routes/index.js";
@@ -39,8 +39,10 @@ export function createApp() {
     });
   }
 
-  // Global rate limit on /api
+  // Global rate limit on /api — লেখা/auth-নির্ভর বাকেট (GET/OPTIONS skip)
   app.use("/api", apiLimiter);
+  // পড়া-শুধু GET/OPTIONS আলাদা উদার বাকেটে — স্বাভাবিক ব্রাউজিংয়ে 429 নেই
+  app.use("/api", readLimiter);
 
   ensureUploadDirs();
   // Serve uploaded images locally (/uploads/...)

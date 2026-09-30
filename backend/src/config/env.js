@@ -59,7 +59,11 @@ const env = {
   UPLOAD_DIR: process.env.UPLOAD_DIR || "uploads",
 
   RATE_LIMIT_WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "15", 10) * 60 * 1000,
+  // লেখা/auth-নির্ভর রিকোয়েস্টের বাকেট (GET এখানে গোনা হয় না)
   RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || "300", 10),
+  // পড়া-শুধু (GET/OPTIONS) ট্রাফিকের উদার বাকেট — এক পেজ-লোডে অনেক GET,
+  // স্বাভাবিক ব্রাউজিংয়ে 429 এড়াতে লেখার বাকেট থেকে আলাদা
+  RATE_LIMIT_READ_MAX: parseInt(process.env.RATE_LIMIT_READ_MAX || "600", 10),
   AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "20", 10),
 
   SMTP_HOST: process.env.SMTP_HOST || "",

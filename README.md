@@ -141,8 +141,11 @@ UI-ও নিয়মগুলো আগে থেকেই দেখায় 
   একটাই /auth/refresh কলে মেটে।
 - **OAuth (Google/Facebook):** Mongo-backed single-use handoff code (60s TTL) + HMAC-signed,
   replay-protected state nonce (10min TTL)
-- **Abuse প্রতিরোধ:** OAuth এন্ডপয়েন্টে ডেডিকেটেড limiter (10/15min) + **fail2ban guard** —
-  ব্যর্থ exchange/state-চেষ্টায় ৫ বারে IP ব্লক (429 + Retry-After); সফল লগইনে কাউন্টার রিসেট
+- **Abuse প্রতিরোধ:** রাউট-ভিত্তিক রেট-লিমিট — পড়া-শুধু (GET/OPTIONS) ট্রাফিক উদার আলাদা বাকেটে
+  (`RATE_LIMIT_READ_MAX`, 600/15min — স্বাভাবিক ব্রাউজিংয়ে 429 নেই), লেখা/auth-নির্ভর কঠোর বাকেটে
+  (`RATE_LIMIT_MAX`, 300/15min), auth 20/15min, contact 10/hr; OAuth এন্ডপয়েন্টে ডেডিকেটেড limiter
+  (10/15min) + **fail2ban guard** — ব্যর্থ exchange/state-চেষ্টায় ৫ বারে IP ব্লক (429 + Retry-After);
+  সফল লগইনে কাউন্টার রিসেট
 - **Contact ফর্ম:** honeypot + time-trap স্প্যাম ডিফেন্স (বট সাইলেন্টলি ফেলা হয়; ড্রপ-ইভেন্ট capped collection-এ persist — `GET /admin/contact/events`) + 10/hr limiter
 - সব রেট-লিমিট ও OAuth কাউন্টার অ্যাডমিন `GET /admin/stats`-এ দৃশ্যমান;
   ইভেন্ট-হিস্ট্রি Mongo capped collection-এ persist হয় — `GET /admin/oauth/events`-এ রিস্টার্টের পরেও পাওয়া যায়

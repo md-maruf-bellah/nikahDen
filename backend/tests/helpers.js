@@ -72,6 +72,7 @@ export async function startServer({ transactions = true } = {}) {
   // Raise rate limits for the test run, then build the app (limiters read env
   // at import time, so the dynamic import must happen after the change).
   process.env.RATE_LIMIT_MAX = "100000";
+  process.env.RATE_LIMIT_READ_MAX = "100000";
   process.env.AUTH_RATE_LIMIT_MAX = "100000";
   process.env.CONTACT_RATE_LIMIT_MAX = "100000";
   process.env.OAUTH_RATE_LIMIT_MAX = "100000"; // OAuth এন্ডপয়েন্ট টেস্টগুলো একই IP থেকে চলে
