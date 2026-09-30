@@ -2,6 +2,7 @@ import { Noto_Sans_Bengali, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
 import { AuthProvider } from "@/lib/auth-context";
+import { GuardPreviewProvider } from "@/components/GuardPreviewProvider";
 import SiteChrome from "@/components/SiteChrome";
 
 const notoSansBengali = Noto_Sans_Bengali({
@@ -32,8 +33,10 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-screen flex flex-col bg-base-100 text-base-content font-noto">
         <AuthProvider>
-          <SiteChrome>{children}</SiteChrome>
-          <ScrollToTop />
+          <GuardPreviewProvider>
+            <SiteChrome>{children}</SiteChrome>
+            <ScrollToTop />
+          </GuardPreviewProvider>
         </AuthProvider>
       </body>
     </html>
