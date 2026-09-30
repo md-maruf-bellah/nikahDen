@@ -1,6 +1,6 @@
 # CI — প্রতিটি push-এ চলে:
 #   ১) backend: পূর্ণ টেস্ট স্যুট (node --test, in-memory MongoDB — আলাদা Mongo service লাগে না)
-#   ২) frontend: next build
+#   ২) frontend: ইউনিট টেস্ট (node --test — ফ্রন্টএন্ড লজিক React-মুক্ত মডিউলে) + next build
 #
 # নোট: runner (ubuntu-24.04) এ mongodb-memory-server-এর পুরনো default mongod
 # libcrypto.so.1.1 খুঁজে ব্যর্থ হয় — তাই MONGOMS_VERSION দিয়ে 7.0.x পিন করা
@@ -63,6 +63,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Unit tests (node --test)
+        run: npm test
 
       - name: Build (next build)
         run: npm run build
