@@ -38,6 +38,12 @@ const env = {
     process.env.JWT_REFRESH_SECRET || "dev-refresh-secret-change-me-in-production",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
 
+  // রোটেশনের পর এই সেকেন্ডের ভেতরে পুরনো refresh token আবার এলে সেটি
+  // আক্রমণ নয় — কনকারেন্ট ট্যাব/রিস্টার্ট-পরবর্তী বেনাইন রেস ধরা হয়
+  // (রিফ্রেশ-স্ট্যাম্পিডে ফ্যামিলি-রিভোকে লগইন মারা যায় না)। গ্রেস শেষে
+  // replay মানেই আসল reuse — পুরো session family রিভোক।
+  REFRESH_REUSE_GRACE_SECONDS: parseInt(process.env.REFRESH_REUSE_GRACE_SECONDS || "60", 10),
+
   ACCESS_COOKIE_NAME: "nikahdeen_access",
   REFRESH_COOKIE_NAME: "nikahdeen_refresh",
 

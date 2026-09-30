@@ -134,7 +134,11 @@ UI-ও নিয়মগুলো আগে থেকেই দেখায় 
 
 ## নিরাপত্তা (হাইলাইট)
 
-- **Auth:** JWT access (15m) + ঘূর্ণায়মান refresh token (DB-তে hashed) + httpOnly-cookie মোড
+- **Auth:** JWT access (15m) + ঘূর্ণায়মান refresh token (DB-তে hashed — রিস্টার্ট-পার্সিস্টেন্ট) + httpOnly-cookie মোড।
+  Refresh-রোটেশনে ৬০ সেকেন্ডের reuse-grace উইন্ডো: রোটেশনের সাথে-সাথে পুরনো টোকেন আবার এলে সেটি কনকারেন্ট
+  ট্যাব/রিস্টার্ট-পরবর্তী স্ট্যাম্পিডের বেনাইন রেস (access token রি-ইস্যু, successor অক্ষত); গ্রেস-শেষে replay
+  মানেই আসল reuse-attack — পুরো session family রিভোক। ফ্রন্টএন্ড রিফ্রেশ single-flight — এক পেজের সব 401
+  একটাই /auth/refresh কলে মেটে।
 - **OAuth (Google/Facebook):** Mongo-backed single-use handoff code (60s TTL) + HMAC-signed,
   replay-protected state nonce (10min TTL)
 - **Abuse প্রতিরোধ:** OAuth এন্ডপয়েন্টে ডেডিকেটেড limiter (10/15min) + **fail2ban guard** —

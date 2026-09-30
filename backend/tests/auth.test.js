@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import env from "../src/config/env.js";
 import { hashToken, randomToken } from "../src/utils/helpers.js";
 import { startServer, stopServer, clearDb, registerUser, login, createSuperAdmin, auth, superAdmin } from "./helpers.js";
+import { connectDB } from "../src/config/db.js";
 
 describe("AUTH", () => {
   let request;
@@ -104,19 +105,67 @@ describe("AUTH", () => {
   });
 
   describe("refresh rotation", () => {
-    it("rotates refresh tokens and rejects replay", async () => {
+    it("rotates refresh tokens and re-serves in-window replays benignly", async () => {
       const s = await registerUser(request);
 
       const first = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
       assert.equal(first.status, 200);
       assert.notEqual(first.body.data.refreshToken, s.refreshToken);
 
-      // Reusing the old token must fail (rotation + reuse detection).
+      // Reusing the old token within the grace window is a benign concurrent
+      // race now (200 + re-issued access token, no new refresh token) — the
+      // real reuse-attack path is covered in the grace-window test below.
+      const replay = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+      assert.equal(replay.status, 200);
+      assert.ok(replay.body.data.accessToken);
+      assert.equal(replay.body.data.refreshToken, undefined);
+
+      // ইন-উইন্ডো রিপ্লে benign — ফ্যামিলি-কিল হয়নি, তাই successor সচল।
+      // (গ্রেস-শেষে আসল reuse-attack-এ ফ্যামিলি মরে — নিচের টেস্টে কভারড।)
+      const second = await request.post("/api/v1/auth/refresh").send({ refreshToken: first.body.data.refreshToken });
+      assert.equal(second.status, 200);
+      assert.ok(second.body.data.refreshToken);
+    });
+
+    it("gracefully re-serves the successor within the reuse grace window (concurrent-refresh race)", async () => {
+      const s = await registerUser(request);
+
+      const first = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+      assert.equal(first.status, 200);
+      const successor = first.body.data.refreshToken;
+
+      // একই পুরনো টোকেন গ্রেস-উইন্ডোর ভেতরে আবার এলে (কনকারেন্ট ট্যাব /
+      // স্ট্যাম্পিড রিফ্রেশ) — বেনাইন রেস: নতুন পেয়ার নষ্ট হয় না, অ্যাক্সেস
+      // টোকেন রি-ইস্যু হয় এবং successor টিকে থাকে।
+      const race = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+      assert.equal(race.status, 200);
+      assert.ok(race.body.data.accessToken);
+      assert.equal(race.body.data.refreshToken, undefined);
+
+      // রেসের পরেও successor সচল থাকে।
+      const after = await request.post("/api/v1/auth/refresh").send({ refreshToken: successor });
+      assert.equal(after.status, 200);
+      assert.ok(after.body.data.refreshToken);
+    });
+
+    it("kills the whole session family when the grace window has passed (real reuse attack)", async () => {
+      const s = await registerUser(request);
+
+      const first = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+      assert.equal(first.status, 200);
+
+      // গ্রেস-উইন্ডো পার করে দাও (ভাল করে হাইজ্যাক-ডিটেকশন অক্ষত রাখতে)।
+      const RefreshToken = mongoose.model("RefreshToken");
+      const { hashToken } = await import("../src/utils/helpers.js");
+      await RefreshToken.updateOne(
+        { tokenHash: hashToken(s.refreshToken) },
+        { $set: { revokedAt: new Date(Date.now() - 10 * 60 * 1000) } },
+      );
+
       const replay = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
       assert.equal(replay.status, 401);
 
-      // Reuse detection revokes the whole session family: the rotated token
-      // is dead too, forcing a fresh login.
+      // ফ্যামিলি-রিভোক: successor-ও মরে যায়।
       const second = await request.post("/api/v1/auth/refresh").send({ refreshToken: first.body.data.refreshToken });
       assert.equal(second.status, 401);
     });
@@ -193,6 +242,29 @@ describe("AUTH", () => {
     it("admins exist in seed fixture", async () => {
       const ok = await login(request, superAdmin.email, superAdmin.password);
       assert.equal(ok.user.role, "SUPERADMIN");
+    });
+  });
+
+  describe("backend restart persistence", () => {
+    it("refresh tokens survive a process restart: silent refresh works after reconnecting", async () => {
+      const s = await registerUser(request);
+
+      // "প্রসেস মৃত্যু" সিমুলেট: Mongo না ঘুরিয়ে কানেকশন ছিঁড়ে নতুন Express
+      // অ্যাপ বসানো — টোকেন-স্টোর Mongo-তে থাকায় রিস্টার্টে কিছুই হারায় না।
+      // একই in-memory mongod-এ ফিরে যেতে host/port/name আগেই ক্যাপচার করি।
+      const { host, port, name } = mongoose.connection;
+      await mongoose.disconnect();
+      await connectDB(`mongodb://${host}:${port}/${name}`, { serverSelectionTimeoutMS: 30000 });
+
+      const res = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+      assert.equal(res.status, 200);
+      assert.ok(res.body.data.accessToken);
+      assert.ok(res.body.data.refreshToken);
+
+      // রিফ্রেশ হওয়া পেয়ারও সচল — সেশন সত্যিই টিকে আছে।
+      const me = await request.get("/api/v1/auth/me").set(auth(res.body.data.accessToken));
+      assert.equal(me.status, 200);
+      assert.equal(me.body.data.email, s.user.email);
     });
   });
 });

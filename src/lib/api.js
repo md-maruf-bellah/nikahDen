@@ -52,6 +52,27 @@ function buildQuery(params = {}) {
   return s ? `?${s}` : "";
 }
 
+// Single-flight রিফ্রেশ — এক পেজে একসাথে অনেক 401 এলে সবাই একটাই
+// /auth/refresh কলে দাঁড়ায়। না হলে প্রত্যেকে একই refresh token নিয়ে
+// কল করে; রোটেশনের পরে বাকিরা replay হয় আর ব্যাকএন্ড reuse-detection
+// পুরো session family রিভোক করে দেয় — ব্যাকএন্ড রিস্টার্টের পর এভাবেই
+// লগইন মরে যেত।
+let refreshInflight = null;
+
+function refreshTokens() {
+  if (!tokenStore.getRefresh()) return Promise.resolve(null);
+  if (!refreshInflight) {
+    refreshInflight = request("/auth/refresh", {
+      method: "POST",
+      body: { refreshToken: tokenStore.getRefresh() },
+      auth: false,
+    }).finally(() => {
+      refreshInflight = null;
+    });
+  }
+  return refreshInflight;
+}
+
 async function request(path, { method = "GET", body, params, auth = true, retried = false, raw = false } = {}) {
   const url = `${API_BASE}${path}${buildQuery(params)}`;
   const headers = {};
@@ -75,13 +96,9 @@ async function request(path, { method = "GET", body, params, auth = true, retrie
 
   const json = await res.json().catch(() => ({}));
 
-  // Token expired → try one silent refresh, then replay the original request.
-  if (res.status === 401 && auth && !retried && tokenStore.getRefresh()) {
-    const refreshed = await request("/auth/refresh", {
-      method: "POST",
-      body: { refreshToken: tokenStore.getRefresh() },
-      auth: false,
-    }).catch(() => null);
+  // Token expired → একটাই শেয়ার্ড silent refresh, তারপর আসল রিকোয়েস্ট রিপ্লে।
+  if (res.status === 401 && auth && !retried) {
+    const refreshed = await refreshTokens().catch(() => null);
     if (refreshed?.accessToken) {
       tokenStore.set(refreshed.accessToken, refreshed.refreshToken);
       return request(path, { method, body, params, auth, retried: true });

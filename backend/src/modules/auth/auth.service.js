@@ -156,7 +156,31 @@ export async function refreshSession(rawRefreshToken, meta = {}) {
     tokenHash: hashToken(rawRefreshToken),
   });
   if (!stored || stored.revokedAt) {
-    // Token reuse/rotation detected: kill the user's whole session family.
+    // রোটেশনের পরপরই পুরনো টোকেন আবার এলে সেটি reuse-attack নয় —
+    // একই রিফ্রেশ-টোকেনে একসাথে ফায়ার হওয়া কনকারেন্ট রিকোয়েস্টের বেনাইন রেস
+    // (একাধিক ট্যাব, পেজ-লোড বার্স্ট, বা সার্ভার রিস্টার্টের পর সব API কল
+    // একসাথে 401 খেয়ে স্ট্যাম্পিড রিফ্রেশ)। গ্রেস-উইন্ডোর ভেতরে একই
+    // নতুন পেয়ার ফেরত দিলে সবাই বেঁচে যায়; শেয়ার্ড single-flight
+    // জাভাস্ক্রিপ্ট এক-পেজে সাধারণত এটাই আটকায়, এটা শেষ সেফটি-জাল।
+    if (
+      stored?.revokedAt &&
+      stored.replacedBy &&
+      Date.now() - stored.revokedAt.getTime() <= env.REFRESH_REUSE_GRACE_SECONDS * 1000
+    ) {
+      const successor = await RefreshToken.findOne({ tokenHash: stored.replacedBy, revokedAt: null });
+      if (successor && successor.expiresAt > new Date()) {
+        const user = await User.findById(successor.user);
+        if (user && user.status === USER_STATUSES.ACTIVE) {
+          return {
+            accessToken: signAccessToken(user),
+            refreshToken: undefined,
+            user: publicUser(user),
+          };
+        }
+      }
+    }
+    // গ্রেস-শেষে replay = আসল token reuse: পুরো session family রিভোক
+    // (হাইজ্যাক-ডিটেকশন অক্ষত থাকে)।
     if (stored?.user) await revokeAllUserTokens(stored.user);
     throw ApiError.unauthorized(
       "Refresh token is invalid or has been used already.",
