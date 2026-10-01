@@ -5,6 +5,11 @@ import { MessageCircle, Ban, CreditCard, ShieldCheck } from "lucide-react";
 import { tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useGuardPreview } from "@/components/GuardPreviewProvider";
+import {
+  resolveGuardReason,
+  isOwnOrMissing,
+  buildChatTargets,
+} from "./StartChatButton.core.mjs";
 
 /**
  * বায়োডাটা কার্ড/ডিটেইলসের Message বোতাম —
@@ -13,12 +18,13 @@ import { useGuardPreview } from "@/components/GuardPreviewProvider";
  * - নিজের বায়োডাটায় বোতামই দেখায় না
  * - guard-প্রিভিউ: ব্লক/সীমা/প্যাকেজ-বাধা থাকলে বোতাম নিষ্ক্রিয় + কারণ লেখা
  *   (প্রিভিউ শেষ কথা নয় — ক্লিক করলেও সার্ভারের guard-ই চূড়ান্ত সিদ্ধান্ত দেয়)
+ *
+ * কারণ-ম্যাপিং/পথ-তৈরির লজিক StartChatButton.core.mjs-এ — ইউনিট-টেস্টেড।
  */
-const REASON_LABELS = {
-  blocked: { icon: Ban, text: "মেসেজিং সম্ভব নয়" },
-  LIMIT_REACHED: { icon: ShieldCheck, text: "সীমা শেষ — ম্যাচ বা আপগ্রেড" },
-  UPGRADE_REQUIRED: { icon: CreditCard, text: "প্যাকেজ আপগ্রেড দরকার" },
-  NO_PACKAGE: { icon: CreditCard, text: "প্যাকেজ আপগ্রেড দরকার" },
+const ICONS = {
+  ban: Ban,
+  "shield-check": ShieldCheck,
+  "credit-card": CreditCard,
 };
 
 export default function StartChatButton({ userId, className = "", children }) {
@@ -26,21 +32,22 @@ export default function StartChatButton({ userId, className = "", children }) {
   const { user } = useAuth();
   const [preview] = useGuardPreview(userId);
 
-  if (!userId || (user && user.id === userId)) return null;
+  if (isOwnOrMissing(userId, user?.id)) return null;
 
   // guard-প্রিভিউতে বাধা থাকলে নিষ্ক্রিয় + কারণ (নীরব দেয়াল/সীমা — সব আগেই দেখা যায়)
-  const disabled = Boolean(preview && preview.canMessage === false);
-  const reason = disabled ? REASON_LABELS[preview.blocked ? "blocked" : preview.reason] || null : null;
-  const ReasonIcon = reason?.icon || Ban;
+  const { disabled, reason, title } = resolveGuardReason(preview);
+  const ReasonIcon = (reason && ICONS[reason.iconKey]) || Ban;
+
+  const { chatPath, loginPath } = buildChatTargets(userId);
 
   const go = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!tokenStore.getAccess()) {
-      router.push(`/login?next=${encodeURIComponent(`/profile?tab=${encodeURIComponent("মেসেজিং")}&chat=${userId}`)}`);
+      router.push(loginPath);
       return;
     }
-    router.push(`/profile?tab=${encodeURIComponent("মেসেজিং")}&chat=${userId}`);
+    router.push(chatPath);
   };
 
   if (disabled) {
@@ -48,7 +55,7 @@ export default function StartChatButton({ userId, className = "", children }) {
       <button
         type="button"
         disabled
-        title={reason ? reason.text : "মেসেজিং সম্ভব নয়"}
+        title={title}
         className={`${className} opacity-55 cursor-not-allowed`}
       >
         {reason ? (
