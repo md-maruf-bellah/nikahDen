@@ -29,7 +29,7 @@ assets/, public/ → স্ট্যাটিক অ্যাসেট
 | জব                            | কী চলে                                                              | স্থানীয় সমতুল্য            |
 | ----------------------------- | ------------------------------------------------------------------- | --------------------------- |
 | **Backend tests (Node 22)**   | `npm ci && npm test` — ১০২টি integration টেস্ট (in-memory MongoDB)  | `cd backend && npm test`    |
-| **Frontend build**            | `npm ci && npm run build` — Next.js প্রোডাকশন বিল্ড                 | `npm run build`             |
+| **Frontend build**            | `npm ci && npm test && npm run build` — ইউনিট টেস্ট (node --test) + Next.js প্রোডাকশন বিল্ড | `npm test`, `npm run build` |
 
 > **নোট:** রানারে mongodb-memory-server-এর ডিফল্ট mongod বাইনারি ব্যর্থ হয় বলে
 > CI-তে `MONGOMS_VERSION=7.0.24` পিন করা আছে (OpenSSL 3 লিংকড, ubuntu-24.04-এ চলে)।
@@ -73,6 +73,7 @@ npm run dev               # http://localhost:3000
 | `npm run build`  | প্রোডাকশন বিল্ড (CI-তেও চলে)     |
 | `npm start`      | প্রোডাকশন সার্ভার                |
 | `npm run lint`   | ESLint                           |
+| `npm test`       | ফ্রন্টএন্ড টেস্ট স্যুট (node --test) — নিচের [প্রেসক্রিপশন](#ফ্রন্টএন্ড-টেস্ট--কোর-মডিউল--nodetest-প্রেসক্রিপশন) দেখুন |
 
 **ব্যাকএন্ড (`cd backend`):**
 
@@ -101,6 +102,59 @@ MONGOMS_VERSION=7.0.24 npm test
 - কভারেজ: auth + OAuth, biodata, membership/orders, social (like/message/contact),
   preferences, completion, messaging guard — **১০২ টেস্ট**
 - প্রথম রানে mongod বাইনারি ডাউনলোড হয় (একবারই)
+
+---
+
+## ফ্রন্টএন্ড টেস্ট — কোর-মডিউল + node:test প্রেসক্রিপশন
+
+ফ্রন্টএন্ডে নতুন লজিক লেখার সময় টেস্টযোগ্যতা দুই স্তরে ভাবুন — **আগে কোর, পরে কম্পোনেন্ট**।
+রানার কোনোটাতেই নতুন নয়: সব একই `node --test` (`npm test`)।
+
+### স্তর ১: পিওর লজিক → `*.core.mjs` (ডিফল্ট পথ)
+
+React/DOM-নির্ভর যেকোনো হিসাব-নিকাশ — ম্যাপিং, রেজলভার, পাথ-বিল্ডার, ব্যাচিং/ডিবাউন্স,
+স্টেট-মেশিন — কম্পোনেন্টে না রেখে আলাদা React-মুক্ত মডিউলে তুলুন:
+
+| কোর মডিউল (React-মুক্ত)                    | টেস্ট (node --test)                    |
+| ------------------------------------------ | -------------------------------------- |
+| `src/components/GuardPreview.core.mjs`    | `tests/guard-preview.core.test.mjs`   |
+| `src/components/StartChatButton.core.mjs` | `tests/start-chat-button.core.test.mjs` |
+
+নিয়ম:
+- মডিউলে React, `next/*`, DOM global — কোনোটাই ইমপোর্ট নয়; বিশুদ্ধ ESM (`.mjs`)।
+- বাইরের জিনিস (টাইমার, fetch, setState) **inject** করুন — টেস্টে ফেক ঢোকানো যায়
+  (`createGuardPreviewEngine({ fetchIntent, setPreviews, getUserId, timers })` দেখুন)।
+- কম্পোনেন্ট শুধু ওয়্যারিং: হুক → কোর ফাংশন → JSX; কোরের আচরণ কম্পোনেন্টের সাথে হুবহু এক রাখুন।
+- কনস্ট্যান্ট (`DEBOUNCE_MS`, `MAX_BATCH`, `REASON_LABELS`...) এক্সপোর্ট করুন — টেস্ট ও
+  কম্পোনেন্ট একই মান পড়ে; React-জগতের ডেটা (আইকন কম্পোনেন্ট) কোরে যায় না —
+  বদলে string `iconKey` পাঠান, কম্পোনেন্টে ম্যাপ করুন।
+- টেস্টে `node:test` + `node:assert/strict`; টেস্ট-নাম বাংলায়, আচরণ বর্ণনা করে।
+
+### স্তর ২: কম্পোনেন্ট-লেভেল (হুক-রেস/ওয়্যারিং) → @testing-library/react
+
+হুকের ভেতরের রেস — যেমন `useGuardPreview`-এর auth-hydrate (…/auth/me শেষ না হওয়া পর্যন্ত
+প্রিভিউ-কল পেন্ডিং, ইউজার এলে আবার চেষ্টা) — পিওর ফাংশনে থাকে না; আসল প্রোভাইডার-ট্রি রেন্ডার
+করে ধরতে হয়। `tests/helpers/jsx-env.mjs` পরিবেশটা বানিয়ে দেয় (node --test-এর ভেতরেই,
+নতুন টেস্ট-রানার ছাড়া):
+
+- `setupDom()` — jsdom-এর window/document/localStorage global-এ (React DOM-এর আগে)
+- `bundleModule(entry, key)` — esbuild দিয়ে JSX/`@/`-এলিয়াস বান্ডল; `next/navigation` স্টাব
+  (`globalThis.__nkTestRouter.push` পর্যবেক্ষণযোগ্য); react external — RTL-এর সাথে একই ইনস্ট্যান্স
+- `installFetchMock()` — URL-ফ্র্যাগমেন্ট ধরে রেসপন্ডার + সব কলের লগ;
+  **রেসপন্ডার `entry` পায় আর সব রেসপন্স `{ data }` এনভেলপে** (api ক্লায়েন্ট `json.data` আনর‍্যাপ করে)
+- `deferred()` — হাইড্রেশন/রেস ম্যানুয়ালি ধরে রাখা
+
+রেসিপি (দেখুন `tests/guard-preview.hook.test.mjs`):
+1. আসল `AuthProvider` + `GuardPreviewProvider` ব্যবহার করুন — মক করুন শুধু `fetch` আর router।
+2. হুকের ফলাফল DOM-এ ঢালুন ছোট প্রোবে (`data-testid` + data-অ্যাট্রিবিউট)।
+3. অপেক্ষা RTL `waitFor` দিয়ে; `beforeEach`-এ নতুন fetch-মক, `afterEach`-এ `cleanup()` +
+   `localStorage.clear()` (jsdom-স্টোরেজ টেস্ট-জুড়ে লিক করে)।
+
+নতুন devDependencies শুধু এগুলো: `jsdom`, `@testing-library/react`, `@testing-library/dom`,
+`esbuild` — রানটাইম বান্ডলে কিছুই যায় না।
+
+**সিদ্ধান্ত-নিয়ম:** নতুন লজিক প্রথমেই কোর-মডিউলে + স্তর-১ টেস্টে; স্তর ২ শুধু কম্পোনেন্ট-সংযোগ,
+রেস, hydration-প্রমাণে। কম্পোনেন্ট-টেস্ট কখনো পিওর-লজিক টেস্টের বিকল্প নয়।
 
 ---
 

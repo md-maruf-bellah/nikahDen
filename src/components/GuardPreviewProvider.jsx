@@ -35,8 +35,12 @@ export function GuardPreviewProvider({ children }) {
     };
   }, []);
 
+  // রেন্ডার-ফেজেই মিরর — child-এর effect parent-এর effect-এর আগে চলে (React নিয়ম),
+  // তাই hydrate-কমিটে child যখন schedule করে, userRef তখন যেন তাজা থাকে।
+  // effect-এ লিখলে এক কমিট পিছিয়ে যায় আর প্রথম লোডের প্রিভিউ-রিকোয়েস্ট নীরবে হারায়।
+  userRef.current = user;
+
   useEffect(() => {
-    userRef.current = user;
     // লগআউট/ইউজার-পরিবর্তনে ক্যাশ পরিষ্কার (প্রিভিউ sender-নির্ভর)
     setPreviews({});
     engineRef.current?.clearCache();
