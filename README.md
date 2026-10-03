@@ -119,6 +119,7 @@ React/DOM-নির্ভর যেকোনো হিসাব-নিকাশ 
 | ------------------------------------------ | -------------------------------------- |
 | `src/components/GuardPreview.core.mjs`    | `tests/guard-preview.core.test.mjs`   |
 | `src/components/StartChatButton.core.mjs` | `tests/start-chat-button.core.test.mjs` |
+| `src/components/Messenger.core.mjs`       | `tests/messenger.core.test.mjs`         |
 
 নিয়ম:
 - মডিউলে React, `next/*`, DOM global — কোনোটাই ইমপোর্ট নয়; বিশুদ্ধ ESM (`.mjs`)।

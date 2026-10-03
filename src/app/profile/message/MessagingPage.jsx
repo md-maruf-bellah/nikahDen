@@ -5,6 +5,25 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { conversationApi, blockApi, userApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import {
+  ICE_BREAKER_TEXT,
+  asArray,
+  buildFallbackConversation,
+  canSendMessage,
+  canStartChatWith,
+  chatParamAction,
+  createMemberSearchEngine,
+  filterConversations,
+  findExistingConversation,
+  guardNoticeFor,
+  makeOptimisticMessage,
+  memberRowState,
+  pickFreshConversation,
+  resolveOptimisticId,
+  revertOptimistic,
+  shouldAutoOpenFirst,
+  timeLabel,
+} from "@/components/Messenger.core.mjs";
 
 const MessagingApp = () => {
   const { user } = useAuth();
@@ -23,18 +42,26 @@ const MessagingApp = () => {
   const [startBusyId, setStartBusyId] = useState(null);
   // messaging guard-এর 402/403 ধরে দেখানোর ইনলাইন নোটিস (null = নেই)
   const [guardNotice, setGuardNotice] = useState(null);
-  const searchTimer = useRef(null);
   const scrollRef = useRef(null);
+  // সদস্য-খোঁজা ইঞ্জিন — ডিবাউন্স+প্রিভিউ-মার্জ কোর-মডিউলে; setState এখানেই inject
+  const memberSearchRef = useRef(null);
+  if (!memberSearchRef.current) {
+    memberSearchRef.current = createMemberSearchEngine({
+      searchUsers: userApi.search,
+      searchIntent: userApi.searchIntent,
+      setResults: setMemberResults,
+      setBusy: setSearchBusy,
+    });
+  }
   const searchParams = useSearchParams();
   const handledChatRef = useRef(null);
   const [pendingChat, setPendingChat] = useState(null);
 
   const loadConversations = useCallback(async () => {
     try {
-      const list = await conversationApi.list({ limit: 50 });
-      const arr = Array.isArray(list) ? list : [];
+      const arr = asArray(await conversationApi.list({ limit: 50 }));
       setConversations(arr);
-      if (arr.length && !activeChat) {
+      if (shouldAutoOpenFirst(arr, activeChat)) {
         // প্রথম কথোপকথন শুধু প্রিভিউ — মেসেজ GET করলেই সার্ভার mark-read করে দেয়,
         // তাই unread ব্যাজ বাঁচাতে এখানে মেসেজ লোড করা হয় না; ক্লিকে লোড হবে।
         setActiveChat(arr[0]);
@@ -75,7 +102,7 @@ const MessagingApp = () => {
       }
       try {
         const list = await conversationApi.messages(conversation.id, { limit: 100 });
-        setMessages(Array.isArray(list) ? list : []);
+        setMessages(asArray(list));
         // GET মেসেজেই সার্ভার mark-read করে; তালিকার ব্যাজ রিফ্রেশ করুন
         loadConversations();
       } catch {
@@ -112,88 +139,32 @@ const MessagingApp = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // guard errorCode → বাংলা নোটিস (আপগ্রেড লিংকসহ)
-  const guardNoticeFor = (errorCode, serverMessage) => {
-    switch (errorCode) {
-      case "MESSAGING_UPGRADE_REQUIRED":
-        return { upgrade: true, text: "আপনার বর্তমান প্যাকেজে ম্যাচ ছাড়া মেসেজ পাঠানো যায় না। আপগ্রেড করলে নতুন সদস্যদের সাথে কথা বলতে পারবেন।" };
-      case "MESSAGING_LIMIT_REACHED":
-        return { upgrade: true, text: "ম্যাচ ছাড়া এই সদস্যকে পাঠানোর সীমা শেষ। দুজনে একে অপরকে পছন্দ (ম্যাচ) করলে সীমাহীন — অথবা আপগ্রেড করুন।" };
-      case "NO_MESSAGING_PACKAGE":
-        return { upgrade: true, text: "আপনার প্যাকেজে মেসেজিং সীমিত। ম্যাচ ছাড়া কথা বলতে উন্নত প্যাকেজ দরকার।" };
-      default:
-        return serverMessage ? { upgrade: false, text: serverMessage } : null;
-    }
-  };
-
   const handleSendMessage = async () => {
-    if (!inputText.trim() || !activeChat || blockedByMe) return;
+    if (!canSendMessage(inputText, activeChat, blockedByMe)) return;
     const text = inputText;
     const tmpId = `tmp-${Date.now()}`;
     setInputText("");
     setGuardNotice(null);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: tmpId,
-        sender: user?.id,
-        text,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+    setMessages((prev) => [...prev, makeOptimisticMessage({ tmpId, senderId: user?.id, text })]);
     try {
       const sent = await conversationApi.send(activeChat.id, text);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tmpId ? { ...m, id: sent.id } : m))
-      );
+      setMessages((prev) => resolveOptimisticId(prev, tmpId, sent.id));
       loadConversations();
     } catch (err) {
       // অপটিমিস্টিক বার্তা তুলে ফেলে নোটিস দেখাই — guard-এর 402/403-এ আপগ্রেড লিংকসহ
-      setMessages((prev) => prev.filter((m) => m.id !== tmpId));
+      setMessages((prev) => revertOptimistic(prev, tmpId));
       const notice = guardNoticeFor(err?.errorCode, err?.message);
       if (notice) setGuardNotice(notice);
     }
   };
 
-  const filtered = conversations.filter((c) =>
-    (c.partner?.name || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = filterConversations(conversations, search);
 
   // টাইপ করলে ৩০০ms ডিবাউন্সে সদস্য-খোঁজা — ফলাফল কথোপকথন তালিকার নিচে
+  // (ডিবাউন্স+প্রিভিউ-মার্জ ইঞ্জিন Messenger.core.mjs-এ)
   const handleSearchInput = (value) => {
     setSearch(value);
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    const q = value.trim();
-    if (q.length < 2) {
-      setMemberResults(null);
-      return;
-    }
-    searchTimer.current = setTimeout(async () => {
-      setSearchBusy(true);
-      try {
-        const res = await userApi.search(q, 8);
-        const found = Array.isArray(res) ? res : [];
-        if (!found.length) {
-          setMemberResults([]);
-          return;
-        }
-        // guard-পূর্ব প্রিভিউ সহ দেখাই — নইলে নিষ্ক্রিয় row-এ ক্লিকের রেস হয়
-        // (preview ব্যর্থ হলে guard:null → ক্লিক অনুমোদিত, সার্ভার চৌকাঠই শেষ কথা)
-        let guarded = found.map((m) => ({ ...m, guard: null }));
-        try {
-          const pv = await userApi.searchIntent(found.map((m) => m.id));
-          const byId = Object.fromEntries((Array.isArray(pv) ? pv : []).map((r) => [r.id, r]));
-          guarded = found.map((m) => ({ ...m, guard: byId[m.id] || null }));
-        } catch {
-          /* প্রিভিউ নীরব */
-        }
-        setMemberResults(guarded);
-      } catch {
-        setMemberResults([]);
-      } finally {
-        setSearchBusy(false);
-      }
-    }, 300);
+    memberSearchRef.current.onInput(value);
   };
 
   // বায়োডাটা কার্ডের Message বোতাম → /profile?tab=মেসেজিং&chat=<userId> ডিপ-লিংক:
@@ -201,18 +172,18 @@ const MessagingApp = () => {
   const openChatWithUser = useCallback(
     async (partnerId) => {
       if (!partnerId || partnerId === user?.id) return;
-      const existing = conversations.find((c) => c.partner?.id === partnerId);
+      const existing = findExistingConversation(conversations, partnerId);
       if (existing) {
         openChat(existing);
         return;
       }
       setGuardNotice(null);
       try {
-        const res = await conversationApi.start({ recipientId: partnerId, text: "আসসালামু আলাইকুম, আপনার সাথে কথা বলতে চাই।" });
+        const res = await conversationApi.start({ recipientId: partnerId, text: ICE_BREAKER_TEXT });
         const convoId = res?.conversation?.id;
         const arr = await loadConversations();
         // সার্ভার-রেশেপড অবজেক্ট থেকে খুলি — পার্টনার-নাম সাথে সাথেই দেখা যায়
-        const fresh = arr.find((c) => c.id === convoId) || { id: convoId, partner: { id: partnerId, name: null, avatar: null }, lastMessage: null, unreadCount: 0 };
+        const fresh = pickFreshConversation(arr, convoId, partnerId);
         openChat(fresh);
       } catch (err) {
         const notice = guardNoticeFor(err?.errorCode, err?.errorCode === "BLOCKED" ? null : err?.message);
@@ -224,16 +195,16 @@ const MessagingApp = () => {
 
   // ?chat= প্যারামিটার খাওয়া — একবারই; conversation তালিকা লোড হওয়ার পরে প্রসেস হবে
   useEffect(() => {
-    const chat = searchParams?.get("chat");
-    if (chat && handledChatRef.current !== chat) {
-      handledChatRef.current = chat;
-      if (tokenStore.getAccess()) {
-        setPendingChat(chat);
-      }
-      // URL পরিষ্কার — ?chat= সরিয়ে শুধু tab রাখি (retrigger হয় না)
-      window.history.replaceState(null, "", `/profile?tab=${encodeURIComponent("মেসেজিং")}`);
-    }
+    const action = chatParamAction(searchParams?.get("chat"), handledChatRef.current, Boolean(tokenStore.getAccess()));
+    if (!action) return;
+    handledChatRef.current = action.chat;
+    if (action.pending) setPendingChat(action.pending);
+    // URL পরিষ্কার — ?chat= সরিয়ে শুধু tab রাখি (retrigger হয় না)
+    window.history.replaceState(null, "", action.cleanUrl);
   }, [searchParams]);
+
+  // unmount-এ পেন্ডিং সদস্য-খোঁজা বাতিল
+  useEffect(() => () => memberSearchRef.current?.clear(), []);
 
   useEffect(() => {
     if (loading || !pendingChat) return;
@@ -243,17 +214,16 @@ const MessagingApp = () => {
 
   // খোঁজা সদস্যের সাথে কথোপকথন শুরু — ভার্চুয়াল row দেখানোর জন্য স্থানীয়ভাবে যোগ
   const startChatWith = async (member) => {
-    if (startBusyId) return;
     // guard-প্রিভিউতে নিষ্ক্রিয় হলে ক্লিকই নেই
-    if (member.guard && member.guard.canMessage === false) return;
+    if (!canStartChatWith(member, startBusyId)) return;
     setStartBusyId(member.id);
     try {
-      const res = await conversationApi.start({ recipientId: member.id, text: "আসসালামু আলাইকুম, আপনার সাথে কথা বলতে চাই।" });
+      const res = await conversationApi.start({ recipientId: member.id, text: ICE_BREAKER_TEXT });
       const convoId = res?.conversation?.id;
       setSearch("");
       setMemberResults(null);
       await loadConversations();
-      const fresh = { id: convoId, partner: { id: member.id, name: member.name, avatar: member.avatar }, lastMessage: null, unreadCount: 0 };
+      const fresh = buildFallbackConversation(convoId, member.id, member.name, member.avatar);
       openChat(fresh);
     } catch (err) {
       // guard-এর 402/403 — নোটিস দেখাই (আপগ্রেড লিংকসহ); ব্লকড হলে নীরব
@@ -262,16 +232,6 @@ const MessagingApp = () => {
     } finally {
       setStartBusyId(null);
     }
-  };
-
-  const timeLabel = (iso) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const now = new Date();
-    const sameDay = d.toDateString() === now.toDateString();
-    return sameDay
-      ? d.toLocaleTimeString("bn-BD", { hour: "numeric", minute: "2-digit" })
-      : d.toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
   };
 
   return (
@@ -355,23 +315,13 @@ const MessagingApp = () => {
                 {memberResults.length > 0 ? "সদস্য পাওয়া গেছে — ক্লিক করে কথা শুরু করুন" : "কোনো সদস্য পাওয়া যায়নি"}
               </p>
               {memberResults.map((m) => {
-                const already = conversations.some((c) => c.partner?.id === m.id);
-                const g = m.guard || null;
-                const disabled = Boolean(g && g.canMessage === false);
-                const reasonLabel =
-                  g?.blocked
-                    ? "মেসেজিং সম্ভব নয়"
-                    : g?.reason === "LIMIT_REACHED"
-                      ? "সীমা শেষ — আপগ্রেড বা ম্যাচ"
-                      : g?.reason === "UPGRADE_REQUIRED" || g?.reason === "NO_PACKAGE"
-                        ? "প্যাকেজ আপগ্রেড দরকার"
-                        : null;
+                const row = memberRowState(m, conversations);
                 return (
                   <div
                     key={m.id}
-                    onClick={() => !disabled && startChatWith(m)}
+                    onClick={() => !row.disabled && startChatWith(m)}
                     className={`flex items-center gap-3 p-2 transition-all ${
-                      disabled || already ? "opacity-55" : "cursor-pointer hover:bg-gray-50"
+                      row.disabled || row.already ? "opacity-55" : "cursor-pointer hover:bg-gray-50"
                     }`}
                   >
                     <img
@@ -382,12 +332,12 @@ const MessagingApp = () => {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-gray-800 text-sm truncate">{m.name}</h4>
                       <p className="text-[11px] text-gray-400">
-                        {reasonLabel || (already ? "ইতিমধ্যে কথোপকথনে আছেন" : "নতুন কথোপকথন শুরু করুন")}
+                        {row.reasonLabel || (row.already ? "ইতিমধ্যে কথোপকথনে আছেন" : "নতুন কথোপকথন শুরু করুন")}
                       </p>
                     </div>
-                    {disabled ? (
+                    {row.disabled ? (
                       <span className="badge badge-xs badge-ghost border-gray-200 text-gray-400 shrink-0">নিষ্ক্রিয়</span>
-                    ) : already ? (
+                    ) : row.already ? (
                       <span className="badge badge-xs badge-ghost border-gray-200 text-gray-400 shrink-0">চালু আছে</span>
                     ) : null}
                     {startBusyId === m.id && (
