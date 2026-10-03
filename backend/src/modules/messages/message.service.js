@@ -8,6 +8,7 @@ import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
 import { NOTIFICATION_TYPES, USER_STATUSES } from "../../constants/index.js";
 import { assertMessagingPermission } from "./messagingGuard.service.js";
+import { emitToUser } from "../../realtime/index.js";
 
 const OID = mongoose.Types.ObjectId;
 
@@ -139,6 +140,13 @@ export async function getConversationMessages(userId, conversationId, { page = 1
     { conversation: conversationId, recipient: userId, status: "SENT" },
     { $set: { status: "READ", readAt: new Date() } }
   );
+  // পড়া মাত্রই প্রেরকের room-এ লাইভ read-রসিদ (GET পথও mark-read করে)
+  {
+    const conv = await Conversation.findById(conversationId).select("participants").lean();
+    for (const p of (conv?.participants || [])) {
+      if (p.toString() !== userId) emitToUser(p, "message:read", { conversationId, reader: userId });
+    }
+  }
 
   const total = await Message.countDocuments({ conversation: conversationId });
   const docs = await Message.find({ conversation: conversationId })
@@ -197,6 +205,26 @@ async function sendMessageTo(userId, conversationId, text) {
     data: { kind: "conversation", id: conversationId },
   });
 
+  // রিয়েলটাইম — REST চুক্তি অপরিবর্তিত; socket বন্ধ থাকলে নীরব no-op
+  const messagePayload = {
+    id: message._id.toString(),
+    conversationId,
+    sender: userId,
+    recipient: recipientId.toString(),
+    text: message.text,
+    status: message.status,
+    createdAt: message.createdAt.toISOString(),
+  };
+  emitToUser(recipientId, "message:new", messagePayload);
+  emitToUser(recipientId, "notification:new", {
+    id: null,
+    type: NOTIFICATION_TYPES.MESSAGE,
+    title: "You have a new message",
+    body: text.slice(0, 160),
+    data: { kind: "conversation", id: conversationId },
+    createdAt: message.createdAt.toISOString(),
+  });
+
   return {
     id: message._id.toString(),
     text: message.text,
@@ -207,11 +235,14 @@ async function sendMessageTo(userId, conversationId, text) {
 }
 
 export async function markRead(userId, conversationId) {
-  await assertParticipant(userId, conversationId);
+  const conversation = await assertParticipant(userId, conversationId);
   const res = await Message.updateMany(
     { conversation: conversationId, recipient: userId, status: "SENT" },
     { $set: { status: "READ", readAt: new Date() } }
   );
+  // প্রেরককে জানাই প্রাপক পড়েছে (একাধিক ডিভাইস/ট্যাব সহ)
+  const participants = conversation.participants.filter((p) => p.toString() !== userId);
+  for (const sender of participants) emitToUser(sender, "message:read", { conversationId, reader: userId });
   return { marked: res.modifiedCount };
 }
 

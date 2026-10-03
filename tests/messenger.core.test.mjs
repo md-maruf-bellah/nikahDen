@@ -23,6 +23,8 @@ import {
   shouldAutoOpenFirst,
   chatParamAction,
   createMemberSearchEngine,
+  shouldHandleLiveMessage,
+  appendLiveMessage,
 } from "../src/components/Messenger.core.mjs";
 
 /**
@@ -323,6 +325,43 @@ describe("messenger core — chatParamAction (?chat= ডিপ-লিংক গ�
 
   it("MESSAGING_TAB = 'মেসেজিং' — পেজ-ট্যাবের সাথে যুক্ত", () => {
     assert.equal(MESSAGING_TAB, "মেসেজিং");
+  });
+});
+
+describe("messenger core — live (socket) message", () => {
+  const live = { id: "m9", conversationId: "c1", sender: "u2", text: "লাইভ", createdAt: new Date().toISOString() };
+
+  it("খোলা conversation-এর মেসেজ → handle", () => {
+    assert.equal(shouldHandleLiveMessage(live, "c1"), true);
+  });
+
+  it("অন্য conversation-এর মেসেজ → নয় (শুধু তালিকা-রিফ্রেশ)", () => {
+    assert.equal(shouldHandleLiveMessage(live, "c2"), false);
+  });
+
+  it("conversationId/id অনুপস্থিত বা চ্যাট বন্ধ → নয়", () => {
+    assert.equal(shouldHandleLiveMessage({ id: "x" }, "c1"), false);
+    assert.equal(shouldHandleLiveMessage({ conversationId: "c1" }, "c1"), false);
+    assert.equal(shouldHandleLiveMessage(live, null), false);
+    assert.equal(shouldHandleLiveMessage(null, "c1"), false);
+  });
+
+  it("appendLiveMessage: নতুন অ্যারের শেষে বসে", () => {
+    const prev = [{ id: "m1", text: "a" }];
+    const next = appendLiveMessage(prev, live);
+    assert.deepEqual(next.map((m) => m.id), ["m1", "m9"]);
+    assert.notEqual(next, prev);
+  });
+
+  it("appendLiveMessage: একই id আবার এলে ডুপ্লিকেট নয়", () => {
+    const prev = [live];
+    const next = appendLiveMessage(prev, { ...live });
+    assert.equal(next, prev, "অপরিবর্তিত অ্যারেই ফেরে");
+    assert.equal(next.length, 1);
+  });
+
+  it("appendLiveMessage: null তালিকায়ও নিরাপদ", () => {
+    assert.deepEqual(appendLiveMessage(null, live), [live]);
   });
 });
 

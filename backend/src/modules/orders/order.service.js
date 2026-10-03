@@ -9,6 +9,7 @@ import User from "../../models/user.model.js";
 import { getNextSequence } from "../../models/counter.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { withTransaction } from "../../config/db.js";
+import { emitToUser } from "../../realtime/index.js";
 import { isValidObjectId, randomToken, pick } from "../../utils/helpers.js";
 import { parsePagination, buildPagination, parseSort } from "../../utils/pagination.js";
 import { addConnectCredit } from "../membership/connect.service.js";
@@ -224,6 +225,18 @@ export async function payOrder(userId, id, { paymentMethod = "CARD", transaction
     const finalDoc = await Order.findById(order._id).session(session).lean();
     return decorate(finalDoc);
   });
+
+  // ট্রানজ্যাকশন কমিটের পরেই রিয়েলটাইম emit (রোলব্যাক-হলে emit হয় না)
+  if (result) {
+    emitToUser(result.user?.id || result.user || userId, "notification:new", {
+      id: null,
+      type: NOTIFICATION_TYPES.ORDER_PAID,
+      title: "Payment successful",
+      body: `${result.item?.title || ""} — payment confirmed`,
+      data: { kind: "order", id: result.id || id },
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   return result;
 }

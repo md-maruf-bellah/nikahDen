@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCheck } from "lucide-react";
 import { notificationApi } from "@/lib/api";
+import { ensureSocket, onSocketEvent } from "@/lib/socket";
+import { tokenStore } from "@/lib/api";
+import { playNotificationSound } from "@/lib/notifSound";
 
 /**
  * Navbar notification bell — unread badge + dropdown।
@@ -52,6 +55,25 @@ export default function NotificationBell() {
       window.removeEventListener("notifications-changed", onChange);
     };
   }, [refreshCount]);
+
+  // রিয়েলটাইম — লগইন থাকলে socket; নতুন নোটিফিকেশনে সাথে সাথেই ব্যাজ+সাউন্ড
+  useEffect(() => {
+    if (!tokenStore.getAccess() && !tokenStore.getRefresh()) return;
+    ensureSocket(() => tokenStore.getAccess());
+    const offNew = onSocketEvent("notification:new", (n) => {
+      setUnread((u) => u + 1);
+      setItems((prev) => (Array.isArray(prev) ? [n, ...prev].slice(0, 6) : prev));
+      playNotificationSound();
+    });
+    const offRead = onSocketEvent("notification:read", () => {
+      setUnread(0);
+      setItems((prev) => (Array.isArray(prev) ? prev.map((it) => ({ ...it, isRead: true })) : prev));
+    });
+    return () => {
+      offNew();
+      offRead();
+    };
+  }, []);
 
   // বাইরে ক্লিকে ড্রপডাউন বন্ধ
   useEffect(() => {

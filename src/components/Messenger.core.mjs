@@ -123,6 +123,21 @@ export function revertOptimistic(messages, tmpId) {
   return (messages || []).filter((m) => m.id !== tmpId);
 }
 
+/**
+ * লাইভ (socket) মেসেজ গেট — এই conversation-এর কি না, ডুপ্লিকেট কি না।
+ * sender === নিজে হলেও false নয় (অন্য ট্যাব-সিঙ্ক) — ডুপ্লিকেট-গার্ডই আসল রক্ষা।
+ */
+export function shouldHandleLiveMessage(msg, activeConversationId) {
+  return Boolean(msg?.id && msg.conversationId && msg.conversationId === activeConversationId);
+}
+
+/** লাইভ মেসেজ তালিকায় জুড়ুন — id দিয়ে ডুপ্লিকেট-গার্ড, নতুন অ্যারে */
+export function appendLiveMessage(messages, msg) {
+  const arr = messages || [];
+  if (arr.some((m) => m.id === msg.id)) return arr;
+  return [...arr, msg];
+}
+
 /** পরিচিত সদস্য? — কথোপকথন-তালিকায় partner-আইডি মিললে সেটাই খোলে */
 export function findExistingConversation(conversations, partnerId) {
   return (conversations || []).find((c) => c.partner?.id === partnerId) || null;

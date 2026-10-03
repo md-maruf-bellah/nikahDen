@@ -22,8 +22,11 @@ import {
   resolveOptimisticId,
   revertOptimistic,
   shouldAutoOpenFirst,
+  shouldHandleLiveMessage,
+  appendLiveMessage,
   timeLabel,
 } from "@/components/Messenger.core.mjs";
+import { ensureSocket, onSocketEvent } from "@/lib/socket";
 
 const MessagingApp = () => {
   const { user } = useAuth();
@@ -205,6 +208,19 @@ const MessagingApp = () => {
 
   // unmount-এ পেন্ডিং সদস্য-খোঁজা বাতিল
   useEffect(() => () => memberSearchRef.current?.clear(), []);
+
+  // রিয়েলটাইম — খোলা চ্যাটে নতুন মেসেজ সাথে সাথেই বসে; তালিকার ব্যাজও রিফ্রেশ
+  useEffect(() => {
+    if (!tokenStore.getAccess() && !tokenStore.getRefresh()) return;
+    ensureSocket(() => tokenStore.getAccess());
+    const off = onSocketEvent("message:new", (msg) => {
+      if (shouldHandleLiveMessage(msg, activeChat?.id)) {
+        setMessages((prev) => appendLiveMessage(prev, msg));
+      }
+      loadConversations();
+    });
+    return off;
+  }, [activeChat?.id, loadConversations]);
 
   useEffect(() => {
     if (loading || !pendingChat) return;

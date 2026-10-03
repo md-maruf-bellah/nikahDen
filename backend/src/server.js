@@ -3,6 +3,7 @@ import env from "./config/env.js";
 import { connectDB } from "./config/db.js";
 import { ensureOauthEventCapped } from "./models/oauthEvent.model.js";
 import { ensureContactEventCapped } from "./models/contactEvent.model.js";
+import { initRealtime, closeRealtime } from "./realtime/index.js";
 
 async function bootstrap() {
   const app = createApp();
@@ -23,10 +24,14 @@ async function bootstrap() {
     console.log(`[server] Health check: http://localhost:${env.PORT}/health`);
   });
 
+  // Socket.IO — একই HTTP সার্ভারে (কোনো নতুন পোর্ট নয়)
+  initRealtime(server);
+
   // Graceful shutdown
   const shutdown = async (signal) => {
     console.log(`\n[server] ${signal} received — shutting down...`);
     server.close(async () => {
+      closeRealtime();
       try {
         const { mongoose } = await import("mongoose");
         await mongoose.disconnect();

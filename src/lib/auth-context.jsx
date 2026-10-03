@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { authApi, tokenStore } from "./api";
+import { ensureSocket, destroySocket } from "./socket";
 
 const AuthContext = createContext(null);
 
@@ -63,9 +64,16 @@ export function AuthProvider({ children }) {
       /* token already invalid — clear locally anyway */
     }
     tokenStore.clear();
+    destroySocket(); // লগআউটে socket বিচ্ছিন্ন
     setUser(null);
     router.push("/");
   }, [router]);
+
+  // লগইন হলে রিয়েলটাইম socket (অটো-রিকানেক্টসহ); লগআউট/সেশন-মৃত্যুতে বিচ্ছিন্ন
+  useEffect(() => {
+    if (user) ensureSocket(() => tokenStore.getAccess());
+    else destroySocket();
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout, refreshUser, isLoggedIn: Boolean(user) }}>

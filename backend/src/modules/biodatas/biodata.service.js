@@ -8,6 +8,7 @@ import { isValidObjectId, ageFrom } from "../../utils/helpers.js";
 import { BIODATA_STATUSES, NOTIFICATION_TYPES, ROLES, GENDERS } from "../../constants/index.js";
 import { getConnectBalance, deductConnectForView, hasViewedBiodata } from "../membership/connect.service.js";
 import { computeCompletion } from "./biodata.completion.js";
+import { emitToUser } from "../../realtime/index.js";
 
 // ---------------------------------------------------------------------------
 // Field allow-lists (defense against mass assignment)
@@ -391,6 +392,20 @@ export async function moderateBiodata(id, { status, rejectionReason }, reviewer)
         : `Reason: ${doc.rejectionReason}`,
     data: { kind: "biodata", id: doc._id.toString(), status },
   });
+  emitToUser(doc.user, "notification:new", {
+    id: null,
+    type: NOTIFICATION_TYPES.BIODATA_STATUS,
+    title:
+      status === BIODATA_STATUSES.APPROVED
+        ? `Your biodata ${doc.biodataNo} is now live`
+        : `Your biodata ${doc.biodataNo} needs attention`,
+    body:
+      status === BIODATA_STATUSES.APPROVED
+        ? "Congratulations! Your biodata has been approved and is visible to other members."
+        : `Reason: ${doc.rejectionReason}`,
+    data: { kind: "biodata", id: doc._id.toString(), status },
+    createdAt: new Date().toISOString(),
+  });
 
   return toPublicDoc(doc.toObject(), { full: true });
 }
@@ -446,6 +461,7 @@ export async function likeBiodata(userId, biodataId) {
       body: "You can now start a conversation.",
       data: { kind: "biodata", id: biodataId },
     });
+    emitToUser(targetUserId, "notification:new", { id: null, type: NOTIFICATION_TYPES.MUTUAL_LIKE, title: "It's a match! You both liked each other.", body: "You can now start a conversation.", data: { kind: "biodata", id: biodataId }, createdAt: new Date().toISOString() });
     await Notification.create({
       user: userId,
       type: NOTIFICATION_TYPES.MUTUAL_LIKE,
@@ -453,6 +469,7 @@ export async function likeBiodata(userId, biodataId) {
       body: "Start a conversation now.",
       data: { kind: "biodata", id: myBiodata._id.toString() },
     });
+    emitToUser(userId, "notification:new", { id: null, type: NOTIFICATION_TYPES.MUTUAL_LIKE, title: "It's a match! You both liked each other.", body: "Start a conversation now.", data: { kind: "biodata", id: myBiodata._id.toString() }, createdAt: new Date().toISOString() });
   } else {
     await Notification.create({
       user: targetUserId,
@@ -461,6 +478,7 @@ export async function likeBiodata(userId, biodataId) {
       body: "A member liked your biodata. Open the like list to view details.",
       data: { kind: "like", id: like._id.toString(), biodataId },
     });
+    emitToUser(targetUserId, "notification:new", { id: null, type: NOTIFICATION_TYPES.BIODATA_LIKE, title: "Someone liked your biodata", body: "A member liked your biodata. Open the like list to view details.", data: { kind: "like", id: like._id.toString(), biodataId }, createdAt: new Date().toISOString() });
   }
 
   return { id: like._id.toString(), isMutual: like.isMutual };

@@ -79,6 +79,27 @@ const stubNextRouter = {
 };
 
 /**
+ * socket.io-client — বান্ডলে টেনে আনলে xmlhttprequest-ssl-এর dynamic require('fs')
+ * ESM-এ ফাটে; আবার আসল সংযোগও টেস্টে নিষিদ্ধ। নিষ্ক্রিয় ফেক-socket দেই
+ * (globalThis.__nkTestSocket দিয়ে টেস্ট চাইলে নিয়ন্ত্রণ করতে পারে)।
+ */
+const stubSocketClient = {
+  name: "stub-socket-client",
+  setup(build) {
+    build.onResolve({ filter: /^socket\.io-client$/ }, () => ({ path: "socket-io-client", namespace: "nk-stub-socket" }));
+    build.onLoad({ filter: /.*/, namespace: "nk-stub-socket" }, () => ({
+      contents: `
+        export function io() {
+          return globalThis.__nkTestSocket || { connect() {}, disconnect() {}, on() {}, off() {}, emit() {} };
+        }
+        export default { io };
+      `,
+      loader: "js",
+    }));
+  },
+};
+
+/**
  * ভার্চুয়াল এন্ট্রি-সোর্স বান্ডল করে ESM মডিউল হিসেবে import করে।
  * react/react-dom external — প্রজেক্টের node_modules-এর একই ইনস্ট্যান্স।
  * @param {string} source  ESM এন্ট্রি-সোর্স (re-export বারেল)
@@ -99,7 +120,7 @@ export async function bundleModule(source, cacheKey) {
     write: false,
     outExtension: { ".js": ".mjs" },
     external: ["react", "react-dom", "react/jsx-runtime", "react-dom/client", "lucide-react"],
-    plugins: [aliasAt, stubNextRouter],
+    plugins: [aliasAt, stubNextRouter, stubSocketClient],
     logLevel: "silent",
   });
   fs.writeFileSync(outFile, result.outputFiles[0].text);

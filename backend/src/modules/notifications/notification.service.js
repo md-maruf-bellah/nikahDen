@@ -2,6 +2,7 @@ import Notification from "../../models/notification.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
+import { emitToUser } from "../../realtime/index.js";
 
 export async function myNotifications(userId, query) {
   const { page, limit, skip } = parsePagination(query);
@@ -31,6 +32,7 @@ export async function markRead(userId, id) {
 
 export async function markAllRead(userId) {
   await Notification.updateMany({ user: userId, isRead: false }, { $set: { isRead: true } });
+  emitToUser(userId, "notification:read", { all: true });
   return { success: true };
 }
 
