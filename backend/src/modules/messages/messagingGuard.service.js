@@ -23,6 +23,9 @@ import Biodata from "../../models/biodata.model.js";
 import Message from "../../models/message.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { assertNotBlockedBetween } from "../blocks/block.service.js";
+// guard-কোডের সত্যের উৎস — frontend-লেবেলের সাথে সম্পূর্ণতা যাচাই হয়
+// tests/guard-reasons.core.test.mjs-এ (shared manifest দুই প্যাকেজ পড়ে)
+import { GUARD_ERROR_CODES } from "../../../../shared/guardReasons.mjs";
 
 
 /**
@@ -80,7 +83,7 @@ export async function assertMessagingPermission(senderId, recipientId) {
     if (plan && plan.messagingEnabled === false) {
       throw ApiError.forbidden(
         `Messaging on the ${plan.name} plan is limited to matches. Upgrade your package to start conversations.`,
-        "NO_MESSAGING_PACKAGE"
+        GUARD_ERROR_CODES.NO_MESSAGING_PACKAGE
       );
     }
     const pairLimit = plan ? plan.messagingLimit : -1;
@@ -88,7 +91,7 @@ export async function assertMessagingPermission(senderId, recipientId) {
       throw new ApiError(
         402,
         "Your package does not include starting conversations. Upgrade to message members you have not matched with yet.",
-        "MESSAGING_UPGRADE_REQUIRED"
+        GUARD_ERROR_CODES.MESSAGING_UPGRADE_REQUIRED
       );
     }
     if (pairLimit > 0) {
@@ -96,7 +99,7 @@ export async function assertMessagingPermission(senderId, recipientId) {
       if (sent >= pairLimit) {
         throw ApiError.forbidden(
           `Match ছাড়া এই সদস্যকে সর্বোচ্চ ${pairLimit}টি মেসেজ পাঠানো যায়। Match হলে সীমাহীন।`,
-          "MESSAGING_LIMIT_REACHED"
+          GUARD_ERROR_CODES.MESSAGING_LIMIT_REACHED
         );
       }
     }

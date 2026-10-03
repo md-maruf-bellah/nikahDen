@@ -120,6 +120,7 @@ React/DOM-নির্ভর যেকোনো হিসাব-নিকাশ 
 | `src/components/GuardPreview.core.mjs`    | `tests/guard-preview.core.test.mjs`   |
 | `src/components/StartChatButton.core.mjs` | `tests/start-chat-button.core.test.mjs` |
 | `src/components/Messenger.core.mjs`       | `tests/messenger.core.test.mjs`         |
+| `shared/guardReasons.mjs` (guard-কারণ ম্যানিফেস্ট — backend+frontend উভয়ের এক সত্যের উৎস) | `tests/guard-reasons.core.test.mjs`     |
 
 নিয়ম:
 - মডিউলে React, `next/*`, DOM global — কোনোটাই ইমপোর্ট নয়; বিশুদ্ধ ESM (`.mjs`)।
@@ -174,6 +175,13 @@ React/DOM-নির্ভর যেকোনো হিসাব-নিকাশ 
 UI-ও নিয়মগুলো আগে থেকেই দেখায় — মেসেঞ্জার সার্চে guard-প্রিভিউসহ নিষ্ক্রিয় রো,
 বায়োডাটা কার্ডের Message বোতামে `?chat=` ডিপ-লিংক (লগইন না থাকলে `?next=` দিয়ে ফেরত),
 আর guard-এররে বাংলা নোটিস + আপগ্রেড লিংক।
+
+**কোডের এক সত্যের উৎস:** guard-কারণ (`LIMIT_REACHED`, `UPGRADE_REQUIRED`, `NO_PACKAGE`)
+ও errorCode (`MESSAGING_*`, `NO_MESSAGING_PACKAGE`, `BLOCKED`) + সব UI-লেবেলের উৎস
+একটাই — [shared/guardReasons.mjs](shared/guardReasons.mjs)। backend (user.service,
+messagingGuard, block.service) ও frontend (StartChatButton/Messenger কোর) দুই প্যাকেজই
+এখান থেকে পড়ে; `tests/guard-reasons.core.test.mjs` দুই-দিকের সম্পূর্ণতা CI-তে যাচাই করে।
+`reason: null`/অজানা কোড (যেমন PENDING-টার্গেট) fallback-লেবেলে যায়।
 
 **সংশ্লিষ্ট এন্ডপয়েন্ট** (বিস্তারিত [backend/docs/API.md](backend/docs/API.md)):
 

@@ -112,6 +112,8 @@ handoff codes are therefore restart- and multi-instance-safe.
 | PATCH  | `/users/me`     | auth — update name/phone/avatar |
 | POST   | `/users/me/avatar` | auth — multipart `avatar` (≤2MB jpg/png/webp) |
 | GET    | `/users/me/dashboard` | auth — biodata existence summary |
+| GET    | `/users/search` | auth — member search (ACTIVE only, name/avatar) |
+| GET    | `/users/search-intent` | auth — guard preview: `canMessage, blocked, reason` (`LIMIT_REACHED` \| `UPGRADE_REQUIRED` \| `NO_PACKAGE` \| null — উৎস: [shared/guardReasons.mjs](../../shared/guardReasons.mjs)) |
 | GET    | `/users`        | ADMIN+ — list; filters `search, role, status` |
 | POST   | `/users`        | ADMIN+ — create user    |
 | GET    | `/users/:id`    | ADMIN+ / EDITOR — detail |
@@ -236,6 +238,13 @@ package limit এক জায়গায়, স্থিতিশীল প�
 প্ল্যান ফিল্ড (admin `POST/PATCH /membership/plans`):
 `messagingEnabled` (boolean, default true), `messagingLimit` (-1 unlimited,
 0 none, n>0 per-pair)। Seed: bimonthly=3, quarterly=10, semi-annual=-1।
+
+**কোডের সত্যের উৎস:** উপরের errorCode ও search-intent-এর `reason` কোডের একমাত্র উৎস
+[shared/guardReasons.mjs](../../shared/guardReasons.mjs) — backend এখান থেকেই ইমপোর্ট করে,
+frontend-লেবেলও (REASON_LABELS/MEMBER_ROW_LABELS/নোটিস) এখান থেকেই তৈরি। দুই-দিকের
+সম্পূর্ণতা CI-তে `tests/guard-reasons.core.test.mjs` যাচাই করে — নতুন কোড label-ছাড়া
+ঢুকলে টেস্ট পড়ে যায়। `reason: null` মানে অজানা/নেই কারণ (যেমন টার্গেট PENDING/INACTIVE) —
+UI fallback-লেবেল দেখায়; "PENDING" নামে কোড পাঠানো হয় না।
 
 ### Blocks `/blocks` (auth)
 

@@ -13,6 +13,12 @@
  *   - সদস্য-খোঁজা ইঞ্জিন: ডিবাউন্স + guard-প্রিভিউ মার্জ (টাইমার/API inject করা)
  */
 
+// কারণ-লেবেল ও errorCode-নোটিসের সত্যের উৎস: shared/guardReasons.mjs
+// (backend কোড-সেটের সাথে দুই-দিকের সম্পূর্ণতা tests/guard-reasons.core.test.mjs-এ)।
+import { MEMBER_ROW_LABELS, GUARD_NOTICES } from "../../shared/guardReasons.mjs";
+
+export { MEMBER_ROW_LABELS };
+
 /** নতুন কথোপকথনের আইস-ব্রেকার — openChatWithUser ও startChatWith একই টেক্সট পাঠায় */
 export const ICE_BREAKER_TEXT = "আসসালামু আলাইকুম, আপনার সাথে কথা বলতে চাই।";
 
@@ -34,16 +40,13 @@ export function buildCleanMessagingUrl() {
  * @returns {{upgrade: boolean, text: string} | null}
  */
 export function guardNoticeFor(errorCode, serverMessage) {
-  switch (errorCode) {
-    case "MESSAGING_UPGRADE_REQUIRED":
-      return { upgrade: true, text: "আপনার বর্তমান প্যাকেজে ম্যাচ ছাড়া মেসেজ পাঠানো যায় না। আপগ্রেড করলে নতুন সদস্যদের সাথে কথা বলতে পারবেন।" };
-    case "MESSAGING_LIMIT_REACHED":
-      return { upgrade: true, text: "ম্যাচ ছাড়া এই সদস্যকে পাঠানোর সীমা শেষ। দুজনে একে অপরকে পছন্দ (ম্যাচ) করলে সীমাহীন — অথবা আপগ্রেড করুন।" };
-    case "NO_MESSAGING_PACKAGE":
-      return { upgrade: true, text: "আপনার প্যাকেজে মেসেজিং সীমিত। ম্যাচ ছাড়া কথা বলতে উন্নত প্যাকেজ দরকার।" };
-    default:
-      return serverMessage ? { upgrade: false, text: serverMessage } : null;
-  }
+  const curated = Object.prototype.hasOwnProperty.call(GUARD_NOTICES, errorCode)
+    ? GUARD_NOTICES[errorCode]
+    : undefined;
+  // কিউরেটেড নোটিস থাকলে সেটাই (ম্যানিফেস্টে null মানে সচেতনভাবে নীরব — যেমন BLOCKED)
+  if (curated) return { ...curated };
+  // অজানা কোড বা নীরব-নোটিস কোড → কলারের সার্ভার-মেসেজ, নইলে null (নীরব)
+  return serverMessage ? { upgrade: false, text: serverMessage } : null;
 }
 
 /** API ফল নিরাপদে অ্যারে বানানো — null/অবজেক্ট এলে খালি তালিকা */
@@ -72,14 +75,6 @@ export function timeLabel(iso, now = new Date()) {
     ? d.toLocaleTimeString("bn-BD", { hour: "numeric", minute: "2-digit" })
     : d.toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
 }
-
-/** সদস্য-row-এর কারণ-লেবেল (messenger সার্চ-ফলাফল) — StartChatButton-এর থেকে টেক্সট আলাদা */
-export const MEMBER_ROW_LABELS = {
-  blocked: "মেসেজিং সম্ভব নয়",
-  LIMIT_REACHED: "সীমা শেষ — আপগ্রেড বা ম্যাচ",
-  UPGRADE_REQUIRED: "প্যাকেজ আপগ্রেড দরকার",
-  NO_PACKAGE: "প্যাকেজ আপগ্রেড দরকার",
-};
 
 /**
  * সদস্য-row-স্টেট — সার্চ-ফলাফলের প্রতিটা row-এর রেন্ডার-সিদ্ধান্ত।

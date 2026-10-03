@@ -9,6 +9,9 @@ import { isValidObjectId } from "../../utils/helpers.js";
 import { ROLES, USER_STATUSES } from "../../constants/index.js";
 import { isBlockedBetween } from "../blocks/block.service.js";
 import { isMatchBetween } from "../messages/messagingGuard.service.js";
+// প্রিভিউ-কারণের সত্যের উৎস — frontend-লেবেলের সাথে সম্পূর্ণতা যাচাই হয়
+// tests/guard-reasons.core.test.mjs-এ (shared manifest দুই প্যাকেজ পড়ে)
+import { PREVIEW_REASONS } from "../../../../shared/guardReasons.mjs";
 
 const PUBLIC_FIELDS =
   "firstName lastName email phone role status avatar createdAt updatedAt lastLoginAt";
@@ -108,7 +111,9 @@ export async function searchMembers(query, { limit = 10 } = {}) {
  * (কারণ ফাঁস হয় না, শুধু নিষ্ক্রিয় দেখায়); limit/plan অবস্থা স্পষ্টভাবে দেখানো যায়
  * কারণ সেগুলো প্রেরকের নিজের entitlement।
  *
- * ফল: { items: [{ id, canMessage, blocked, reason: null | "LIMIT_REACHED" | "UPGRADE_REQUIRED" | "NO_PACKAGE" }] }
+ * ফল: { items: [{ id, canMessage, blocked, reason: null | PREVIEW_REASONS.* }] }
+ * (কারণ-কোডের সত্যের উৎস: shared/guardReasons.mjs — reason:null মানে অজানা/নেই কারণ,
+ *  যেমন টার্গেট ACTIVE নয় (PENDING/INACTIVE) — frontend সেটিকে fallback-লেবেল দেখায়)
  */
 export async function previewMessagingIntent(viewerId, idList = []) {
   const ids = [...new Set(idList.filter(isValidObjectId))].slice(0, 25);
@@ -146,16 +151,16 @@ export async function previewMessagingIntent(viewerId, idList = []) {
       }
 
       if (plan && plan.messagingEnabled === false) {
-        return { id, canMessage: false, blocked: false, reason: "NO_PACKAGE" };
+        return { id, canMessage: false, blocked: false, reason: PREVIEW_REASONS.NO_PACKAGE };
       }
       const limit = plan ? plan.messagingLimit : -1;
       if (limit === 0) {
-        return { id, canMessage: false, blocked: false, reason: "UPGRADE_REQUIRED" };
+        return { id, canMessage: false, blocked: false, reason: PREVIEW_REASONS.UPGRADE_REQUIRED };
       }
       if (limit > 0) {
         const sent = await Message.countDocuments({ sender: viewerId, recipient: id });
         if (sent >= limit) {
-          return { id, canMessage: false, blocked: false, reason: "LIMIT_REACHED" };
+          return { id, canMessage: false, blocked: false, reason: PREVIEW_REASONS.LIMIT_REACHED };
         }
       }
       return { id, canMessage: true, blocked: false, reason: null };

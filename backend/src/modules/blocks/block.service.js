@@ -4,6 +4,7 @@ import { ApiError } from "../../utils/ApiError.js";
 import { isValidObjectId } from "../../utils/helpers.js";
 import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { USER_STATUSES } from "../../constants/index.js";
+import { GUARD_ERROR_CODES } from "../../../../shared/guardReasons.mjs";
 
 /** এই দুজনের মধ্যে (যেকোনো দিক থেকে) block আছে কি না — messaging choke-point ব্যবহার করে। */
 export async function isBlockedBetween(userA, userB) {
@@ -16,7 +17,7 @@ export async function isBlockedBetween(userA, userB) {
  */
 export async function assertNotBlockedBetween(userA, userB) {
   if (await isBlockedBetween(userA, userB)) {
-    throw ApiError.forbidden("Messaging is not available between these accounts.", "BLOCKED");
+    throw ApiError.forbidden("Messaging is not available between these accounts.", GUARD_ERROR_CODES.BLOCKED);
   }
 }
 

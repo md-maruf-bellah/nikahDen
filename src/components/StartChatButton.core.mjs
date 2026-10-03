@@ -11,16 +11,15 @@
  *   - গেস্ট-ক্লিকের লগইন-রিডাইরেক্ট পথ (next= ডাবল-এনকোডসহ)
  */
 
-/** reason/blocked → { iconKey, text } — canMessage:false হলেই কার্যকর */
-export const REASON_LABELS = {
-  blocked: { iconKey: "ban", text: "মেসেজিং সম্ভব নয়" },
-  LIMIT_REACHED: { iconKey: "shield-check", text: "সীমা শেষ — ম্যাচ বা আপগ্রেড" },
-  UPGRADE_REQUIRED: { iconKey: "credit-card", text: "প্যাকেজ আপগ্রেড দরকার" },
-  NO_PACKAGE: { iconKey: "credit-card", text: "প্যাকেজ আপগ্রেড দরকার" },
-};
+// কারণ-লেবেলের সত্যের উৎস একটাই: shared/guardReasons.mjs (backend-এর কোড-সেটের সাথে
+// দুই-দিকের সম্পূর্ণতা tests/guard-reasons.core.test.mjs-এ যাচাই হয়)। এখানে শুধু রি-এক্সপোর্ট।
+import {
+  REASON_LABELS,
+  DISABLED_FALLBACK_TITLE,
+} from "../../shared/guardReasons.mjs";
 
-/** কারণ অজানা/নেই (যেমন PENDING অ্যাকাউন্ট) — তবু নিষ্ক্রিয় বোতামের title এটাই */
-export const DISABLED_FALLBACK_TITLE = "মেসেজিং সম্ভব নয়";
+/** reason/blocked → { iconKey, text } — canMessage:false হলেই কার্যকর */
+export { REASON_LABELS, DISABLED_FALLBACK_TITLE };
 
 export const MESSAGING_TAB = "মেসেজিং";
 
