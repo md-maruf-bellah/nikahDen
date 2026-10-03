@@ -28,7 +28,12 @@ export function getSocket() {
  * @param {() => string | null} getToken  প্রতি connect attempt-এ টাটকা access token
  */
 export function ensureSocket(getToken) {
-  if (socket) return socket;
+  if (socket) {
+    // একই ইনস্ট্যান্স সারাজীবন থাকে — লিসেনার-ধারকরা (bell/messenger) কখনো
+    // মৃত ইনস্ট্যান্সে আটকে থাকে না; বিচ্ছিন্ন থাকলে একই দিয়ে পুনঃসংযোগ
+    if (!socket.connected) socket.connect();
+    return socket;
+  }
   if (typeof window === "undefined") return null;
 
   const url = new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1");
@@ -54,9 +59,11 @@ export function onSocketEvent(event, fn) {
   return () => socket.off(event, fn);
 }
 
-/** লগআউট/unmount — বিচ্ছিন্ন ও লিসেনার পরিষ্কার */
+/**
+ * লগআউট/সেশন-মৃত্যু — শুধু সংযোগ কাটা; ইনস্ট্যান্স ও লিসেনার টিকে থাকে,
+ * পরের লগইনে ensureSocket() একই দিয়ে টাটকা টোকেনে reconnect করে।
+ */
 export function destroySocket() {
   if (!socket) return;
   socket.disconnect();
-  socket = null;
 }
