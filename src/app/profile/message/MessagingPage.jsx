@@ -14,15 +14,17 @@ import {
   chatParamAction,
   createMemberSearchEngine,
   filterConversations,
-  findExistingConversation,
   guardNoticeFor,
   makeOptimisticMessage,
   memberRowState,
   pickFreshConversation,
+  planOpenChatWithUser,
   resolveOptimisticId,
   revertOptimistic,
   shouldAutoOpenFirst,
   shouldHandleLiveMessage,
+  shouldReleasePendingChat,
+  startFailureNotice,
   appendLiveMessage,
   timeLabel,
 } from "@/components/Messenger.core.mjs";
@@ -174,10 +176,11 @@ const MessagingApp = () => {
   // পরিচিত সদস্য হলে সেই conversation খোলে, না হলে আইস-ব্রেকারসহ নতুন শুরু করে।
   const openChatWithUser = useCallback(
     async (partnerId) => {
-      if (!partnerId || partnerId === user?.id) return;
-      const existing = findExistingConversation(conversations, partnerId);
-      if (existing) {
-        openChat(existing);
+      // খোলার সিদ্ধান্ত (ignore/open/start) মূল কোরে — Messenger.core.planOpenChatWithUser
+      const plan = planOpenChatWithUser({ partnerId, userId: user?.id, conversations });
+      if (plan.action === "ignore") return;
+      if (plan.action === "open") {
+        openChat(plan.conversation);
         return;
       }
       setGuardNotice(null);
@@ -189,7 +192,7 @@ const MessagingApp = () => {
         const fresh = pickFreshConversation(arr, convoId, partnerId);
         openChat(fresh);
       } catch (err) {
-        const notice = guardNoticeFor(err?.errorCode, err?.errorCode === "BLOCKED" ? null : err?.message);
+        const notice = startFailureNotice(err);
         if (notice) setGuardNotice(notice);
       }
     },
@@ -223,7 +226,9 @@ const MessagingApp = () => {
   }, [activeChat?.id, loadConversations]);
 
   useEffect(() => {
-    if (loading || !pendingChat) return;
+    // গেট কোরে (shouldReleasePendingChat): তালিকা লোড + pending থাকলেই একবার —
+    // পরে সাথে সাথে null করে দেওয়ায় রি-রেন্ডারে আবার খোলে না
+    if (!shouldReleasePendingChat(loading, pendingChat)) return;
     setPendingChat(null);
     openChatWithUser(pendingChat);
   }, [pendingChat, loading, openChatWithUser]);
@@ -243,7 +248,7 @@ const MessagingApp = () => {
       openChat(fresh);
     } catch (err) {
       // guard-এর 402/403 — নোটিস দেখাই (আপগ্রেড লিংকসহ); ব্লকড হলে নীরব
-      const notice = guardNoticeFor(err?.errorCode, err?.errorCode === "BLOCKED" ? null : err?.message);
+      const notice = startFailureNotice(err);
       if (notice) setGuardNotice(notice);
     } finally {
       setStartBusyId(null);

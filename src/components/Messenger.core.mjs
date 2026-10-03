@@ -172,6 +172,38 @@ export function chatParamAction(chat, handledChat, hasAccess) {
 }
 
 /**
+ * pending ?chat= ছাড়ার গেট — কথোপকথন-তালিকা লোড শেষ না হওয়া পর্যন্ত ধরে রাখে;
+ * কলার ছাড়ার সাথে সাথেই pending মুছে ফেলে (null) তাই রি-রেন্ডারে বারবার খোলে না —
+ * মুছে গেলে এই গেট আর true হয় না (একবারই-সেম্যান্টিকস কলারের এক-লাইনে)।
+ */
+export function shouldReleasePendingChat(loading, pendingChat) {
+  return !loading && Boolean(pendingChat);
+}
+
+/**
+ * ?chat=<partnerId> → কথোপকথন খোলার সিদ্ধান্ত (pure; API কল ও setState কলারের দায়িত্ব):
+ *   - "ignore": খালি আইডি বা নিজের আইডিতে নিজেকে খোলা যায় না
+ *   - "open":   পরিচিত কথোপকথন — তালিকার সেই row-টিই সরাসরি খোলে
+ *   - "start":  নতুনশুরু — সার্ভারে আইস-ব্রেকারসহ conversation start করতে হবে
+ * @param {{partnerId: string | null | undefined, userId?: string | null, conversations?: Array<object>}} opts
+ * @returns {{action: "ignore"} | {action: "open", conversation: object} | {action: "start"}}
+ */
+export function planOpenChatWithUser({ partnerId, userId, conversations }) {
+  if (!partnerId || (userId != null && partnerId === userId)) return { action: "ignore" };
+  const existing = findExistingConversation(conversations, partnerId);
+  if (existing) return { action: "open", conversation: existing };
+  return { action: "start" };
+}
+
+/**
+ * নতুন-শুরু (start) ব্যর্থতার ইনলাইন-নোটিস — BLOCKED নীরব দেয়াল: কারণও নয় সার্ভার-মেসেজও
+ * দেখানো হয় না; বাকি গার্ড-কোডে আপগ্রেড-লিংকসহ নোটিস, অজানা এররে সার্ভার-বার্তা।
+ */
+export function startFailureNotice(err) {
+  return guardNoticeFor(err?.errorCode, err?.errorCode === "BLOCKED" ? null : err?.message);
+}
+
+/**
  * সদস্য-খোঁজা ইঞ্জিন — MessagingPage-এর handleSearchInput-এর সদস্য-অর্ধেক।
  *
  * টাইপ করলে SEARCH_DEBOUNCE_MS পরে খোঁজে; minChars-এর কম হলে ফলাফল বন্ধ (null)।

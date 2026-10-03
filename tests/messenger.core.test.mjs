@@ -22,6 +22,9 @@ import {
   pickFreshConversation,
   shouldAutoOpenFirst,
   chatParamAction,
+  shouldReleasePendingChat,
+  planOpenChatWithUser,
+  startFailureNotice,
   createMemberSearchEngine,
   shouldHandleLiveMessage,
   appendLiveMessage,
@@ -325,6 +328,82 @@ describe("messenger core — chatParamAction (?chat= ডিপ-লিংক গ�
 
   it("MESSAGING_TAB = 'মেসেজিং' — পেজ-ট্যাবের সাথে যুক্ত", () => {
     assert.equal(MESSAGING_TAB, "মেসেজিং");
+  });
+});
+
+describe("messenger core — ?chat= খোলার স্টেট-লজিক (pending release + open/start plan)", () => {
+  it("তালিকা লোড চলাকালে pending ছাড়ে না (loading → অপেক্ষা)", () => {
+    assert.equal(shouldReleasePendingChat(true, "u9"), false);
+  });
+
+  it("লোড শেষ + pending থাকলেই ছাড়ে", () => {
+    assert.equal(shouldReleasePendingChat(false, "u9"), true);
+  });
+
+  it("pending না থাকলে (মুছে গেছে/খালি) আর খোলে না — একবারই-সেম্যান্টিকস", () => {
+    assert.equal(shouldReleasePendingChat(false, null), false);
+    assert.equal(shouldReleasePendingChat(false, undefined), false);
+    assert.equal(shouldReleasePendingChat(false, ""), false);
+  });
+
+  it("পরিচিত পার্টনার → open (তালিকার সেই row-টিই, নতুন অবজেক্ট নয়)", () => {
+    const conv = { id: "c1", partner: { id: "u9", name: "করিম" } };
+    const plan = planOpenChatWithUser({ partnerId: "u9", userId: "me", conversations: [conv] });
+    assert.equal(plan.action, "open");
+    assert.equal(plan.conversation, conv, "তালিকার row-এর একই রেফারেন্স খোলে");
+  });
+
+  it("অপরিচিত পার্টনার → start (আইস-ব্রেকারসহ নতুন শুরু)", () => {
+    const plan = planOpenChatWithUser({ partnerId: "u2", userId: "me", conversations: [] });
+    assert.deepEqual(plan, { action: "start" });
+  });
+
+  it("তালিকা নেই/খালি হলেও start (প্রথমবার ডিপ-লিংক)", () => {
+    assert.equal(planOpenChatWithUser({ partnerId: "u2", userId: "me" }).action, "start");
+    assert.equal(planOpenChatWithUser({ partnerId: "u2", userId: "me", conversations: null }).action, "start");
+  });
+
+  it("নিজের আইডি বা খালি partnerId → ignore (নিজেকে খোলা যায় না)", () => {
+    assert.equal(planOpenChatWithUser({ partnerId: "me", userId: "me", conversations: [] }).action, "ignore");
+    assert.equal(planOpenChatWithUser({ partnerId: null, userId: "me" }).action, "ignore");
+    assert.equal(planOpenChatWithUser({ partnerId: "", userId: "me" }).action, "ignore");
+  });
+
+  it("user লোড হয়নি (userId null/undefined) → ignore নয়, পরিচিত হলে open", () => {
+    const conv = { id: "c1", partner: { id: "me" } };
+    assert.equal(planOpenChatWithUser({ partnerId: "me", userId: null, conversations: [conv] }).action, "open");
+    assert.equal(planOpenChatWithUser({ partnerId: "u2", userId: undefined, conversations: [] }).action, "start");
+  });
+
+  it("পুরো প্রবাহ: গেট → একবার ছাড়ে → plan (লোড না-হওয়ায় অপেক্ষা, তারপর শুরু)", () => {
+    const action = chatParamAction("u2", null, true);
+    assert.equal(action.pending, "u2");
+    assert.equal(shouldReleasePendingChat(true, action.pending), false, "লোড চলাকালে অপেক্ষা");
+    const plan = planOpenChatWithUser({ partnerId: action.pending, userId: "me", conversations: [] });
+    assert.equal(plan.action, "start");
+    assert.equal(shouldReleasePendingChat(false, null), false, "ছাড়ার পর pending মুছে বন্ধ");
+  });
+});
+
+describe("messenger core — startFailureNotice (নতুন-শুরু ব্যর্থতার নোটিস)", () => {
+  it("BLOCKED → null (নীরব দেয়াল — সার্ভার-মেসেজও দেখানো হয় না)", () => {
+    assert.equal(startFailureNotice({ errorCode: "BLOCKED", message: "Messaging is not available between these accounts." }), null);
+  });
+
+  it("গার্ড-কোড → আপগ্রেড-লিংকসহ ম্যানিফেস্ট-নোটিস", () => {
+    const n = startFailureNotice({ errorCode: "MESSAGING_UPGRADE_REQUIRED", message: "server copy" });
+    assert.equal(n.upgrade, true);
+    assert.ok(n.text.includes("আপগ্রেড"));
+  });
+
+  it("অজানা কোড + বার্তা → সেটাই, upgrade:false", () => {
+    assert.deepEqual(startFailureNotice({ errorCode: "SOMETHING", message: "কাস্টম বার্তা" }), { upgrade: false, text: "কাস্টম বার্তা" });
+  });
+
+  it("err নেই/বার্তা নেই → null (নীরব)", () => {
+    assert.equal(startFailureNotice(undefined), null);
+    assert.equal(startFailureNotice(null), null);
+    assert.equal(startFailureNotice({}), null);
   });
 });
 
