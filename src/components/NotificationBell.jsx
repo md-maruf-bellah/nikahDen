@@ -63,7 +63,8 @@ export default function NotificationBell() {
     const offNew = onSocketEvent("notification:new", (n) => {
       setUnread((u) => u + 1);
       setItems((prev) => (Array.isArray(prev) ? [n, ...prev].slice(0, 6) : prev));
-      playNotificationSound();
+      // একই ইভেন্ট nav+sidebar দু বেলে আসে — id-কী থ্রটল দু'বার চাইম রোধ করে
+      playNotificationSound(n?.id);
     });
     const offRead = onSocketEvent("notification:read", () => {
       setUnread(0);

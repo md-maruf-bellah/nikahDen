@@ -11,6 +11,28 @@
 let ctx = null;
 let unlocked = false;
 
+/** মডিউল-লেভেল থ্রটল-অবস্থা — সব NotificationBell ইনস্ট্যান্স একই স্টেট শেয়ার করে */
+let lastChime = { key: null, at: 0 };
+
+/** টানা চাইমের ন্যূনতম গ্যাপ (ms) — দু বেল বা ঘণ্টার বন্দুক এড়াতে */
+export const CHIME_GAP_MS = 1000;
+
+/**
+ * চাইম হবে কি না — pure সিদ্ধান্ত (unit-টেস্টেড, notif-sound.core.test.mjs)।
+ * নিয়ম:
+ *   ১. একই নোটিফিকেশন-আইডি (দু NotificationBell একই payload পায়) → সবসময় বাদ
+ *   ২. আগের চাইমের CHIME_GAP_MS-এর মধ্যে → বাদ (id-less ডুপ + ঘণ্টার বন্দুক)
+ * শুধু আসল চাইমেই অবস্থা আপডেট হয় — বাদ পড়লে উইন্ডো এগোয় না (starvation নয়)।
+ * @param {number} nowMs
+ * @param {string | null | undefined} key notification id (না থাকলে null)
+ * @param {{key: string | null, at: number}} last শেষ চাইমের অবস্থা
+ */
+export function shouldPlayChime(nowMs, key, last) {
+  if (key != null && last.key === key) return false;
+  if (last.at && nowMs - last.at < CHIME_GAP_MS) return false;
+  return true;
+}
+
 /** সাউন্ড চালু/বন্ধ (localStorage-স্থায়ী) */
 export function isSoundEnabled() {
   if (typeof window === "undefined") return false;
@@ -50,9 +72,10 @@ if (typeof window !== "undefined") {
 
 /**
  * ছোট দুই-নোট বেল — নতুন মেসেজ/গুরুত্বপূর্ণ নোটিফিকেশনে।
+ * @param {string} [key] notification id — দু বেল একই id-তে একবাই বাজায় (মডিউল-থ্রটল)
  * সাউন্ড বন্ধ থাকলে বা অডিও unlock না হলে নীরব no-op (কোনো এরর নয়)।
  */
-export function playNotificationSound() {
+export function playNotificationSound(key) {
   if (!isSoundEnabled() || typeof window === "undefined") return;
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -60,6 +83,9 @@ export function playNotificationSound() {
     ctx = ctx || new AC();
     if (ctx.state === "suspended") ctx.resume();
     if (ctx.state !== "running") return; // ব্যবহারকারী-ইন্টার‍্যাকশন হয়নি — নীরব
+
+    const k = key ?? null;
+    if (!shouldPlayChime(Date.now(), k, lastChime)) return; // দু বেলের ডুপ — একবাই বাজায়
 
     const now = ctx.currentTime;
     const gain = ctx.createGain();
@@ -76,6 +102,7 @@ export function playNotificationSound() {
       osc.start(now + at);
       osc.stop(now + at + 0.5);
     }
+    lastChime = { key: k, at: Date.now() };
   } catch {
     /* কখনো ক্র্যাশ নয় */
   }

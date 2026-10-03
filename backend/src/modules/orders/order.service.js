@@ -9,7 +9,7 @@ import User from "../../models/user.model.js";
 import { getNextSequence } from "../../models/counter.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { withTransaction } from "../../config/db.js";
-import { emitToUser } from "../../realtime/index.js";
+import { emitNewNotification } from "../notifications/notification.service.js";
 import { isValidObjectId, randomToken, pick } from "../../utils/helpers.js";
 import { parsePagination, buildPagination, parseSort } from "../../utils/pagination.js";
 import { addConnectCredit } from "../membership/connect.service.js";
@@ -162,6 +162,8 @@ export async function cancelOrder(userId, id) {
 export async function payOrder(userId, id, { paymentMethod = "CARD", transactionRef } = {}) {
   if (!isValidObjectId(id)) throw ApiError.badRequest("Invalid order id", "INVALID_ID");
 
+  // ট্রানজ্যাকশনের ভেতরে তৈরি নোটিফিকেশন-ডক — কমিটের পরে এখান থেকেই emit
+  let paidNotification = null;
   const result = await withTransaction(async (session) => {
     const order = await Order.findOne({ _id: id, user: userId }).session(session);
     if (!order) throw ApiError.notFound("Order not found", "ORDER_NOT_FOUND");
@@ -211,7 +213,7 @@ export async function payOrder(userId, id, { paymentMethod = "CARD", transaction
     order.invoiceNo = `INV-${new Date().getFullYear()}-${String(invoiceSeq).padStart(6, "0")}`;
     await order.save({ session });
 
-    await Notification.create(
+    const notifDocs = await Notification.create(
       [{
         user: userId,
         type: NOTIFICATION_TYPES.ORDER_PAID,
@@ -221,21 +223,16 @@ export async function payOrder(userId, id, { paymentMethod = "CARD", transaction
       }],
       { session }
     );
+    paidNotification = notifDocs[0];
 
     const finalDoc = await Order.findById(order._id).session(session).lean();
     return decorate(finalDoc);
   });
 
-  // ট্রানজ্যাকশন কমিটের পরেই রিয়েলটাইম emit (রোলব্যাক-হলে emit হয় না)
+  // ট্রানজ্যাকশন কমিটের পরেই রিয়েলটাইম emit (রোলব্যাক-হলে result undefined → emit হয় না);
+  // পে-লোড সরাসরি DB-ডক থেকে — আসল id সহ, বার্তাও ডকের সাথে হুবহু এক
   if (result) {
-    emitToUser(result.user?.id || result.user || userId, "notification:new", {
-      id: null,
-      type: NOTIFICATION_TYPES.ORDER_PAID,
-      title: "Payment successful",
-      body: `${result.item?.title || ""} — payment confirmed`,
-      data: { kind: "order", id: result.id || id },
-      createdAt: new Date().toISOString(),
-    });
+    emitNewNotification(paidNotification);
   }
 
   return result;

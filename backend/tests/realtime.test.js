@@ -17,6 +17,7 @@ import { io as Client } from "socket.io-client";
 import mongoose from "mongoose";
 import { startServer, stopServer, clearDb, registerUser, auth } from "./helpers.js";
 import { initRealtime, closeRealtime } from "../src/realtime/index.js";
+import { notificationEvent } from "../src/modules/notifications/notification.service.js";
 import env from "../src/config/env.js";
 
 describe("REALTIME (socket.io)", () => {
@@ -111,6 +112,28 @@ describe("REALTIME (socket.io)", () => {
     assert.equal(msg, "FORBIDDEN");
   });
 
+  it("notificationEvent — পে-লোড সবসময় DB-ডক থেকে, id null নয় (pure)", () => {
+    const createdAt = new Date("2026-01-02T03:04:05.000Z");
+    const doc = {
+      _id: { toString: () => "65f0c0ffee0000000000abcd" },
+      type: "MESSAGE",
+      title: "You have a new message",
+      body: "হাই",
+      data: { kind: "conversation", id: "c1" },
+      createdAt,
+    };
+    const ev = notificationEvent(doc);
+    assert.equal(ev.id, "65f0c0ffee0000000000abcd", "আসল DB-id — id:null নয়");
+    assert.equal(ev.type, doc.type);
+    assert.equal(ev.title, doc.title);
+    assert.equal(ev.body, doc.body);
+    assert.deepEqual(ev.data, doc.data);
+    assert.equal(ev.createdAt, createdAt.toISOString());
+    // createdAt না থাকলেও ক্র্যাশ নয় — সময়সহ আসে
+    const noTs = notificationEvent({ ...doc, createdAt: null });
+    assert.ok(!Number.isNaN(Date.parse(noTs.createdAt)));
+  });
+
   it("REST মেসেজ → প্রাপক live message:new + notification:new; প্রেরক নিজেরটা পায় না", async () => {
     const alice = await registerUser(request);
     const bob = await registerUser(request);
@@ -143,6 +166,14 @@ describe("REALTIME (socket.io)", () => {
     const liveNotif = await bobNotifPromise;
     assert.equal(liveNotif.type, "MESSAGE");
     assert.ok(liveNotif.data?.id, "conversationId ডেটাতে");
+    assert.ok(liveNotif.id, "নোটিফিকেশনের আসল DB-id থাকতে হবে (id:null নয়)");
+    // payload-id-এ প্রাপকের নামে আসল DB-ডকই পাওয়া যায়, বার্তাও হুবহু
+    const Notification = mongoose.model("Notification");
+    const notifDoc = await Notification.findById(liveNotif.id);
+    assert.ok(notifDoc, "payload-id-এ DB-ডক পাওয়া যায়");
+    assert.equal(notifDoc.user.toString(), bob.user.id, "ডক প্রাপকের নামে");
+    assert.equal(notifDoc.title, liveNotif.title);
+    assert.equal(notifDoc.createdAt.toISOString(), liveNotif.createdAt);
 
     await new Promise((r) => setTimeout(r, 200));
     assert.equal(aliceGotOwn, null, "প্রেরক নিজের message:new পায় না — শুধু প্রাপকের room");

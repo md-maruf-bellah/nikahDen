@@ -4,6 +4,27 @@ import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
 import { emitToUser } from "../../realtime/index.js";
 
+/**
+ * notification:new লাইভ-পে-লোড — **সবসময় সত্তিকার DB-ডক থেকে** (একটাই উৎস),
+ * তাই `id` কখনো null হয় না। দুটি NotificationBell একই id পায় — সেটাই
+ * চাইম-থ্রটল (src/lib/notifSound.js) কে দু'বার বাজতে দেয় না।
+ */
+export function notificationEvent(doc) {
+  return {
+    id: doc._id.toString(),
+    type: doc.type,
+    title: doc.title,
+    body: doc.body,
+    data: doc.data ?? {},
+    createdAt: (doc.createdAt ? new Date(doc.createdAt) : new Date()).toISOString(),
+  };
+}
+
+/** ডক-মালিকের room-এ notification:new — কলার শুধু create করে এখানে পাঠায় */
+export function emitNewNotification(doc) {
+  emitToUser(doc.user, "notification:new", notificationEvent(doc));
+}
+
 export async function myNotifications(userId, query) {
   const { page, limit, skip } = parsePagination(query);
   const filter = { user: userId };
@@ -48,4 +69,4 @@ export async function clearAll(userId) {
   return { deleted: result.deletedCount };
 }
 
-export default { myNotifications, markRead, markAllRead, removeNotification, clearAll };
+export default { myNotifications, markRead, markAllRead, removeNotification, clearAll, notificationEvent, emitNewNotification };

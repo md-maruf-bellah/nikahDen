@@ -9,6 +9,7 @@ import { isValidObjectId } from "../../utils/helpers.js";
 import { NOTIFICATION_TYPES, USER_STATUSES } from "../../constants/index.js";
 import { assertMessagingPermission } from "./messagingGuard.service.js";
 import { emitToUser } from "../../realtime/index.js";
+import { emitNewNotification } from "../notifications/notification.service.js";
 
 const OID = mongoose.Types.ObjectId;
 
@@ -197,7 +198,7 @@ async function sendMessageTo(userId, conversationId, text) {
   conversation.lastMessageAt = new Date();
   await conversation.save();
 
-  await Notification.create({
+  const notification = await Notification.create({
     user: recipientId,
     type: NOTIFICATION_TYPES.MESSAGE,
     title: "You have a new message",
@@ -216,14 +217,8 @@ async function sendMessageTo(userId, conversationId, text) {
     createdAt: message.createdAt.toISOString(),
   };
   emitToUser(recipientId, "message:new", messagePayload);
-  emitToUser(recipientId, "notification:new", {
-    id: null,
-    type: NOTIFICATION_TYPES.MESSAGE,
-    title: "You have a new message",
-    body: text.slice(0, 160),
-    data: { kind: "conversation", id: conversationId },
-    createdAt: message.createdAt.toISOString(),
-  });
+  // নোটিফিকেশন-পে-লোড সরাসরি DB-ডক থেকে — আসল id সহ (id:null ছিল না)
+  emitNewNotification(notification);
 
   return {
     id: message._id.toString(),
