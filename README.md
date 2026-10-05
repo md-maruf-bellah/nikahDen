@@ -141,12 +141,14 @@ React/DOM-নির্ভর যেকোনো হিসাব-নিকাশ 
 
 - `setupDom()` — jsdom-এর window/document/localStorage global-এ (React DOM-এর আগে)
 - `bundleModule(entry, key)` — esbuild দিয়ে JSX/`@/`-এলিয়াস বান্ডল; `next/navigation` স্টাব
-  (`globalThis.__nkTestRouter.push` পর্যবেক্ষণযোগ্য); react external — RTL-এর সাথে একই ইনস্ট্যান্স
-- `installFetchMock()` — URL-ফ্র্যাগমেন্ট ধরে রেসপন্ডার + সব কলের লগ;
+  (`globalThis.__nkTestRouter.push` ও `globalThis.__nkTestSearchParams` — `useSearchParams()` —
+  পর্যবেক্ষণযোগ্য), `next/link` ও `socket.io-client`-স্টাবসহ; react external — RTL-এর সাথে একই ইনস্ট্যান্স
+- `installFetchMock()` — URL-ফ্র্যাগমেন্ট ধরে রেসপন্ডার + সব কলের লগ (url/method/headers/**body**);
   **রেসপন্ডার `entry` পায় আর সব রেসপন্স `{ data }` এনভেলপে** (api ক্লায়েন্ট `json.data` আনর‍্যাপ করে)
 - `deferred()` — হাইড্রেশন/রেস ম্যানুয়ালি ধরে রাখা
 
-রেসিপি (দেখুন `tests/guard-preview.hook.test.mjs`):
+রেসিপি (দেখুন `tests/guard-preview.hook.test.mjs` ও `tests/messaging-deeplink.hook.test.mjs` —
+পরেটি `?chat=` ডিপ-লিংকের তিন প্রমাণ: URL-পরিষ্কার, pending-অপেক্ষা, একবার-খোলা):
 1. আসল `AuthProvider` + `GuardPreviewProvider` ব্যবহার করুন — মক করুন শুধু `fetch` আর router।
 2. হুকের ফলাফল DOM-এ ঢালুন ছোট প্রোবে (`data-testid` + data-অ্যাট্রিবিউট)।
 3. অপেক্ষা RTL `waitFor` দিয়ে; `beforeEach`-এ নতুন fetch-মক, `afterEach`-এ `cleanup()` +

@@ -38,6 +38,10 @@ export function setupDom() {
   }
   // Node ≥21-এ global navigator getter — defineProperty দিয়েই নিরাপদ
   Object.defineProperty(globalThis, "navigator", { value: window.navigator, configurable: true, writable: true });
+  // jsdom-এ scrollIntoView নেই — অটো-স্ক্রল ইফেক্ট চালু কম্পোনেন্ট (মেসেঞ্জার) নইলে ফাটে
+  if (typeof window.Element.prototype.scrollIntoView !== "function") {
+    window.Element.prototype.scrollIntoView = function scrollIntoView() {};
+  }
   globalThis.requestAnimationFrame = window.requestAnimationFrame?.bind(window) ?? ((cb) => setTimeout(() => cb(Date.now()), 16));
   globalThis.cancelAnimationFrame = window.cancelAnimationFrame?.bind(window) ?? ((id) => clearTimeout(id));
   // React 19-এর act() — RTL ছাড়া চালালে এই পতাকা চাই
@@ -66,14 +70,39 @@ const aliasAt = {
   },
 };
 
-/** next/navigation — শুধু useRouter দরকার; টেস্ট globalThis.__nkTestRouter দিয়ে নিয়ন্ত্রণ করে */
+/**
+ * next/navigation — টেস্ট দুইটি global দিয়ে নিয়ন্ত্রণ করে:
+ *   __nkTestRouter     → useRouter().push পর্যবেক্ষণযোগ্য
+ *   __nkTestSearchParams → useSearchParams() রিটার্ন (না দিলে undefined; কলার `?.get()` করে)
+ */
 const stubNextRouter = {
   name: "stub-next-router",
   setup(build) {
     build.onResolve({ filter: /^next\/navigation$/ }, () => ({ path: "next-navigation", namespace: "nk-stub" }));
     build.onLoad({ filter: /.*/, namespace: "nk-stub" }, () => ({
-      contents: "export function useRouter() { return globalThis.__nkTestRouter || { push() {} }; }",
+      contents: `
+        export function useRouter() { return globalThis.__nkTestRouter || { push() {} }; }
+        export function useSearchParams() { return globalThis.__nkTestSearchParams; }
+      `,
       loader: "js",
+    }));
+  },
+};
+
+/**
+ * next/link — অ্যাঙ্কর-মাত্র স্টাব। আসল Link বান্ডলে app-router-কনটেক্সট টানে আনে,
+ * যা টেস্ট-ট্রি-তে (Router প্রোভাইডার ছাড়া) ভাঙা; টেস্টে href+childrenই দরকার।
+ */
+const stubNextLink = {
+  name: "stub-next-link",
+  setup(build) {
+    build.onResolve({ filter: /^next\/link$/ }, () => ({ path: "next-link", namespace: "nk-stub-link" }));
+    build.onLoad({ filter: /.*/, namespace: "nk-stub-link" }, () => ({
+      resolveDir: ROOT,
+      contents: `export default function Link({ href, children, ...rest }) {
+  return <a href={typeof href === "string" ? href : "#"} {...rest}>{children}</a>;
+}`,
+      loader: "jsx",
     }));
   },
 };
@@ -120,7 +149,7 @@ export async function bundleModule(source, cacheKey) {
     write: false,
     outExtension: { ".js": ".mjs" },
     external: ["react", "react-dom", "react/jsx-runtime", "react-dom/client", "lucide-react"],
-    plugins: [aliasAt, stubNextRouter, stubSocketClient],
+    plugins: [aliasAt, stubNextRouter, stubNextLink, stubSocketClient],
     logLevel: "silent",
   });
   fs.writeFileSync(outFile, result.outputFiles[0].text);
@@ -139,6 +168,8 @@ export function installFetchMock() {
       url: String(url),
       method: (init.method || "GET").toUpperCase(),
       headers: init.headers || null,
+      // POST-body (api ক্লায়েন্ট JSON.stringify করে দেয়) — রিকোয়েস্ট-শরীর অ্যাসার্টের জন্য
+      body: init.body ?? null,
     };
     log.push(entry);
     for (const route of routes) {
