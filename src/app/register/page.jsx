@@ -91,11 +91,16 @@ const Register = () => {
             {/* Name Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
-                <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+                <label
+                  htmlFor="reg-first-name"
+                  className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                >
                   নামের প্রথম অংশ
                 </label>
                 <input
                   type="text"
+                  id="reg-first-name"
+                  autoComplete="given-name"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -104,11 +109,16 @@ const Register = () => {
                 />
               </div>
               <div className="relative">
-                <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+                <label
+                  htmlFor="reg-last-name"
+                  className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                >
                   নামের শেষ অংশ
                 </label>
                 <input
                   type="text"
+                  id="reg-last-name"
+                  autoComplete="family-name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="XXXXX"
@@ -119,11 +129,16 @@ const Register = () => {
 
             {/* Email Field */}
             <div className="relative">
-              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+              <label
+                htmlFor="reg-email"
+                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+              >
                 ই-মেইল
               </label>
               <input
                 type="email"
+                id="reg-email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -134,12 +149,17 @@ const Register = () => {
 
             {/* Password Field */}
             <div className="relative">
-              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+              <label
+                htmlFor="reg-password"
+                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+              >
                 পাসওয়ার্ড
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  id="reg-password"
+                  autoComplete="new-password"
                   required
                   minLength={8}
                   value={password}
@@ -150,6 +170,9 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                  aria-pressed={showPassword}
+                  aria-controls="reg-password"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

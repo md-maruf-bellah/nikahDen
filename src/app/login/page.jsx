@@ -88,11 +88,16 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div className="relative">
-              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+              <label
+                htmlFor="login-email"
+                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+              >
                 ই-মেইল
               </label>
               <input
+                id="login-email"
                 type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -103,12 +108,17 @@ const Login = () => {
 
             {/* Password Field */}
             <div className="relative">
-              <label className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10">
+              <label
+                htmlFor="login-password"
+                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+              >
                 পাসওয়ার্ড
               </label>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -118,6 +128,9 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                  aria-pressed={showPassword}
+                  aria-controls="login-password"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

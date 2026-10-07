@@ -129,6 +129,26 @@ const stubSocketClient = {
 };
 
 /**
+ * next/image — টেস্ট-ট্রি-তে সাধারণ <img>। fill/priority ইত্যাদি Next-বিশেষ
+ * প্রপস DOM-এ গেলে React চিৎকার করে, তাই আলাদা করে বাদ; ছবি-ইমপোর্ট (png ইত্যাদি)
+ * bundleModule-এ dataurl লোডার, তাই src হয়ে থাকে data-URL স্ট্রিং।
+ */
+const stubNextImage = {
+  name: "stub-next-image",
+  setup(build) {
+    build.onResolve({ filter: /^next\/image$/ }, () => ({ path: "next-image", namespace: "nk-stub-image" }));
+    build.onLoad({ filter: /.*/, namespace: "nk-stub-image" }, () => ({
+      resolveDir: ROOT,
+      contents: `export default function Image({ src, alt = "", fill, priority, placeholder, blurDataURL, loader, unoptimized, ...rest }) {
+  const url = typeof src === "string" ? src : (src && src.src) || "";
+  return <img src={url} alt={alt} {...rest} />;
+}`,
+      loader: "jsx",
+    }));
+  },
+};
+
+/**
  * ভার্চুয়াল এন্ট্রি-সোর্স বান্ডল করে ESM মডিউল হিসেবে import করে।
  * react/react-dom external — প্রজেক্টের node_modules-এর একই ইনস্ট্যান্স।
  * @param {string} source  ESM এন্ট্রি-সোর্স (re-export বারেল)
@@ -149,7 +169,9 @@ export async function bundleModule(source, cacheKey) {
     write: false,
     outExtension: { ".js": ".mjs" },
     external: ["react", "react-dom", "react/jsx-runtime", "react-dom/client", "lucide-react"],
-    plugins: [aliasAt, stubNextRouter, stubNextLink, stubSocketClient],
+    // ছবি-অ্যাসেট import (login/register-এর logo/contact) — dataurl হলে কোনো ফাইল-আউটপুট লাগে না
+    loader: { ".png": "dataurl", ".jpg": "dataurl", ".jpeg": "dataurl", ".gif": "dataurl", ".webp": "dataurl", ".svg": "dataurl" },
+    plugins: [aliasAt, stubNextRouter, stubNextLink, stubSocketClient, stubNextImage],
     logLevel: "silent",
   });
   fs.writeFileSync(outFile, result.outputFiles[0].text);

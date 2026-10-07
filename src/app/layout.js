@@ -19,9 +19,35 @@ const hind_siliguri = Hind_Siliguri({
   variable: "--font-noto",
 });
 
+// ডিপ্লয়-ডোমেইন — OG/সাইটম্যাপের সুত্র-ঠিকানা; সেট না থাকলে লোকাল ফলব্যাক
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 export const metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "বিবাহডিল - মুসলিম ম্যাট্রিমনি প্ল্যাটফর্ম",
   description: "বাংলাদেশের বিশ্বস্ত মুসলিম বিবাহ ও ম্যাট্রিমনি প্ল্যাটফর্ম",
+  keywords: ["মুসলিম বিবাহ", "ম্যাট্রিমনি", "বায়োডাটা", "বিবাহ প্রস্তাব", "nikah", "matrimony", "বাংলাদেশ"],
+  applicationName: "নিকাহ্ দ্বীন",
+  openGraph: {
+    title: "বিবাহডিল - মুসলিম ম্যাট্রিমনি প্ল্যাটফর্ম",
+    description: "বাংলাদেশের বিশ্বস্ত মুসলিম বিবাহ ও ম্যাট্রিমনি প্ল্যাটফর্ম",
+    type: "website",
+    locale: "bn_BD",
+    siteName: "বিবাহডিল",
+  },
+  twitter: {
+    card: "summary",
+    title: "বিবাহডিল - মুসলিম ম্যাট্রিমনি প্ল্যাটফর্ম",
+    description: "বাংলাদেশের বিশ্বস্ত মুসলিম বিবাহ ও ম্যাট্রিমনি প্ল্যাটফর্ম",
+  },
+};
+
+/** মোবাইল ভিউপোর্ট + ব্রাউজার-UI থিম — Next ১৬-এ viewport আলাদা এক্সপোর্ট (metadata-এ নয়) */
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  colorScheme: "light",
+  themeColor: "#FD6969",
 };
 
 export default function RootLayout({ children }) {
