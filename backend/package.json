@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/server.js",
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "dev": "node --watch src/server.js",
@@ -14,11 +14,12 @@
     "seed": "node scripts/seed.js",
     "seed:reset": "node scripts/seed.js --reset",
     "verify:lifecycle": "node scripts/verify-lifecycle.js",
-    "test": "node --test --test-concurrency=1 tests/auth.test.js tests/biodata.test.js tests/completion.test.js tests/messagingGuard.test.js tests/oauth.test.js tests/preference.test.js tests/ratelimit.test.js tests/realtime.test.js tests/shop.test.js tests/social.test.js",
+    "test": "node --test --test-concurrency=1 tests/auth.test.js tests/biodata.test.js tests/completion.test.js tests/loginLockout.test.js tests/messagingGuard.test.js tests/oauth.test.js tests/preference.test.js tests/ratelimit.test.js tests/realtime.test.js tests/shop.test.js tests/social.test.js",
     "check": "node --check src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -28,7 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "multer": "^2.3.0",
-    "nodemailer": "^6.9.16",
+    "nodemailer": "^10.0.16",
     "socket.io": "^4.8.4",
     "zod": "^3.24.1"
   },

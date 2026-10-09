@@ -46,6 +46,11 @@ const userSchema = new mongoose.Schema(
 
     lastLoginAt: { type: Date, default: null },
     // Plain text reason never stored; admins may attach a note.
+
+    // Failed-login lockout — পরপর ভুল পাসওয়ার্ডের কাউন্ট; লক প্রয়োগে বা সফল
+    // লগইনে শূন্য হয়। IP-রেট-লিমিটের পরিপূরক অ্যাকাউন্ট-স্তরের সুরক্ষা।
+    failedLoginCount: { type: Number, default: 0 },
+    lockedUntil: { type: Date, default: null },
   },
   {
     timestamps: true,

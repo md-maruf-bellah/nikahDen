@@ -2,9 +2,11 @@ import express from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import compression from "compression";
 import path from "node:path";
 import { corsOptions } from "./config/cors.js";
 import env from "./config/env.js";
+import { cacheControl } from "./middleware/cacheControl.middleware.js";
 import { apiLimiter, readLimiter } from "./middleware/rateLimiter.middleware.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 import { ensureUploadDirs, UPLOAD_ROOT } from "./middleware/upload.middleware.js";
@@ -23,11 +25,17 @@ export function createApp() {
     })
   );
 
+  // gzip/deflate — বড় JSON পেলোড (বায়োডাটা/মেসেজ লিস্ট) নেটওয়ার্কে ছোট করে;
+  // ডিফল্ট 1KB threshold — ছোট রেসপন্স বাদ যায়, CPU অপচয় হয় না
+  app.use(compression());
+
   // CORS (allow the Next.js frontend)
   app.use(cors(corsOptions));
   app.options("*", cors(corsOptions));
 
   app.use(cookieParser());
+  // Cache-Control — পাবলিক GET প্রকাশ্য-ক্যাশেযোগ্য, বাকি সব private no-store
+  app.use(cacheControl);
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 

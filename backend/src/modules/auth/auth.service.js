@@ -121,8 +121,27 @@ export async function loginUser({ email, password }, meta = {}) {
       "INVALID_CREDENTIALS",
     );
   }
+
+  // লক মেয়াদ চলছে — পাসওয়ার্ড যাচাইয়ের আগেই নিষেধ (bcrypt-এর আগে
+  // ফেলে দিলে ব্রুট-ফোর্স নিজের গতিতেই কাউন্ট-আপ চালিয়ে যেতে পারে না)।
+  if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
+    const retrySec = Math.ceil(
+      (user.lockedUntil.getTime() - Date.now()) / 1000,
+    );
+    throw ApiError.tooMany(
+      `Too many failed login attempts. Try again in ${retrySec} second${retrySec === 1 ? "" : "s"}.`,
+      "ACCOUNT_LOCKED",
+    );
+  }
+
   const ok = await user.comparePassword(password);
   if (!ok) {
+    user.failedLoginCount = (user.failedLoginCount || 0) + 1;
+    if (user.failedLoginCount >= env.LOGIN_FAIL_LOCK_COUNT) {
+      user.lockedUntil = new Date(Date.now() + env.LOGIN_FAIL_LOCK_MS);
+      user.failedLoginCount = 0; // লক শেষে নতুন রান — কাউন্ট আগে থেকেই শূন্য
+    }
+    await user.save({ validateBeforeSave: false });
     throw ApiError.unauthorized(
       "Incorrect email or password.",
       "INVALID_CREDENTIALS",
@@ -138,6 +157,9 @@ export async function loginUser({ email, password }, meta = {}) {
     );
   }
 
+  // সফল লগইন — পূর্বের ব্যর্থ-কাউন্ট/লক ধুয়ে যায়
+  user.failedLoginCount = 0;
+  user.lockedUntil = null;
   user.lastLoginAt = new Date();
   await user.save({ validateBeforeSave: false });
 

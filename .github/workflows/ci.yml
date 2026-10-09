@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Node 20 LTS + 22 — backend engines >=18.17;
+        # Node 20 LTS + 22 — backend engines >=20 (nodemailer@10 এর ন্যূনতম);
         # --test-concurrency ফ্ল্যাগ v20.10 থেকে আছে, আর runner-এ "20" মানে latest v20.x
         node: ["20", "22"]
     env:
@@ -44,6 +44,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # নিরাপত্তা — high/critical CVE থাকলে CI লাল (npm audit fix দিয়ে ঠিক করুন)
+      - name: Audit dependencies (npm audit)
+        run: npm audit --audit-level=high
 
       - name: Run test suite
         run: npm test

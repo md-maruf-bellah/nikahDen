@@ -1,14 +1,35 @@
 import { describe, it, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import mongoose from "mongoose";
+import http from "node:http";
+import zlib from "node:zlib";
+import { once } from "node:events";
 import { startServer, stopServer, clearDb, registerUser, login, createSuperAdmin, createStaff, auth } from "./helpers.js";
+
+/** raw HTTP — supertest হেডার-ডিকোড করে ফেলে, gzip প্রমাণ করতে প্রয়োজন */
+function rawGet({ port, path, token }) {
+  return new Promise((resolve, reject) => {
+    const headers = { "accept-encoding": "gzip", connection: "close" };
+    if (token) headers.authorization = `Bearer ${token}`;
+    // agent:false — keep-alive সকেট থাকলে srv.close() অসীমভাবে অপেক্ষা করে
+    const req = http.get({ port, path, headers, agent: false }, (res) => {
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () =>
+        resolve({ encoding: res.headers["content-encoding"], raw: Buffer.concat(chunks) }),
+      );
+    });
+    req.on("error", reject);
+  });
+}
 
 describe("CONTACTS / NOTIFICATIONS / MESSAGES / SECURITY", () => {
   let request;
+  let app;
   let adminToken;
 
   before(async () => {
-    ({ request } = await startServer());
+    ({ request, app } = await startServer());
   });
 
   after(async () => {
@@ -424,6 +445,63 @@ describe("CONTACTS / NOTIFICATIONS / MESSAGES / SECURITY", () => {
       const res = await request.get("/health");
       assert.equal(res.status, 200);
       assert.equal(res.body.status, "ok");
+    });
+
+    it("Cache-Control — পাবলিক GET public, ব্যক্তিগত API private no-store", async () => {
+      const h = await request.get("/health");
+      assert.equal(h.status, 200);
+      assert.equal(h.headers["cache-control"], "public, max-age=60");
+
+      const stats = await request.get("/api/v1/site/stats");
+      assert.equal(stats.status, 200);
+      assert.equal(stats.headers["cache-control"], "public, max-age=300");
+
+      const member = await registerUser(request);
+      const mine = await request.get("/api/v1/conversations").set(auth(member.accessToken));
+      assert.equal(mine.status, 200);
+      assert.equal(mine.headers["cache-control"], "private, no-store", "ব্যক্তিগত ডেটা শেয়ার্ড cache-এ যাবে না");
+
+      // optionalAuth পাবলিক GET — Authorization দিয়ে ফল বদলায়, তাই পাবলিক নয়
+      const list = await request.get("/api/v1/biodatas?page=1&limit=2");
+      assert.equal(list.status, 200);
+      assert.equal(list.headers["cache-control"], "private, no-store");
+
+      const post = await request.post("/api/v1/contacts").send({}); // ভুল payload → 400
+      assert.equal(post.status, 400);
+      assert.equal(post.headers["cache-control"], "private, no-store", "non-GET ও এররেও নীতি বহাল");
+    });
+
+    it("gzip — 1KB-এর বড় JSON রেসপন্স সংকুচিত, ছোটটি নয়", async () => {
+      const member = await registerUser(request);
+      const partner = await registerUser(request);
+      const created = await request
+        .post("/api/v1/conversations")
+        .set(auth(member.accessToken))
+        .send({ recipientId: partner.user.id, text: "খ".repeat(3000) });
+      assert.equal(created.status, 201);
+      const convoId = created.body.data.conversation.id;
+
+      const srv = app.listen(0);
+      try {
+        await once(srv, "listening");
+        const { port } = srv.address();
+
+        const large = await rawGet({
+          port,
+          path: `/api/v1/conversations/${convoId}/messages`,
+          token: member.accessToken,
+        });
+        assert.equal(large.encoding, "gzip", "বড় JSON gzip-এ আসে");
+        const json = JSON.parse(zlib.gunzipSync(large.raw).toString("utf8"));
+        assert.equal(json.success, true);
+        assert.ok(json.data.length >= 1);
+
+        const small = await rawGet({ port, path: "/health" });
+        assert.equal(small.encoding, undefined, "1KB-এর নিচে compress হয় না");
+      } finally {
+        srv.closeAllConnections?.();
+        await new Promise((r) => srv.close(r));
+      }
     });
   });
 });

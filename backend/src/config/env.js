@@ -66,6 +66,12 @@ const env = {
   RATE_LIMIT_READ_MAX: parseInt(process.env.RATE_LIMIT_READ_MAX || "600", 10),
   AUTH_RATE_LIMIT_MAX: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "20", 10),
 
+  // Failed-login lockout — IP-ভিত্তিক রেট-লিমিটের পরিপূরক: একই অ্যাকাউন্টে
+  // পরপর ভুল পাসওয়ার্ড এতবার হলে অ্যাকাউন্ট-স্তরে সাময়িক লক (ডিস্ট্রিবিউটেড
+  // ব্রুট-ফোর্স — একাধিক IP থেকে একই ইমেইল ঘুরলেও ধরা পড়ে)। লক শেষে নতুন রান।
+  LOGIN_FAIL_LOCK_COUNT: parseInt(process.env.LOGIN_FAIL_LOCK_COUNT || "5", 10),
+  LOGIN_FAIL_LOCK_MS: parseInt(process.env.LOGIN_FAIL_LOCK_MS || "900000", 10),
+
   SMTP_HOST: process.env.SMTP_HOST || "",
 
   // ------------------------------------------------------------------
