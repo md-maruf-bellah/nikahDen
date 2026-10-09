@@ -28,6 +28,10 @@ import {
   createMemberSearchEngine,
   shouldHandleLiveMessage,
   appendLiveMessage,
+  typingEventState,
+  presenceTargets,
+  applyReadReceipt,
+  receiptKind,
 } from "../src/components/Messenger.core.mjs";
 
 /**
@@ -602,5 +606,100 @@ describe("messenger core — createMemberSearchEngine", () => {
     await timers.advance();
     await new Promise((r) => setImmediate(r));
     assert.equal(searchCalls.length, 0);
+  });
+});
+
+describe("messenger core — রিয়েলটাইম টাইপিং/presence (Tier-২)", () => {
+  it("typingEventState — খোলা চ্যাটের পার্টনারের start/stop; বাকি সব null", () => {
+    const ctx = {
+      activeConversationId: "c1",
+      activePartnerId: "p1",
+      myId: "me",
+    };
+    assert.equal(
+      typingEventState({ conversationId: "c1", from: "p1", typing: true }, ctx),
+      "start",
+    );
+    assert.equal(
+      typingEventState({ conversationId: "c1", from: "p1", typing: false }, ctx),
+      "stop",
+    );
+    assert.equal(typingEventState({ conversationId: "c2", from: "p1", typing: true }, ctx), null, "অন্য conversation");
+    assert.equal(typingEventState({ conversationId: "c1", from: "x", typing: true }, ctx), null, "অন্য ব্যক্তি");
+    assert.equal(typingEventState({ conversationId: "c1", from: "me", typing: true }, ctx), null, "নিজের নিজের");
+    assert.equal(typingEventState(null, ctx), null, "খালি event");
+    assert.equal(typingEventState({ conversationId: "c1", typing: true }, ctx), null, "from ছাড়া");
+  });
+
+  it("presenceTargets — সব partner unique + খোলা চ্যাট, নিজে বাদ", () => {
+    const conversations = [
+      { partner: { id: "p1" } },
+      { partner: { id: "p2" } },
+      { partner: { id: "p1" } }, // ডুপ্লিকেট
+      { partner: null },
+    ];
+    const activeChat = { partner: { id: "p3" } };
+    assert.deepEqual(
+      presenceTargets(conversations, activeChat, "me").sort(),
+      ["p1", "p2", "p3"],
+    );
+    // নিজে partner হলেও যাবে না
+    const withSelf = [{ partner: { id: "me" } }, { partner: { id: "p1" } }];
+    assert.deepEqual(presenceTargets(withSelf, null, "me"), ["p1"]);
+    assert.deepEqual(presenceTargets(null, null, "me"), [], "খালি তালিকা");
+  });
+
+  it("applyReadReceipt — খোলা conversation-এর নিজের SENT → READ (নতুন array)", () => {
+    const prev = [
+      { id: "m1", sender: "me", status: "SENT" },
+      { id: "m2", sender: "me", status: "READ" },
+      { id: "m3", sender: "p1", status: "SENT" },
+      { id: "m4", sender: "me" }, // pending (সার্ভার-রেসপন্স নেই)
+    ];
+    const next = applyReadReceipt(
+      prev,
+      { conversationId: "c1", reader: "p1", readAt: "2026-10-09T10:00:00Z" },
+      { activeConversationId: "c1", myId: "me" },
+    );
+    assert.notEqual(next, prev, "পরিবর্তন হলে নতুন array");
+    assert.equal(next[0].status, "READ");
+    assert.equal(next[0].readAt, "2026-10-09T10:00:00Z");
+    assert.equal(next[1], prev[1], "আগেই READ — অক্ষত");
+    assert.equal(next[2], prev[2], "পার্টনারের বার্তা — অক্ষত");
+    assert.equal(next[3], prev[3], "pending বার্তা READ হয় না");
+  });
+
+  it("applyReadReceipt — অন্য conversation / নিজের reader / কিছু না মিললে একই reference", () => {
+    const prev = [{ id: "m1", sender: "me", status: "SENT" }];
+    const args = { activeConversationId: "c1", myId: "me" };
+    assert.equal(
+      applyReadReceipt(prev, { conversationId: "c2", reader: "p1" }, args),
+      prev,
+      "অন্য conversation",
+    );
+    assert.equal(
+      applyReadReceipt(prev, { conversationId: "c1", reader: "me" }, args),
+      prev,
+      "নিজের পড়া — নিজের SENT-তে প্রভাব নয়",
+    );
+    assert.equal(
+      applyReadReceipt([{ id: "m1", sender: "p1", status: "SENT" }], { conversationId: "c1", reader: "p1" }, args).length,
+      1,
+      "শুধু পার্টনারের বার্তা — কিছুই বদলায় না",
+    );
+    const nonMatching = [{ id: "m1", sender: "p1", status: "SENT" }];
+    assert.equal(
+      applyReadReceipt(nonMatching, { conversationId: "c1", reader: "p1" }, args),
+      nonMatching,
+      "কোনো row না বদলালে একই reference",
+    );
+  });
+
+  it("receiptKind — pending/sent/read ধাপ + অন্যের বার্তায় null", () => {
+    assert.equal(receiptKind({ sender: "me", status: "SENT" }, "me"), "sent");
+    assert.equal(receiptKind({ sender: "me", status: "READ" }, "me"), "read");
+    assert.equal(receiptKind({ sender: "me" }, "me"), "pending", "অপটিমিস্টিক");
+    assert.equal(receiptKind({ sender: "p1", status: "READ" }, "me"), null, "পার্টনারের বার্তা");
+    assert.equal(receiptKind(null, "me"), null);
   });
 });

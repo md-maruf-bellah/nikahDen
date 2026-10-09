@@ -144,8 +144,11 @@ export async function getConversationMessages(userId, conversationId, { page = 1
   // পড়া মাত্রই প্রেরকের room-এ লাইভ read-রসিদ (GET পথও mark-read করে)
   {
     const conv = await Conversation.findById(conversationId).select("participants").lean();
+    const readAt = new Date().toISOString();
     for (const p of (conv?.participants || [])) {
-      if (p.toString() !== userId) emitToUser(p, "message:read", { conversationId, reader: userId });
+      if (p.toString() !== userId) {
+        emitToUser(p, "message:read", { conversationId, reader: userId, readAt });
+      }
     }
   }
 
@@ -236,8 +239,11 @@ export async function markRead(userId, conversationId) {
     { $set: { status: "READ", readAt: new Date() } }
   );
   // প্রেরককে জানাই প্রাপক পড়েছে (একাধিক ডিভাইস/ট্যাব সহ)
+  const readAt = new Date().toISOString();
   const participants = conversation.participants.filter((p) => p.toString() !== userId);
-  for (const sender of participants) emitToUser(sender, "message:read", { conversationId, reader: userId });
+  for (const sender of participants) {
+    emitToUser(sender, "message:read", { conversationId, reader: userId, readAt });
+  }
   return { marked: res.modifiedCount };
 }
 

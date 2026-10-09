@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Send, ArrowLeft, Ban, CheckCircle2, CreditCard, TriangleAlert } from "lucide-react";
+import { Search, Send, ArrowLeft, Ban, CheckCircle2, Check, CheckCheck, Clock, CreditCard, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { conversationApi, blockApi, userApi, tokenStore } from "@/lib/api";
@@ -26,9 +26,18 @@ import {
   shouldReleasePendingChat,
   startFailureNotice,
   appendLiveMessage,
+  applyReadReceipt,
+  presenceTargets,
+  receiptKind,
   timeLabel,
+  typingEventState,
 } from "@/components/Messenger.core.mjs";
-import { ensureSocket, onSocketEvent } from "@/lib/socket";
+import { ensureSocket, emitSocket, onSocketEvent } from "@/lib/socket";
+
+// টাইপিং-সময়: start throttle / কী-নীরবতায় stop / প্রাপকের অটো-মুছে যাওয়া
+const TYPING_SEND_MS = 1000;
+const TYPING_IDLE_MS = 2000;
+const TYPING_SHOW_MS = 4000;
 
 const MessagingApp = () => {
   const { user } = useAuth();
@@ -47,7 +56,16 @@ const MessagingApp = () => {
   const [startBusyId, setStartBusyId] = useState(null);
   // messaging guard-এর 402/403 ধরে দেখানোর ইনলাইন নোটিস (null = নেই)
   const [guardNotice, setGuardNotice] = useState(null);
+  // রিয়েলটাইম UI — পার্টনার কি টাইপ করছে + পার্টনারদের online-map (presence)
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const [onlineMap, setOnlineMap] = useState({});
   const scrollRef = useRef(null);
+  // typing/presence-রেফ — টাইমার ও শেষ-পাঠানো অবস্থা (re-render-নিরপেক্ষ)
+  const typingExpiryRef = useRef(null);
+  const myTypingTimerRef = useRef(null);
+  const myTypingActiveRef = useRef(false);
+  const lastTypingSentRef = useRef(0);
+  const presenceIdsRef = useRef([]);
   // সদস্য-খোঁজা ইঞ্জিন — ডিবাউন্স+প্রিভিউ-মার্জ কোর-মডিউলে; setState এখানেই inject
   const memberSearchRef = useRef(null);
   if (!memberSearchRef.current) {
@@ -144,12 +162,55 @@ const MessagingApp = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // নিজের typing — এক conversation-এ একবার start (throttle কলার করে),
+  // stop শুধু চালু থাকলেই যায় (প্রতি স্টপে অপ্রয়োজনীয় emit নয়)
+  const sendMyTyping = useCallback(
+    (typing) => {
+      const conversationId = activeChat?.id;
+      const to = activeChat?.partner?.id;
+      if (!conversationId || !to) return;
+      if (typing) {
+        myTypingActiveRef.current = true;
+        lastTypingSentRef.current = Date.now();
+      } else if (!myTypingActiveRef.current) {
+        return;
+      } else {
+        myTypingActiveRef.current = false;
+      }
+      emitSocket("typing", { conversationId, typing });
+    },
+    [activeChat?.id, activeChat?.partner?.id],
+  );
+
+  // ইনপুট-পরিবর্তনে typing:start (১s throttle); ২s কী-নীরবতায় বা পাঠানোর সাথে সাথে stop
+  const handleInputChange = (value) => {
+    setInputText(value);
+    if (myTypingTimerRef.current) {
+      clearTimeout(myTypingTimerRef.current);
+      myTypingTimerRef.current = null;
+    }
+    if (!value.trim()) {
+      sendMyTyping(false);
+      return;
+    }
+    if (Date.now() - lastTypingSentRef.current >= TYPING_SEND_MS) sendMyTyping(true);
+    myTypingTimerRef.current = setTimeout(() => {
+      myTypingTimerRef.current = null;
+      sendMyTyping(false);
+    }, TYPING_IDLE_MS);
+  };
+
   const handleSendMessage = async () => {
     if (!canSendMessage(inputText, activeChat, blockedByMe)) return;
     const text = inputText;
     const tmpId = `tmp-${Date.now()}`;
     setInputText("");
     setGuardNotice(null);
+    if (myTypingTimerRef.current) {
+      clearTimeout(myTypingTimerRef.current);
+      myTypingTimerRef.current = null;
+    }
+    sendMyTyping(false);
     setMessages((prev) => [...prev, makeOptimisticMessage({ tmpId, senderId: user?.id, text })]);
     try {
       const sent = await conversationApi.send(activeChat.id, text);
@@ -212,7 +273,7 @@ const MessagingApp = () => {
   // unmount-এ পেন্ডিং সদস্য-খোঁজা বাতিল
   useEffect(() => () => memberSearchRef.current?.clear(), []);
 
-  // রিয়েলটাইম — খোলা চ্যাটে নতুন মেসেজ সাথে সাথেই বসে; তালিকার ব্যাজও রিফ্রেশ
+  // রিয়েলটাইম — খোলা চ্যাটে মেসেজ/রিড-রসিদ/typing/presence এখানেই জোড়া লাগে
   useEffect(() => {
     if (!tokenStore.getAccess() && !tokenStore.getRefresh()) return;
     ensureSocket(() => tokenStore.getAccess());
@@ -222,8 +283,79 @@ const MessagingApp = () => {
       }
       loadConversations();
     });
-    return off;
-  }, [activeChat?.id, loadConversations]);
+    // রিড-রসিদ — পার্টনার পড়লেই নিজের SENT বার্তায় টিক ওঠে
+    const offRead = onSocketEvent("message:read", (ev) => {
+      setMessages((prev) =>
+        applyReadReceipt(prev, ev, { activeConversationId: activeChat?.id, myId: user?.id }),
+      );
+    });
+    // টাইপিং — শুধু এই চ্যাটের পার্টনার; stop না এলেও কয়েক সেকেন্ডে নিজে মুছে যায়
+    const offTyping = onSocketEvent("typing", (ev) => {
+      const state = typingEventState(ev, {
+        activeConversationId: activeChat?.id,
+        activePartnerId: activeChat?.partner?.id,
+        myId: user?.id,
+      });
+      if (!state) return;
+      if (typingExpiryRef.current) {
+        clearTimeout(typingExpiryRef.current);
+        typingExpiryRef.current = null;
+      }
+      if (state === "start") {
+        setPartnerTyping(true);
+        typingExpiryRef.current = setTimeout(() => setPartnerTyping(false), TYPING_SHOW_MS);
+      } else {
+        setPartnerTyping(false);
+      }
+    });
+    // presence — পার্টনার সংযোগ/বিচ্ছিন্ন লাইভ; রিকানেক্টে আবার জিজ্ঞেস
+    const offPresence = onSocketEvent("presence:update", (ev) => {
+      if (!ev?.userId) return;
+      setOnlineMap((prev) => ({ ...prev, [ev.userId]: Boolean(ev.online) }));
+    });
+    const offSnapshot = onSocketEvent("presence:snapshot", (ev) => {
+      const online = new Set(ev?.online || []);
+      setOnlineMap((prev) => {
+        const next = { ...prev };
+        for (const id of presenceIdsRef.current) next[id] = online.has(id);
+        return next;
+      });
+    });
+    const offConnected = onSocketEvent("connected", () => {
+      if (presenceIdsRef.current.length) emitSocket("presence:query", presenceIdsRef.current);
+    });
+    return () => {
+      off();
+      offRead();
+      offTyping();
+      offPresence();
+      offSnapshot();
+      offConnected();
+      if (typingExpiryRef.current) {
+        clearTimeout(typingExpiryRef.current);
+        typingExpiryRef.current = null;
+      }
+      if (myTypingTimerRef.current) {
+       	clearTimeout(myTypingTimerRef.current);
+        myTypingTimerRef.current = null;
+      }
+      // চ্যাট বদল/আনমাউন্টে অসমাপ্ত typing থেকে যায় না — পুরনো চ্যাটে stop
+      if (myTypingActiveRef.current && activeChat?.id && activeChat?.partner?.id) {
+        emitSocket("typing", { conversationId: activeChat.id, typing: false });
+      }
+      myTypingActiveRef.current = false;
+      setPartnerTyping(false);
+    };
+  }, [activeChat?.id, activeChat?.partner?.id, loadConversations, user?.id]);
+
+  // presence — তালিকার সব পার্টনার + খোলা চ্যাটের পার্টনার এক ঝলকে জিজ্ঞেস
+  useEffect(() => {
+    if (!tokenStore.getAccess() && !tokenStore.getRefresh()) return;
+    const targets = presenceTargets(conversations, activeChat, user?.id);
+    if (!targets.length) return;
+    presenceIdsRef.current = targets;
+    emitSocket("presence:query", targets);
+  }, [conversations, activeChat, user?.id]);
 
   useEffect(() => {
     // গেট কোরে (shouldReleasePendingChat): তালিকা লোড + pending থাকলেই একবার —
@@ -305,6 +437,12 @@ const MessagingApp = () => {
                   className="w-12 h-12 rounded-full object-cover"
                   alt="user"
                 />
+                {onlineMap[c.partner?.id] && (
+                  <span
+                    className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"
+                    aria-label="online"
+                  />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
@@ -397,11 +535,22 @@ const MessagingApp = () => {
                     className="w-10 h-10 rounded-full"
                     alt="active user"
                   />
+                  {onlineMap[activeChat.partner?.id] && (
+                    <span
+                      className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"
+                      aria-label="online"
+                    />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-800 text-sm">
                     {activeChat.partner?.name || "ব্যবহারকারী"}
                   </h3>
+                  {partnerTyping ? (
+                    <p className="text-[11px] text-[#fd6969] animate-pulse">টাইপ করছেন...</p>
+                  ) : onlineMap[activeChat.partner?.id] ? (
+                    <p className="text-[11px] text-green-600">অনলাইনে</p>
+                  ) : null}
                 </div>
               </div>
               {/* Block / Unblock — সবচেয়ে ক্ষুদ্র টাচ-টার্গেট; blocked হলে সবুজ টগল */}
@@ -428,6 +577,7 @@ const MessagingApp = () => {
             <div className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8 chat-scroll">
               {messages.map((msg) => {
                 const isMe = msg.sender === user?.id;
+                const kind = receiptKind(msg, user?.id);
                 return (
                   <div
                     key={msg.id}
@@ -460,6 +610,27 @@ const MessagingApp = () => {
                     >
                       {msg.text}
                     </div>
+                    {kind && (
+                      <span
+                        className="flex items-center gap-1 mt-1 text-gray-400"
+                        aria-label={kind}
+                        title={
+                          kind === "read"
+                            ? "পড়েছেন"
+                            : kind === "sent"
+                              ? "পাঠানো হয়েছে"
+                              : "পাঠানো হচ্ছে"
+                        }
+                      >
+                        {kind === "pending" ? (
+                          <Clock size={12} />
+                        ) : kind === "sent" ? (
+                          <Check size={14} />
+                        ) : (
+                          <CheckCheck size={14} className="text-[#fd6969]" />
+                        )}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -503,7 +674,7 @@ const MessagingApp = () => {
                   <input
                     type="text"
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => handleInputChange(e.target.value)}
                     placeholder="Type a Message..."
                     className="flex-1 text-base focus:outline-none py-2 bg-transparent"
                   />

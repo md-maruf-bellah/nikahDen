@@ -8,7 +8,8 @@
  * token provider পড়ে; reconnect-এও টাটকা টোকেন যায়।
  *
  * ইভেন্ট (সার্ভার → ক্লায়েন্ট): connected, message:new, message:read,
- * notification:new, notification:read
+ * notification:new, notification:read, typing, presence:update, presence:snapshot
+ * ইভেন্ট (ক্লায়েন্ট → সার্ভার): typing, presence:query
  *
  * ব্যবহার:
  *   const socket = ensureSocket(() => tokenStore.getAccess());
@@ -57,6 +58,17 @@ export function onSocketEvent(event, fn) {
   if (!socket) return () => {};
   socket.on(event, fn);
   return () => socket.off(event, fn);
+}
+
+/**
+ * সার্ভারে ইভেন্ট পাঠানো (typing/presence যেমন)। socket নেই হলে নীরব false —
+ * REST কলের মতোই ফলো-আপ কর্তব্য, socket emit কখনো জীবন-রেখা নয়।
+ * socket.io disconnected অবস্থায় emit buffer-এ বসে থাকে ও reconnect-এ যায়।
+ */
+export function emitSocket(event, payload) {
+  if (!socket) return false;
+  socket.emit(event, payload);
+  return true;
 }
 
 /**

@@ -199,6 +199,8 @@ describe("REALTIME (socket.io)", () => {
     const read = await readPromise;
     assert.equal(read.conversationId, convoId);
     assert.equal(read.reader, bob.user.id);
+    assert.ok(read.readAt, "readAt সময়সহ আসে — UI টিকের সময় লাগে");
+    assert.ok(!Number.isNaN(Date.parse(read.readAt)), "readAt বৈধ ISO সময়");
   });
 
   it("REST mark-all-read → নিজের room-এ notification:read", async () => {
@@ -210,5 +212,165 @@ describe("REALTIME (socket.io)", () => {
     await request.patch("/api/v1/notifications/read-all").set(auth(bob.accessToken));
     const read = await readPromise;
     assert.equal(read.all, true);
+  });
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /** presence:query পাঠিয়ে presence:snapshot-এর online তালিকা পাওয়া */
+  function queryPresence(sock, userIds) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(
+        () => reject(new Error("timeout waiting presence:snapshot")),
+        3000,
+      );
+      sock.once("presence:snapshot", (data) => {
+        clearTimeout(t);
+        resolve(data.online);
+      });
+      sock.emit("presence:query", userIds);
+    });
+  }
+
+  it("typing — সদস্যতা-যাচাইসহ রিলে; সদস্য নয়/জাল id → নিঃশেষ; start throttle, stop মুক্ত", async () => {
+    const alice = await registerUser(request);
+    const bob = await registerUser(request);
+    const carol = await registerUser(request);
+
+    const c1 = await request
+      .post("/api/v1/conversations")
+      .set(auth(alice.accessToken))
+      .send({ recipientId: bob.user.id, text: "হ্যালো" });
+    assert.equal(c1.status, 201);
+    const convo1 = c1.body.data.conversation.id;
+    const c2 = await request
+      .post("/api/v1/conversations")
+      .set(auth(bob.accessToken))
+      .send({ recipientId: carol.user.id, text: "হ্যালো" });
+    assert.equal(c2.status, 201);
+    const convo2 = c2.body.data.conversation.id;
+
+    const aSock = connect(alice.accessToken);
+    const bSock = connect(bob.accessToken);
+    const cSock = connect(carol.accessToken);
+    await Promise.all([
+      waitEvent(aSock, "connected"),
+      waitEvent(bSock, "connected"),
+      waitEvent(cSock, "connected"),
+    ]);
+
+    const bobSeen = [];
+    const carolSeen = [];
+    const aliceSeen = [];
+    bSock.on("typing", (ev) => bobSeen.push(ev));
+    cSock.on("typing", (ev) => carolSeen.push(ev));
+    aSock.on("typing", (ev) => aliceSeen.push(ev));
+
+    // (ক) সদস্য relay — পার্টনার ইভেন্ট পায়, from/typing সঠিক
+    const gotStart = waitEvent(bSock, "typing");
+    aSock.emit("typing", { conversationId: convo1, typing: true });
+    const start = await gotStart;
+    assert.equal(start.conversationId, convo1);
+    assert.equal(start.from, alice.user.id);
+    assert.equal(start.typing, true);
+
+    // (খ) start throttle — সাথে সাথে পুনরাবৃত্তি (200ms ভেতরে) রিলে হয় না
+    aSock.emit("typing", { conversationId: convo1, typing: true });
+    await sleep(300);
+    assert.equal(
+      bobSeen.filter((e) => e.conversationId === convo1 && e.typing === true).length,
+      1,
+      "এক throttle-window-এ একবারই start relay",
+    );
+
+    // (গ) stop — throttle-মুক্ত, সাথে সাথেই পৌঁছায়
+    const gotStop = waitEvent(bSock, "typing");
+    aSock.emit("typing", { conversationId: convo1, typing: false });
+    const stop = await gotStop;
+    assert.equal(stop.typing, false);
+    assert.equal(stop.from, alice.user.id);
+
+    // (ঘ) সদস্য নয় — alice অন্যের conversation-এ পাঠালে কেউ পায় না
+    aSock.emit("typing", { conversationId: convo2, typing: true });
+    // (ঙ) জাল/অ-কথোপকথন id — নিঃশেষ
+    aSock.emit("typing", {
+      conversationId: new mongoose.Types.ObjectId().toString(),
+      typing: true,
+    });
+    await sleep(300);
+    assert.equal(carolSeen.length, 0, "অ-সদস্যের typing কারো কাছে যায় না");
+    assert.equal(
+      bobSeen.filter((e) => e.conversationId !== convo1).length,
+      0,
+      "জাল id relay হয় না",
+    );
+    assert.equal(aliceSeen.length, 0, "প্রেরক নিজের room-এ typing পায় না");
+  });
+
+  it("typing — প্রেরক ডিসকানেক্ট হলে অসমাপ্ত typing stop পার্টনারে পৌঁছায়", async () => {
+    const alice = await registerUser(request);
+    const bob = await registerUser(request);
+    const c = await request
+      .post("/api/v1/conversations")
+      .set(auth(alice.accessToken))
+      .send({ recipientId: bob.user.id, text: "হ্যালো" });
+    const convoId = c.body.data.conversation.id;
+
+    const aSock = connect(alice.accessToken);
+    const bSock = connect(bob.accessToken);
+    await waitEvent(aSock, "connected");
+    await waitEvent(bSock, "connected");
+
+    const gotStart = waitEvent(bSock, "typing");
+    aSock.emit("typing", { conversationId: convoId, typing: true });
+    assert.equal((await gotStart).typing, true);
+
+    const gotStop = waitEvent(bSock, "typing");
+    aSock.disconnect(); // stop না পাঠিয়েই বিচ্ছিন্ন
+    const stop = await gotStop;
+    assert.equal(stop.typing, false, "ডিসকানেক্ট-টিপে থাকা typing stop হয়");
+    assert.equal(stop.conversationId, convoId);
+    assert.equal(stop.from, alice.user.id);
+  });
+
+  it("presence — পার্টনার সংযুক্ত হলে online, বিচ্ছিন্ন হলে offline; query-তে snapshot", async () => {
+    const alice = await registerUser(request);
+    const bob = await registerUser(request);
+    const c = await request
+      .post("/api/v1/conversations")
+      .set(auth(alice.accessToken))
+      .send({ recipientId: bob.user.id, text: "হ্যালো" });
+    assert.equal(c.status, 201);
+
+    const aSock = connect(alice.accessToken);
+    await waitEvent(aSock, "connected");
+
+    // সংযোগের আগে — bob offline
+    assert.deepEqual(await queryPresence(aSock, [bob.user.id]), [], "আগে offline");
+
+    // bob সংযুক্ত → alice-কে পার্টনার-প্রসঙ্গে লাইভ online
+    const gotOnline = waitEvent(aSock, "presence:update");
+    const bSock = connect(bob.accessToken);
+    await waitEvent(bSock, "connected");
+    assert.deepEqual(await gotOnline, { userId: bob.user.id, online: true });
+    assert.deepEqual(await queryPresence(aSock, [bob.user.id]), [bob.user.id], "এখন online");
+
+    // bob বিচ্ছিন্ন → লাইভ offline (শেষ সংযোগ কাটলেই)
+    const gotOffline = waitEvent(aSock, "presence:update");
+    bSock.disconnect();
+    assert.deepEqual(await gotOffline, { userId: bob.user.id, online: false });
+    assert.deepEqual(await queryPresence(aSock, [bob.user.id]), [], "আবার offline");
+  });
+
+  it("presence:query — কার্যকর id ছাড়া অন্যটি বাদ, সীমা ছাড়ে না", async () => {
+    const alice = await registerUser(request);
+    const aSock = connect(alice.accessToken);
+    await waitEvent(aSock, "connected");
+
+    const stranger = new mongoose.Types.ObjectId().toString();
+    assert.deepEqual(
+      await queryPresence(aSock, [stranger, "not-an-id", 42, stranger]),
+      [],
+      "অনলাইন নয়/জাল বাদ — শুধু বৈধ অনলাইন id",
+    );
   });
 });

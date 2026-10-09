@@ -108,9 +108,14 @@ export function makeOptimisticMessage({ tmpId, senderId, text, now = new Date() 
   return { id: tmpId, sender: senderId, text, createdAt: now.toISOString() };
 }
 
-/** tmp আইডি → সার্ভার-আইডি (শুধু মিলে-যাওয়া row, নতুন অ্যারে) */
+/**
+ * tmp আইডি → সার্ভার-আইডি (শুধু মিলে-যাওয়া row, নতুন অ্যারে)।
+ * সার্ভার 201 ফেরালেই বার্তা SENT — ডেলিভারি-টিক ওখান থেকেই ওঠে।
+ */
 export function resolveOptimisticId(messages, tmpId, sentId) {
-  return (messages || []).map((m) => (m.id === tmpId ? { ...m, id: sentId } : m));
+  return (messages || []).map((m) =>
+    m.id === tmpId ? { ...m, id: sentId, status: m.status || "SENT" } : m,
+  );
 }
 
 /** ব্যর্থ পাঠানো — tmp row তুলে ফেলা (নতুন অ্যারে) */
@@ -277,4 +282,61 @@ export function createMemberSearchEngine({
   }
 
   return { onInput, clear };
+}
+
+// ---------------------------------------------------------------------------
+// রিয়েলটাইম — টাইপিং / presence / ডেলিভারি-রিড টিক (পিওর; কোনো setState নেই)
+// ---------------------------------------------------------------------------
+
+/**
+ * টাইপিং ইভেন্ট → "start" | "stop" | null — এই খোলা চ্যাটের পার্টনারের কি না।
+ * অন্য conversation/অন্য ব্যক্তি/নিজের নিজের ইভেন্ট সবই null (ইলেগাল রিলে বাদ)।
+ */
+export function typingEventState(event, { activeConversationId, activePartnerId, myId }) {
+  if (!event?.conversationId || event.conversationId !== activeConversationId) return null;
+  if (!event.from || event.from !== activePartnerId || event.from === myId) return null;
+  return event.typing ? "start" : "stop";
+}
+
+/** presence:query-এ কোন পার্টনারদের id যাবে (unique, নিজে বাদ) */
+export function presenceTargets(conversations, activeChat, myId) {
+  const ids = new Set();
+  for (const c of conversations || []) {
+    if (c?.partner?.id) ids.add(c.partner.id);
+  }
+  if (activeChat?.partner?.id) ids.add(activeChat.partner.id);
+  if (myId) ids.delete(myId);
+  return [...ids];
+}
+
+/**
+ * রিড-রসিদ — পার্টনার পড়েছে মাত্রই এই conversation-এর নিজের SENT বার্তা READ।
+ * অন্য conversation/পাঠক নিজে হলে/কোনো পরিবর্তন না হলে একইরেফারেন্স (re-render বাতিল)।
+ */
+export function applyReadReceipt(messages, event, { activeConversationId, myId }) {
+  const arr = messages || [];
+  if (!event?.conversationId || event.conversationId !== activeConversationId) return arr;
+  if (!event.reader || event.reader === myId) return arr;
+  let changed = false;
+  const next = arr.map((m) => {
+    if (m.sender === myId && m.status === "SENT") {
+      changed = true;
+      return { ...m, status: "READ", readAt: event.readAt || new Date().toISOString() };
+    }
+    return m;
+  });
+  return changed ? next : arr;
+}
+
+/**
+ * টিক-আকৃতি — নিজের বার্তার রসিদ-ধাপ (অন্যের বার্তায় null):
+ *   "pending" — অপটিমিস্টিক, সার্ভার এখনো নেয়নি
+ *   "sent"    — সার্ভার পেয়েছে (SENT — ডেলিভারি-টিক)
+ *   "read"    — প্রাপক পেরেছে (READ — রিড-টিক)
+ */
+export function receiptKind(message, myId) {
+  if (!message || message.sender !== myId) return null;
+  if (message.status === "READ") return "read";
+  if (message.status === "SENT") return "sent";
+  return "pending";
 }
