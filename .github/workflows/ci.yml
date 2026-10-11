@@ -68,6 +68,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # production-tree audit — dev-চেইনের braces (eslint-config-next → fast-glob)
+      # এখনো patched নয় (upstream রিলিজ অপেক্ষমান), তাই সেটি বিল্ড-গেট করে না
+      - name: Audit production dependencies (npm audit)
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Unit tests (node --test)
         run: npm test
 
