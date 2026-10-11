@@ -128,9 +128,12 @@ export async function loginUser({ email, password }, meta = {}) {
     const retrySec = Math.ceil(
       (user.lockedUntil.getTime() - Date.now()) / 1000,
     );
+    // details-এ স্ট্রাকচার্ড সেকেন্ড পাঠানো হয় — ক্লায়েন্ট UI-তে বাংলা
+    // কাউন্টডাউন দেখাতে মেসেজ থেকে parse না করে এটাই ব্যবহার করে।
     throw ApiError.tooMany(
       `Too many failed login attempts. Try again in ${retrySec} second${retrySec === 1 ? "" : "s"}.`,
       "ACCOUNT_LOCKED",
+      { retryAfterSeconds: retrySec },
     );
   }
 

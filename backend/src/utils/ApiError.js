@@ -36,7 +36,7 @@ export class ApiError extends Error {
     return new ApiError(422, message, errorCode, details);
   }
 
-  static tooMany(message = "Too many requests, please slow down", errorCode = "RATE_LIMITED") {
-    return new ApiError(429, message, errorCode);
+  static tooMany(message = "Too many requests, please slow down", errorCode = "RATE_LIMITED", details = undefined) {
+    return new ApiError(429, message, errorCode, details);
   }
 }

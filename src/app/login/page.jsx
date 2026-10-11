@@ -11,6 +11,13 @@ import contact from "./../../../assets/contact/img.png";
 import { authApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useSearchParams } from "next/navigation";
+import {
+  LOCK_BANGLA_PREFIX,
+  formatCountdown,
+  isAccountLocked,
+  lockBanglaMessage,
+  lockSecondsFromError,
+} from "@/lib/login-lockout.core.mjs";
 
 const Login = () => {
   const router = useRouter();
@@ -21,6 +28,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lockSeconds, setLockSeconds] = useState(0); // ACCOUNT_LOCKED কাউন্টডাউন
   const [oauthAvailable, setOauthAvailable] = useState({ google: false, facebook: false });
 
   // কোন প্রোভাইডার সার্ভারে কনফিগার করা আছে — সেই অনুযায়ী বাটন enable/disable
@@ -30,6 +38,20 @@ const Login = () => {
       .then((p) => setOauthAvailable({ google: Boolean(p?.google), facebook: Boolean(p?.facebook) }))
       .catch(() => {});
   }, []);
+
+  // লক কাউন্টডাউন — প্রতি সেকেন্ডে টিকে
+  React.useEffect(() => {
+    if (lockSeconds <= 0) return undefined;
+    const id = setInterval(() => setLockSeconds((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [lockSeconds]);
+
+  // কাউন্টডাউন শূন্য → শুধু লক-বার্তা মুছে যায়, অন্য এরর অক্ষত
+  React.useEffect(() => {
+    if (lockSeconds === 0) {
+      setError((msg) => (typeof msg === "string" && msg.startsWith(LOCK_BANGLA_PREFIX) ? "" : msg));
+    }
+  }, [lockSeconds]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +70,13 @@ const Login = () => {
       const isStaff = role === "SUPERADMIN" || role === "ADMIN" || role === "EDITOR";
       router.push(isStaff ? "/dashboard" : next && next.startsWith("/") ? next : "/profile");
     } catch (err) {
-      setError(err.message || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+      if (isAccountLocked(err)) {
+        // 429 ACCOUNT_LOCKED — বাংলা মেসেজ + লাইভ কাউন্টডাউন ব্যাজ
+        setLockSeconds(lockSecondsFromError(err));
+        setError(lockBanglaMessage());
+      } else {
+        setError(err.message || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+      }
     } finally {
       setLoading(false);
     }
@@ -82,6 +110,11 @@ const Login = () => {
           {error && (
             <div className="alert alert-error text-sm py-2 mb-4 shadow-none">
               <span>{error}</span>
+              {lockSeconds > 0 && (
+                <span className="badge badge-ghost font-mono text-base" title="লক শেষ হওয়ার বাকি সময়">
+                  {formatCountdown(lockSeconds)}
+                </span>
+              )}
             </div>
           )}
 
@@ -150,7 +183,7 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || lockSeconds > 0}
               className="btn w-full bg-[#FD6969] hover:bg-[#e85a5a] text-white border-none h-12 text-lg font-bold disabled:opacity-60"
             >
               {loading ? (
