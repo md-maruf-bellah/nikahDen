@@ -13,8 +13,11 @@ import {
   Calendar,
   X,
   RefreshCw,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { usersApi } from "@/lib/api";
+import { formatCountdown, lockedRemainingSeconds } from "@/lib/login-lockout.core.mjs";
 
 const STATUS_MAP = { ACTIVE: "Active", PENDING: "Pending", INACTIVE: "Inactive" };
 const ROLE_LABELS = {
@@ -36,6 +39,8 @@ const toRow = (u) => ({
   status: STATUS_MAP[u.status] || u.status,
   statusKey: u.status,
   image: u.avatar || `https://i.pravatar.cc/150?u=${u.id}`,
+  failedLoginCount: u.failedLoginCount || 0,
+  lockedUntil: u.lockedUntil || null,
 });
 
 const UserManagement = () => {
@@ -55,6 +60,16 @@ const UserManagement = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [unlockingId, setUnlockingId] = useState(null);
+  // লক-কাউন্টডাউন টিকে যায় — শুধু যখন তালিকায় কেউ লক আছে
+  const [now, setNow] = useState(() => Date.now());
+  const hasLocked = data.some((u) => lockedRemainingSeconds(u.lockedUntil, now) > 0);
+
+  useEffect(() => {
+    if (!hasLocked) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [hasLocked]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,6 +174,19 @@ const UserManagement = () => {
       } catch (err) {
         window.alert(err.message || "মুছে ফেলা যায়নি");
       }
+    }
+  };
+
+  const handleUnlock = async (u) => {
+    if (!window.confirm(`${u.name} অ্যাকাউন্টের লক মুছে ফেলতে চান? (ভুল চেষ্টার কাউন্টও শূন্য হবে)`)) return;
+    setUnlockingId(u.id);
+    try {
+      await usersApi.unlock(u.id);
+      await load();
+    } catch (err) {
+      window.alert(err.message || "আনলক করা যায়নি");
+    } finally {
+      setUnlockingId(null);
     }
   };
 
@@ -331,9 +359,36 @@ const UserManagement = () => {
                           </span>
                         );
                       })()}
+                      {lockedRemainingSeconds(u.lockedUntil, now) > 0 && (
+                        <div className="mt-1.5 flex items-center gap-1.5 w-fit px-2.5 py-0.5 bg-red-100 text-red-700 ring-1 ring-red-200 rounded-full" title="লগইন লক আছে — ভুল পাসওয়ার্ডচেষ্টার কারণে">
+                          <Lock size={11} />
+                          <span className="text-[10px] font-black font-mono">
+                            লক • {formatCountdown(lockedRemainingSeconds(u.lockedUntil, now))}
+                          </span>
+                        </div>
+                      )}
+                      {lockedRemainingSeconds(u.lockedUntil, now) === 0 && u.failedLoginCount > 0 && (
+                        <div className="mt-1 flex items-center gap-1.5 w-fit px-2.5 py-0.5 bg-amber-100 text-amber-700 ring-1 ring-amber-200 rounded-full text-[10px] font-bold" title="লক-থ্রেশহোল্ডের আগের ভুল চেষ্টা">
+                          ভুল চেষ্টা: {bn(u.failedLoginCount)}
+                        </div>
+                      )}
                     </td>
                     <td className="py-5 px-6 border-b border-gray-50">
                       <div className="flex items-center gap-1">
+                        {(lockedRemainingSeconds(u.lockedUntil, now) > 0 || u.failedLoginCount > 0) && (
+                          <button
+                            onClick={() => handleUnlock(u)}
+                            disabled={unlockingId === u.id}
+                            title="লক মুছে অ্যাকাউন্ট আবার চালু করুন"
+                            className="p-2 hover:bg-amber-50 text-amber-500 rounded-xl transition-all active:scale-90 disabled:opacity-50"
+                          >
+                            {unlockingId === u.id ? (
+                              <span className="loading loading-spinner loading-xs"></span>
+                            ) : (
+                              <Unlock size={16} />
+                            )}
+                          </button>
+                        )}
                         <button
                           onClick={() => handleOpenModal(u)}
                           className="p-2 hover:bg-blue-50 text-blue-500 rounded-xl transition-all active:scale-90"

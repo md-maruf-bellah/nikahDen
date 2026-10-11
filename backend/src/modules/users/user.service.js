@@ -9,12 +9,13 @@ import { isValidObjectId } from "../../utils/helpers.js";
 import { ROLES, USER_STATUSES } from "../../constants/index.js";
 import { isBlockedBetween } from "../blocks/block.service.js";
 import { isMatchBetween } from "../messages/messagingGuard.service.js";
+import { recordAdminAction, diffRole } from "../admin/adminAudit.service.js";
 // প্রিভিউ-কারণের সত্যের উৎস — frontend-লেবেলের সাথে সম্পূর্ণতা যাচাই হয়
 // tests/guard-reasons.core.test.mjs-এ (shared manifest দুই প্যাকেজ পড়ে)
 import { PREVIEW_REASONS } from "../../../../shared/guardReasons.mjs";
 
 const PUBLIC_FIELDS =
-  "firstName lastName email phone role status avatar createdAt updatedAt lastLoginAt";
+  "firstName lastName email phone role status avatar createdAt updatedAt lastLoginAt failedLoginCount lockedUntil";
 
 export function toPublicUser(u) {
   if (!u) return null;
@@ -30,7 +31,34 @@ export function toPublicUser(u) {
     avatar: u.avatar,
     createdAt: u.createdAt,
     lastLoginAt: u.lastLoginAt,
+    // লকআউন্ট মনিটরিং (admin list) — সদস্য-মুখে ফেরত যায় না (toPublicUser admin-only)
+    failedLoginCount: u.failedLoginCount || 0,
+    lockedUntil: u.lockedUntil || null,
   };
+}
+
+/**
+ * ম্যানুয়াল আনলক (admin) — লক-মেয়াদ যাচাই ছাড়াই কাউন্ট/লক দুটোই মুছে দেয়,
+ * যাতে ভুল চেষ্টার কাউন্ট-থ্রেশহোল্ড গড়ে ওঠা অবশিষ্টাংশও যেন না রায়।
+ */
+export async function unlockUser(id, actor) {
+  if (!isValidObjectId(id)) throw ApiError.badRequest("Invalid user id", "INVALID_ID");
+  const user = await User.findById(id);
+  if (!user) throw ApiError.notFound("User not found", "USER_NOT_FOUND");
+
+  const wasLocked = Boolean(user.lockedUntil && user.lockedUntil.getTime() > Date.now());
+  const previousFailures = user.failedLoginCount || 0;
+
+  if (wasLocked || previousFailures > 0) {
+    user.lockedUntil = null;
+    user.failedLoginCount = 0;
+    await user.save({ validateBeforeSave: false });
+    await recordAdminAction("UNLOCK", actor, { id: user._id.toString(), email: user.email }, {
+      failedAttempts: previousFailures,
+    });
+  }
+
+  return { ...toPublicUser(user), wasLocked, previousFailures };
 }
 
 /** List users — admin only. */
@@ -217,6 +245,7 @@ export async function updateUser(id, data, actor) {
     throw ApiError.forbidden("Only the platform owner can manage staff accounts.", "ADMIN_MANAGE_FORBIDDEN");
   }
 
+  const before = { role: user.role };
   for (const key of ["firstName", "lastName", "phone", "role", "status"]) {
     if (data[key] !== undefined) user[key] = data[key];
   }
@@ -225,6 +254,12 @@ export async function updateUser(id, data, actor) {
     throw ApiError.badRequest("You cannot deactivate your own account.", "SELF_DEACTIVATE_FORBIDDEN");
   }
   await user.save();
+
+  // রোল-পরিবর্তন হলে সেটাই অডিট — বাকি ফিল্ড-এডিট প্রতিদিনের কাজ, ring-বার্বারিতে ফেলে নয়
+  const roleDiff = diffRole(before, { role: user.role });
+  if (roleDiff) {
+    await recordAdminAction("USER_UPDATE", actor, { id: user._id.toString(), email: user.email }, roleDiff);
+  }
 
   return toPublicUser(user.toObject());
 }
@@ -242,8 +277,11 @@ export async function deleteUser(id, actor) {
   }
 
   // Soft delete: archive the account and its biodata (if any).
+  const beforeEmail = user.email;
   user.status = USER_STATUSES.INACTIVE;
   await user.save({ validateBeforeSave: false });
+
+  await recordAdminAction("DELETE", actor, { id: user._id.toString(), email: beforeEmail });
 
   await Biodata.updateOne(
     { user: user._id, status: { $ne: "ARCHIVED" } },

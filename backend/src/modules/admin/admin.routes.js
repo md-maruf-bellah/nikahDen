@@ -24,6 +24,15 @@ router.get(
   adminController.oauthEvents
 );
 
+// Staff-only admin-action audit trail (Mongo capped collection — restart-persistent)
+router.get(
+  "/audit/events",
+  authenticate,
+  authorize(ROLES.ADMIN, ROLES.SUPERADMIN),
+  requirePermission(PERMISSIONS.STATS_READ),
+  adminController.auditEvents
+);
+
 // Staff-only contact spam-drop history (Mongo capped collection — restart-persistent)
 router.get(
   "/contact/events",

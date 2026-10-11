@@ -187,6 +187,12 @@ async function revenueSince(since) {
  * OAuth ইভেন্ট হিস্ট্রি (Mongo capped collection থেকে) — রিস্টার্টের পরেও থাকে।
  * ফিল্টার: ?event=exchange_failed&ip=::1&limit=50
  */
+/** অ্যাডমিন অ্যাকশন অডিট-ট্রেইল রিড (adminAudit.service-এর রিড-লজিকের রিফাইনমেন্ট)। */
+export async function adminAuditHistory({ action, limit } = {}) {
+  const { auditHistory } = await import("./adminAudit.service.js");
+  return auditHistory({ action, limit });
+}
+
 export async function oauthEventHistory({ event, ip, limit } = {}) {
   const items = await recentOAuthEventsFromDb({ event, ip, limit });
   return { items, count: items.length };

@@ -17,6 +17,15 @@ export const oauthEvents = asyncHandler(async (req, res) => {
   return sendSuccess(res, "OAuth event history", data);
 });
 
+// GET /admin/audit/events?action=&limit= — অ্যাডমিন অ্যাকশন অডিট-ট্রেইল (কে/কবে/কী)
+export const auditEvents = asyncHandler(async (req, res) => {
+  const data = await adminService.adminAuditHistory({
+    action: req.query.action,
+    limit: req.query.limit ? parseInt(req.query.limit, 10) : undefined,
+  });
+  return sendSuccess(res, "Admin audit trail", data);
+});
+
 // GET /admin/contact/events?ip=&limit= — পারসিস্টেড contact spam-drop হিস্ট্রি
 export const contactEvents = asyncHandler(async (req, res) => {
   const data = await adminService.contactSpamHistory({

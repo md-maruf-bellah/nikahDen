@@ -68,6 +68,16 @@ router.patch(
   userController.updateUser
 );
 
+// লকআউন্ট ম্যানুয়াল আনলক — failedLoginCount/lockedUntil পরিষ্কার
+router.post(
+  "/:id/unlock",
+  authenticate,
+  authorize(ROLES.ADMIN, ROLES.SUPERADMIN),
+  requirePermission(PERMISSIONS.USER_UPDATE),
+  validate(idParam, "params"),
+  userController.unlockUser
+);
+
 router.delete(
   "/:id",
   authenticate,

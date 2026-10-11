@@ -29,6 +29,7 @@ import "../src/models/conversation.model.js";
 import "../src/models/message.model.js";
 import "../src/models/contactMessage.model.js";
 import "../src/models/preference.model.js";
+import "../src/models/adminAuditEvent.model.js";
 
 let mongod = null;
 let appInstance = null;
@@ -116,6 +117,9 @@ export async function clearDb() {
         } else if (c.collectionName === "contact_events") {
           const { ensureContactEventCapped } = await import("../src/models/contactEvent.model.js");
           await ensureContactEventCapped(mongoose.connection);
+        } else if (c.collectionName === "admin_audit_events") {
+          const { ensureAdminAuditCapped } = await import("../src/models/adminAuditEvent.model.js");
+          await ensureAdminAuditCapped(mongoose.connection);
         }
         return;
       }

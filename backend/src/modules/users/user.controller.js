@@ -34,6 +34,12 @@ export const createUser = asyncHandler(async (req, res) => {
   return sendSuccess(res, "User created successfully", user, undefined, 201);
 });
 
+// ম্যানুয়াল আনলক — অ্যাডমিন প্যানেল থেকে লক করা অ্যাকাউন্ট খোলা
+export const unlockUser = asyncHandler(async (req, res) => {
+  const user = await userService.unlockUser(req.params.id, req.user);
+  return sendSuccess(res, "User unlocked", user);
+});
+
 export const updateUser = asyncHandler(async (req, res) => {
   const user = await userService.updateUser(req.params.id, req.body, req.user);
   return sendSuccess(res, "User updated successfully", user);

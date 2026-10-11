@@ -257,6 +257,8 @@ export const usersApi = {
   create: (body) => api.post("/users", body),
   update: (id, body) => api.patch(`/users/${id}`, body),
   remove: (id) => api.del(`/users/${id}`),
+  // লকআউন্ট ম্যানুয়াল আনলক (failedLoginCount + lockedUntil পরিষ্কার)
+  unlock: (id) => api.post(`/users/${id}/unlock`),
 };
 
 export const adminApi = {
