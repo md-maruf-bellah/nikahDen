@@ -27,6 +27,18 @@ const biodataSchema = new mongoose.Schema(
       default: BIODATA_STATUSES.DRAFT,
       index: true,
     },
+    hiddenReason: {
+      type: String,
+      enum: ["MARRIED", "USER_CHOICE", "ADMIN_ACTION", null],
+      default: null,
+      index: true,
+    },
+    marriage: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Marriage",
+      default: null,
+      index: true,
+    },
 
     // ------------------------------------------------------------
     // "সাধারণ" / directory fields — used by cards, filters, sorting
@@ -45,6 +57,7 @@ const biodataSchema = new mongoose.Schema(
     },
     religion: { type: String, enum: Object.values(RELIGIONS), default: null, index: true },
     sectOrDenomination: { type: String, trim: true, maxlength: 100, default: "" },
+    allowCrossReligion: { type: Boolean, default: false, index: true },
 
     division: { type: String, trim: true, default: "", index: true },
     district: { type: String, trim: true, default: "", index: true },

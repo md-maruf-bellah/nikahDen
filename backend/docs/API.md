@@ -24,8 +24,8 @@ Common query params: `page`, `limit` (max 100), `search`, `sortBy`, `sortOrder`
 | POST   | `/auth/logout`       | public | `{ refreshToken? }` revokes it |
 | GET    | `/auth/me`           | auth   | current user |
 | PATCH  | `/auth/change-password` | auth | `{ currentPassword, newPassword }` |
-| POST   | `/auth/forgot-password` | public | `{ email }` — link emailed (logged in dev), 30-min token |
-| POST   | `/auth/reset-password` | public | `{ token, newPassword }` |
+| POST   | `/auth/forgot-password` | public | `{ email }` → **404 `EMAIL_NOT_FOUND`** ("No account found with this email address.") / **503 `EMAIL_NOT_CONFIGURED`** when SMTP is unset / **503 `EMAIL_DELIVERY_FAILED`** when the send fails; otherwise 200 and a 30-min single-use link is emailed. The token is stored **hashed** and is never written to logs. |
+| POST   | `/auth/reset-password` | public | `{ token, newPassword }` → single-use (400 `INVALID_RESET_TOKEN`), 30-min expiry (400 `RESET_TOKEN_EXPIRED`); on success the old refresh/access sessions are revoked. |
 
 Refresh tokens are stored **hashed**; rotation invalidates the previous token.
 

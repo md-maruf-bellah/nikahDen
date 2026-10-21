@@ -51,3 +51,8 @@ export const myMembership = asyncHandler(async (req, res) => {
   const summary = await membershipService.myMembership(req.user.id);
   return sendSuccess(res, "My membership", summary);
 });
+
+export const myLedger = asyncHandler(async (req, res) => {
+  const { items, pagination } = await membershipService.myConnectLedger(req.user.id, req.query);
+  return sendSuccess(res, "Connect ledger fetched", items, pagination);
+});

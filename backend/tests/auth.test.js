@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import env from "../src/config/env.js";
 import { hashToken, randomToken } from "../src/utils/helpers.js";
+import { takeOutbox } from "../src/utils/emailer.js";
 import { startServer, stopServer, clearDb, registerUser, login, createSuperAdmin, auth, superAdmin } from "./helpers.js";
 import { connectDB } from "../src/config/db.js";
 
@@ -212,9 +213,109 @@ describe("AUTH", () => {
   });
 
   describe("password reset", () => {
-    it("forgot-password never leaks account existence", async () => {
-      const res = await request.post("/api/v1/auth/forgot-password").send({ email: "no-such@test.dev" });
-      assert.equal(res.status, 200);
+    const noSuchEmail = "no-such@test.dev";
+
+    // টেস্ট outbox — সার্ভার লিঙ্ক কোথাও লগে ছাড়ে না, তাই টেস্ট নিজেই
+    // ইন-মেমরি outbox থেকে raw টোকেন তুলে লিঙ্ক ফলো করে।
+    const withOutbox = async (fn) => {
+      process.env.MAIL_OUTBOX = "1";
+      try {
+        return await fn();
+      } finally {
+        delete process.env.MAIL_OUTBOX;
+        takeOutbox();
+      }
+    };
+
+    const captureResetLink = async (email) => {
+      takeOutbox();
+      const res = await request.post("/api/v1/auth/forgot-password").send({ email });
+      return { res, outbox: takeOutbox() };
+    };
+
+    it("unregistered email → 404 with the exact message, no token issued", async () => {
+      const res = await request.post("/api/v1/auth/forgot-password").send({ email: noSuchEmail });
+      assert.equal(res.status, 404);
+      assert.equal(res.body.errorCode, "EMAIL_NOT_FOUND");
+      assert.equal(res.body.message, "No account found with this email address.");
+      assert.equal(await mongoose.model("ResetToken").countDocuments({}), 0);
+    });
+
+    it("invalid email format → 400 validation error", async () => {
+      const res = await request.post("/api/v1/auth/forgot-password").send({ email: "not-an-email" });
+      assert.equal(res.status, 400);
+      assert.equal(res.body.errorCode, "VALIDATION_ERROR");
+    });
+
+    it("reports a missing email service instead of bypassing verification", async () => {
+      const s = await registerUser(request);
+      const res = await request.post("/api/v1/auth/forgot-password").send({ email: s.user.email });
+      assert.equal(res.status, 503);
+      assert.equal(res.body.errorCode, "EMAIL_NOT_CONFIGURED");
+      // টোকেন তৈরিই হয়নি — undeliverable লিঙ্ক কখনো বাস্তব হয় না।
+      assert.equal(await mongoose.model("ResetToken").countDocuments({}), 0);
+    });
+
+    it("full flow: link → one-time reset → login with the new password", async () =>
+      withOutbox(async () => {
+        const s = await registerUser(request);
+
+        const forgot = await request.post("/api/v1/auth/forgot-password").send({ email: s.user.email });
+        assert.equal(forgot.status, 200);
+        // API response must never carry the raw token.
+        assert.ok(!JSON.stringify(forgot.body).includes("token"));
+
+        const { outbox } = await captureResetLink(s.user.email);
+        assert.equal(outbox.length, 1);
+        assert.match(outbox[0].text, /\/reset\?token=/);
+        const raw = outbox[0].text.match(/token=([A-Za-z0-9_-]+)/)[1];
+
+        // Weak password rejected by the shared zod rules.
+        const weak = await request.post("/api/v1/auth/reset-password").send({ token: raw, newPassword: "short" });
+        assert.equal(weak.status, 400);
+        assert.equal(weak.body.errorCode, "VALIDATION_ERROR");
+
+        // Wrong/expired-looking token first is fine; valid token now.
+        const ok = await request.post("/api/v1/auth/reset-password").send({ token: raw, newPassword: "ResetMe123" });
+        assert.equal(ok.status, 200);
+
+        // Token is single-use — reuse is refused.
+        const again = await request.post("/api/v1/auth/reset-password").send({ token: raw, newPassword: "ResetMe456" });
+        assert.equal(again.status, 400);
+        assert.equal(again.body.errorCode, "INVALID_RESET_TOKEN");
+
+        // Login with the new password works; the old one does not.
+        const login = await request.post("/api/v1/auth/login").send({ email: s.user.email, password: "ResetMe123" });
+        assert.equal(login.status, 200);
+        const stale = await request.post("/api/v1/auth/login").send({ email: s.user.email, password: "Rahim@12345" });
+        assert.equal(stale.status, 401);
+
+        // Existing sessions are revoked on reset (refresh token is dead).
+        const refresh = await request.post("/api/v1/auth/refresh").send({ refreshToken: s.refreshToken });
+        assert.equal(refresh.status, 401);
+      }));
+
+    it("expired token → 400 RESET_TOKEN_EXPIRED", async () => {
+      const s = await registerUser(request);
+      const raw = randomToken(32);
+      await mongoose.model("ResetToken").create({
+        user: s.user.id,
+        tokenHash: hashToken(raw),
+        expiresAt: new Date(Date.now() - 60 * 1000),
+        purpose: "PASSWORD_RESET",
+      });
+      const res = await request.post("/api/v1/auth/reset-password").send({ token: raw, newPassword: "FreshPass1" });
+      assert.equal(res.status, 400);
+      assert.equal(res.body.errorCode, "RESET_TOKEN_EXPIRED");
+    });
+
+    it("unknown/tampered token → 400 INVALID_RESET_TOKEN", async () => {
+      const res = await request.post("/api/v1/auth/reset-password").send({
+        token: randomToken(32),
+        newPassword: "FreshPass1",
+      });
+      assert.equal(res.status, 400);
+      assert.equal(res.body.errorCode, "INVALID_RESET_TOKEN");
     });
 
     it("resets the password with a valid one-time token", async () => {

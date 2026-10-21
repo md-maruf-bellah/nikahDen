@@ -17,16 +17,56 @@ function getTransporter() {
 }
 
 /**
- * Sends an email when SMTP is configured. In development without SMTP the
- * message is printed to the console so flows (e.g. reset password) stay
- * testable. Returns true when "sent" (logged), false when skipped entirely.
+ * True when a real mail path exists: either SMTP is configured, or the test
+ * outbox (below) is switched on. Used to fail loudly BEFORE creating a
+ * password-reset token, so an undeliverable mail never leaves a live token
+ * behind.
+ */
+export function isMailConfigured() {
+  return Boolean(env.SMTP_HOST) || outboxEnabled();
+}
+
+// ---------------------------------------------------------------------------
+// Test outbox — NOT a delivery channel.
+//
+// Tests set MAIL_OUTBOX=1 to capture an outgoing mail in memory instead of
+// sending it, so a test can follow the emailed reset link end-to-end. It is
+// opt-in via process.env (evaluated per call, so a test can toggle it),
+// never written to any log, and never reachable in production: the raw reset
+// token must not appear in server logs.
+// ---------------------------------------------------------------------------
+const outbox = [];
+
+const outboxEnabled = () => process.env.MAIL_OUTBOX === "1";
+
+/** Removes and returns everything captured since the last call (tests only). */
+export function takeOutbox() {
+  return outbox.splice(0, outbox.length);
+}
+
+/**
+ * Sends an email through SMTP.
+ *
+ * Never logs the message body — reset mails contain a single-use raw token,
+ * and spec forbids exposing reset tokens in logs. Without SMTP the mail is
+ * skipped and reported as `{ delivered: false, dev: true }` so the caller can
+ * surface a clear "email service is not configured" error instead of silently
+ * bypassing verification.
+ *
+ * @returns {Promise<{delivered: boolean, dev: boolean}>}
  */
 export async function sendMail({ to, subject, text, html }) {
+  if (outboxEnabled()) {
+    outbox.push({ to, subject, text: text ?? "", html: html ?? null, at: new Date() });
+    return { delivered: true, dev: false };
+  }
+
   const t = getTransporter();
   if (!t) {
-    console.log(`[mail][dev, no SMTP] To: ${to} | Subject: ${subject}\n${text ?? ""}`);
+    console.warn(`[mail] SMTP not configured — message to <${to}> ("${subject}") was NOT sent.`);
     return { delivered: false, dev: true };
   }
+
   try {
     await t.sendMail({ from: env.MAIL_FROM, to, subject, text, html });
     return { delivered: true, dev: false };

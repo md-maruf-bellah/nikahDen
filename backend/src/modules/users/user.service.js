@@ -95,7 +95,32 @@ export async function listUsers({ page = 1, limit = 10, search, role, status, so
     User.find(filter).sort(sort).skip(skip).limit(l).select(PUBLIC_FIELDS).lean(),
   ]);
 
-  const items = docs.map((u) => toPublicUser(u));
+  const userIds = docs.map((u) => u._id);
+  const [biodatas, subs] = await Promise.all([
+    Biodata.find({ user: { $in: userIds } }).select("user biodataNo status gender district occupation").lean(),
+    Subscription.find({ user: { $in: userIds }, status: "ACTIVE" }).select("user plan tier").lean(),
+  ]);
+  const bioMap = new Map(biodatas.map((b) => [b.user.toString(), {
+    id: b._id.toString(),
+    biodataNo: b.biodataNo,
+    status: b.status,
+    gender: b.gender,
+    district: b.district,
+    occupation: b.occupation,
+  }]));
+  const subMap = new Map(subs.map((s) => [s.user.toString(), {
+    plan: s.plan,
+    tier: s.tier,
+  }]));
+
+  const items = docs.map((u) => {
+    const pub = toPublicUser(u);
+    return {
+      ...pub,
+      biodata: bioMap.get(pub.id) || null,
+      subscription: subMap.get(pub.id) || null,
+    };
+  });
   const canDeleteSuperAdmin = actor?.role === ROLES.SUPERADMIN;
 
   return { items, pagination: buildPagination(total, p, l), meta: { canDeleteSuperAdmin } };
@@ -147,12 +172,14 @@ export async function previewMessagingIntent(viewerId, idList = []) {
   const ids = [...new Set(idList.filter(isValidObjectId))].slice(0, 25);
   if (!ids.length) return { items: [] };
 
-  // প্রেরকের active plan (messagingGuard.activePlanFor-এর হুবহু নকল — ছোট রাখতে এখানেই)
-  const sub = await Subscription.findOne({
-    user: viewerId,
-    status: "ACTIVE",
-    expiresAt: { $gt: new Date() },
-  }).populate("plan", "name messagingEnabled messagingLimit");
+  const [sub, viewerBio] = await Promise.all([
+    Subscription.findOne({
+      user: viewerId,
+      status: "ACTIVE",
+      expiresAt: { $gt: new Date() },
+    }).populate("plan", "name messagingEnabled messagingLimit"),
+    Biodata.findOne({ user: viewerId }).select("religion").lean(),
+  ]);
   const plan = sub?.plan?._id
     ? {
         messagingEnabled: sub.plan.messagingEnabled !== false,
@@ -171,6 +198,14 @@ export async function previewMessagingIntent(viewerId, idList = []) {
       // block — দুই দিকের যেকোনোটি (নীরব: কারণ বলা হয় না)
       if (await isBlockedBetween(viewerId, id)) {
         return { id, canMessage: false, blocked: true, reason: null };
+      }
+
+      // ধর্মভিত্তিক ইন্টারঅ্যাকশন চেক: স্বধর্মীয় সংরক্ষণ ও পারমিশন নীতি
+      if (viewerBio?.religion) {
+        const targetBio = await Biodata.findOne({ user: id }).select("religion allowCrossReligion").lean();
+        if (targetBio?.religion && targetBio.religion !== viewerBio.religion && !targetBio.allowCrossReligion) {
+          return { id, canMessage: false, blocked: false, reason: PREVIEW_REASONS.CROSS_RELIGION_RESTRICTED };
+        }
       }
 
       // match থাকলে সব সীমা বাইপাস — messagingGuard-এর নিয়মই

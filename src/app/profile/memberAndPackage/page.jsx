@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, CreditCard, Zap } from "lucide-react";
+import { ChevronDown, CreditCard, History, Loader2, Zap } from "lucide-react";
 import { membershipApi, biodataApi } from "@/lib/api";
+import { ledgerEntry } from "@/lib/connects.core.mjs";
 import CompletionCard from "../biodata/CompletionCard";
 
 const MembershipDashboard = () => {
@@ -10,6 +11,9 @@ const MembershipDashboard = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [data, setData] = useState(null);
   const [completion, setCompletion] = useState(null);
+  const [packs, setPacks] = useState([]);
+  const [ledger, setLedger] = useState(null); // null = not fetched yet
+  const [ledgerLoading, setLedgerLoading] = useState(false);
 
   useEffect(() => {
     membershipApi
@@ -21,7 +25,23 @@ const MembershipDashboard = () => {
       .completion()
       .then((d) => setCompletion(d.hasBiodata ? d : null))
       .catch(() => {});
+    // কেনার প্যাক তালিকা — চেকআউটে পাঠানোর জন্য (সার্ভারেই সক্রিয় প্যাক ফিল্টার)
+    membershipApi
+      .packs()
+      .then((p) => setPacks(Array.isArray(p) ? p : []))
+      .catch(() => setPacks([]));
   }, []);
+
+  // কানেক্ট হিস্ট্রি খোলা হলে একবার লোড — আসল লেজার (পে-করা ক্রেডিট/খরচ), সিড করা ডেটা নয়
+  useEffect(() => {
+    if (activeModal !== "ledger" || ledger !== null || ledgerLoading) return;
+    setLedgerLoading(true);
+    membershipApi
+      .ledger({ limit: 15 })
+      .then((res) => setLedger(Array.isArray(res?.data) ? res.data : []))
+      .catch(() => setLedger([]))
+      .finally(() => setLedgerLoading(false));
+  }, [activeModal, ledger, ledgerLoading]);
 
   const plan = data?.subscription?.plan;
   const isActive = data?.subscription?.isActive;
@@ -88,9 +108,13 @@ const MembershipDashboard = () => {
               <p className="text-red-500 font-bold text-2xl mb-4">{connects}</p>
               <p className="text-sm mb-6 leading-relaxed">
                 প্রতিটি বায়োডাটা দেখতে ১ টি করে কানেক্টে ব্যবহার হবে।
-                <span className="text-red-400 cursor-pointer hover:underline ml-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal("ledger")}
+                  className="text-red-400 cursor-pointer hover:underline ml-1"
+                >
                   বিস্তারিত দেখুন
-                </span>
+                </button>
                 ।
               </p>
               <button
@@ -168,7 +192,7 @@ const MembershipDashboard = () => {
         </label>
       </div>
 
-      {/* Buy Connect Modal */}
+      {/* Buy Connect Modal — সরাসরি প্যাক সিলেক্ট করে চেকআউটে যায় */}
       <input
         type="checkbox"
         className="modal-toggle"
@@ -180,9 +204,121 @@ const MembershipDashboard = () => {
           <h3 className="font-bold text-lg flex items-center gap-2">
             <CreditCard className="text-red-500" /> নতুন কানেক্ট কিনুন
           </h3>
-          <p className="py-4 ">
-            আপনার একাউন্টে নতুন কানেক্ট যোগ করতে নিচের বাটনে ক্লিক করুন।
+          <p className="pt-3 pb-1 text-sm text-gray-600">
+            আপনার বর্তমান ব্যালেন্স:{" "}
+            <span className="font-bold text-red-500">{connects}</span> — কানেক্ট
+            চেকআউট পে করে কেনা যায়; পেমেন্ট সফল হলেই ব্যালেন্সে যোগ হবে।
           </p>
+
+          {packs.length > 0 ? (
+            <ul className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+              {packs.map((p) => (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 border border-red-100 rounded-md px-3 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-semibold">{p.nameBn || p.name}</p>
+                    <p className="text-xs text-gray-500">{p.connects} কানেক্ট</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-bold text-red-500">
+                      ৳{(p.price || 0).toLocaleString("bn-BD")}
+                    </span>
+                    <button
+                      className="btn btn-error btn-sm text-white normal-case px-4"
+                      onClick={() => router.push(`/checkout?packId=${p.id}`)}
+                    >
+                      কিনুন
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-4 text-sm text-gray-500">
+              এখন কোনো সক্রিয় কানেক্ট প্যাক নেই। চেকআউট থেকে দেখে আসতে পারেন।
+            </p>
+          )}
+
+          <div className="modal-action">
+            <button
+              className="btn btn-ghost"
+              onClick={() => setActiveModal(null)}
+            >
+              বাতিল
+            </button>
+            <button
+              className="btn btn-outline btn-error text-red-500"
+              onClick={() => router.push("/checkout?kind=PACK")}
+            >
+              চেকআউটে যান
+            </button>
+          </div>
+        </div>
+        <label className="modal-backdrop" onClick={() => setActiveModal(null)}>
+          Close
+        </label>
+      </div>
+
+      {/* Connect Ledger Modal — আসল লেনদেনের হিস্ট্রি */}
+      <input
+        type="checkbox"
+        className="modal-toggle"
+        checked={activeModal === "ledger"}
+        readOnly
+      />
+      <div className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box bg-white">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <History className="text-red-500" /> কানেক্ট হিস্ট্রি
+          </h3>
+
+          {ledgerLoading ? (
+            <p className="py-5 text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" /> লোড হচ্ছে...
+            </p>
+          ) : ledger?.length ? (
+            <ul className="mt-3 divide-y divide-red-50 max-h-72 overflow-y-auto">
+              {ledger.map((row) => {
+                const entry = ledgerEntry(row);
+                return (
+                  <li
+                    key={entry.id}
+                    className="py-2 flex items-start justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{entry.label}</p>
+                      <p className="text-xs text-gray-500">
+                        {entry.createdAt
+                          ? new Date(entry.createdAt).toLocaleDateString("bn-BD")
+                          : ""}
+                        {entry.reason ? ` • ${entry.reason}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p
+                        className={`text-sm font-bold ${
+                          entry.credited ? "text-green-600" : "text-red-500"
+                        }`}
+                      >
+                        {entry.amount > 0 ? "+" : ""}
+                        {entry.amount}
+                      </p>
+                      <p className="text-[11px] text-gray-400">
+                        ব্যালেন্স {entry.balanceAfter}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="py-5 text-sm text-gray-500">
+              এখনো কোনো কানেক্ট লেনদেন নেই — প্যাক কিনে শুরু করুন।
+            </p>
+          )}
+
           <div className="modal-action">
             <button
               className="btn btn-ghost"
@@ -192,9 +328,12 @@ const MembershipDashboard = () => {
             </button>
             <button
               className="btn btn-error text-white"
-              onClick={() => router.push("/member")}
+              onClick={() => {
+                setActiveModal(null);
+                router.push("/checkout?kind=PACK");
+              }}
             >
-              কিনুন
+              কানেক্ট কিনুন
             </button>
           </div>
         </div>

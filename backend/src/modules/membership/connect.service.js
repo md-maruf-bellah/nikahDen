@@ -54,6 +54,45 @@ export async function deductConnectForView({ userId, biodataId, ownerId, amount,
   return doc[0];
 }
 
+/**
+ * True when the user already has this biodata's photos: either they paid the
+ * one-time photo unlock, OR they paid the full biodata view (a full view has
+ * always included photos — never charge twice for the same access).
+ */
+export async function hasPhotoAccess(userId, biodataId) {
+  const found = await ConnectTransaction.exists({
+    user: userId,
+    biodata: biodataId,
+    type: { $in: [CONNECT_TYPES.PHOTO_UNLOCK, CONNECT_TYPES.BIODATA_VIEW] },
+  });
+  return Boolean(found);
+}
+
+/**
+ * Generic one-time deduction used by non-view charges (photo unlock,
+ * guardian connection). One ledger row per (user, type, biodata) so the same
+ * billable action is never charged twice.
+ */
+export async function deductConnectOnce({ userId, type, amount, reason, biodata = null, ownerId = null }) {
+  if (biodata) {
+    const already = await ConnectTransaction.exists({ user: userId, biodata, type });
+    if (already) return { alreadyCharged: true };
+  }
+  const balance = await getConnectBalance(userId);
+  if (balance < amount) return null;
+  const balanceAfter = balance - amount;
+  const doc = await ConnectTransaction.create([{
+    user: userId,
+    type,
+    amount: -amount,
+    balanceAfter,
+    reason: reason || "Connect spend",
+    biodata,
+    viewedByUser: ownerId,
+  }]);
+  return { alreadyCharged: false, txn: doc[0], balanceAfter };
+}
+
 /** Generic credit used by the orders module (grants are recorded here). */
 export async function addConnectCredit({ userId, type, amount, reason, order = null, metadata = {} }, session = null) {
   const balance = await getConnectBalance(userId, session);
@@ -73,4 +112,12 @@ export async function addConnectCredit({ userId, type, amount, reason, order = n
   return doc[0];
 }
 
-export default { getConnectBalance, addConnectCredit, deductConnectForView, hasViewedBiodata, lastBalanceBefore };
+export default {
+  getConnectBalance,
+  addConnectCredit,
+  deductConnectForView,
+  hasViewedBiodata,
+  hasPhotoAccess,
+  deductConnectOnce,
+  lastBalanceBefore,
+};

@@ -48,11 +48,16 @@ export async function recordAdminAction(action, actor, target, extra = {}) {
   }
 }
 
-/** GET /admin/audit/events?action=&limit= — নতুন থেকে পুরনো ক্রম। */
-export async function auditHistory({ action, limit = 100 } = {}) {
+/**
+ * GET /admin/audit/events?action=&prefix=&limit= — নতুন থেকে পুরনো ক্রম।
+ * action = নির্দিষ্ট অ্যাকশন (exact match); prefix = পরিবার (যেমন "GUARDIAN_") —
+ * দুটো একসাথে দিলে exact action জেতে।
+ */
+export async function auditHistory({ action, prefix, limit = 100 } = {}) {
   await ensureAdminAuditCapped();
   const filter = {};
   if (action) filter.action = action;
+  else if (prefix) filter.action = { $regex: `^${String(prefix).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}` };
   const capped = Math.min(Math.max(Number(limit) || 100, 1), 500);
   return AdminAuditEvent.find(filter).sort({ $natural: -1 }).limit(capped).lean();
 }

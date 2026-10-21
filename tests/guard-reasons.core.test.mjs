@@ -79,11 +79,12 @@ describe("guard reasons — ম্যানিফেস্টের ভেতর
     }
   });
 
-  it("প্রতিটি errorCode-র notice আছে — বা সচেতনভাবে null (BLOCKED = নীরব দেয়াল)", () => {
+  it("প্রতিটি errorCode-র notice আছে — বা সচেতনভাবে null (BLOCKED / CROSS_RELIGION = নীরব বা সার্ভার দেয়াল)", () => {
     assert.deepEqual(Object.keys(GUARD_NOTICES).sort(), Object.keys(GUARD_ERROR_CODES).sort());
     assert.equal(GUARD_NOTICES[GUARD_ERROR_CODES.BLOCKED], null, "BLOCKED-notice null হতেই হবে");
+    assert.equal(GUARD_NOTICES[GUARD_ERROR_CODES.CROSS_RELIGION_RESTRICTED], null, "CROSS_RELIGION notice null হতেই হবে");
     for (const [code, notice] of Object.entries(GUARD_NOTICES)) {
-      if (code === GUARD_ERROR_CODES.BLOCKED) continue;
+      if (code === GUARD_ERROR_CODES.BLOCKED || code === GUARD_ERROR_CODES.CROSS_RELIGION_RESTRICTED) continue;
       assert.equal(notice?.upgrade, true, `${code}: আপগ্রেড-লিংকসহ notice হতে হবে`);
       assert.ok(notice?.text?.length > 0, `${code}: notice-টেক্সট নেই`);
     }
@@ -143,6 +144,7 @@ describe("guard reasons — backend থেকে ম্যানিফেস্�
     assert.ok(guardSrc.includes("GUARD_ERROR_CODES.NO_MESSAGING_PACKAGE"));
     assert.ok(guardSrc.includes("GUARD_ERROR_CODES.MESSAGING_UPGRADE_REQUIRED"));
     assert.ok(guardSrc.includes("GUARD_ERROR_CODES.MESSAGING_LIMIT_REACHED"));
+    assert.ok(guardSrc.includes("GUARD_ERROR_CODES.CROSS_RELIGION_RESTRICTED"));
     assert.ok(blockSrc.includes("GUARD_ERROR_CODES.BLOCKED"), "BLOCKED block.service-এর চৌকাঠে ছাড়তে হবে");
   });
 

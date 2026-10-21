@@ -7,6 +7,7 @@ import Like from "../../models/like.model.js";
 import ConnectTransaction from "../../models/connectTransaction.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { isValidObjectId } from "../../utils/helpers.js";
+import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { getConnectBalance } from "./connect.service.js";
 import { CONNECT_TYPES } from "../../constants/index.js";
 
@@ -88,6 +89,38 @@ export async function deletePack(id) {
 }
 
 // ---------------------------------------------------------------------------
+// My connect ledger — every credit/debit the caller's balance is built from.
+// Rows are always scoped to the requesting user; balances are auditable, never
+// client-writable (credits only ever arrive through a paid order).
+// ---------------------------------------------------------------------------
+export async function myConnectLedger(userId, query = {}) {
+  const filter = { user: userId };
+  if (query.type) filter.type = query.type;
+
+  const { page, limit, skip } = parsePagination(query);
+  const [total, docs] = await Promise.all([
+    ConnectTransaction.countDocuments(filter),
+    ConnectTransaction.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+  ]);
+
+  const items = docs.map((d) => ({
+    id: d._id.toString(),
+    type: d.type,
+    amount: d.amount,
+    balanceAfter: d.balanceAfter,
+    reason: d.reason || "",
+    order: d.order ? d.order.toString() : null,
+    createdAt: d.createdAt,
+  }));
+
+  return { items, pagination: buildPagination(total, page, limit) };
+}
+
+// ---------------------------------------------------------------------------
 // My membership dashboard (used by the member dashboard UI)
 // ---------------------------------------------------------------------------
 export async function myMembership(userId) {
@@ -140,4 +173,13 @@ export async function myMembership(userId) {
   };
 }
 
-export default { listPlans, getPlan, createPlan, updatePlan, deletePlan, listPacks, myMembership };
+export default {
+  listPlans,
+  getPlan,
+  createPlan,
+  updatePlan,
+  deletePlan,
+  listPacks,
+  myMembership,
+  myConnectLedger,
+};

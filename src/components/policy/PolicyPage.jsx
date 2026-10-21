@@ -2,29 +2,28 @@
 
 import Link from "next/link";
 import { ChevronRight, FileText } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
 
 /**
  * পলিসি পেজের শেয়ার্ড লেআউট — /privacy, /terms, /refund তিনটিই এটা ব্যবহার করে।
- * /about-এর হেডার-স্টাইল (bg-[#ff6b6b] ব্যানার + ব্রেডক্রাম্ব) আর কনটেন্ট টাইপোগ্রাফি
- * হুবহু ধরে রাখা হয়েছে যাতে ডিজাইন সিস্টেম এক থাকে।
- *
- * sections: [{ title, body: [paragraph, ...], list?: [item, ...] }]
  */
 export default function PolicyPage({ title, subtitle, updated, sections, policyNav }) {
+  const { t, isRTL } = useLanguage();
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header Banner — /about পেজের মতোই */}
-      <div className="bg-[#ff6b6b] py-10 text-center mb-12">
+      <div className="bg-[#ff6b6b] py-10 text-center mb-12 text-white">
         <h1 className="text-3xl font-bold mb-2 tracking-wide">{title}</h1>
         <p className="text-md text-red-100 opacity-90">
-          <Link href="/">হোম</Link> / {title}
+          <Link href="/" className="hover:underline">{t("nav.home", "হোম")}</Link> / {title}
         </p>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Content */}
-          <article className="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10">
+          <article className="lg:col-span-8 bg-white text-gray-800 rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10">
             {subtitle && (
               <p className="text-gray-500 leading-relaxed mb-8">{subtitle}</p>
             )}
@@ -45,7 +44,7 @@ export default function PolicyPage({ title, subtitle, updated, sections, policyN
                         <li key={i} className="flex gap-2">
                           <ChevronRight
                             size={16}
-                            className="text-[#fd6969] shrink-0 mt-0.5"
+                            className={`text-[#fd6969] shrink-0 mt-0.5 ${isRTL ? "rotate-180" : ""}`}
                             strokeWidth={3}
                           />
                           <span>{li}</span>
@@ -59,9 +58,9 @@ export default function PolicyPage({ title, subtitle, updated, sections, policyN
 
             {updated && (
               <p className="text-xs text-gray-400 mt-10 pt-4 border-t border-gray-100">
-                সর্বশেষ হালনাগাদ: {updated} — পলিসি সংক্রান্ত প্রশ্নে{" "}
+                {t("common.lastUpdated", "সর্বশেষ হালনাগাদ")}: {updated} —{" "}
                 <Link href="/contact" className="text-[#fd6969] font-semibold hover:underline">
-                  যোগাযোগ করুন
+                  {t("nav.contact", "যোগাযোগ করুন")}
                 </Link>
                 ।
               </p>
@@ -73,7 +72,7 @@ export default function PolicyPage({ title, subtitle, updated, sections, policyN
             <div className="bg-base-200/60 rounded-2xl border border-gray-100 p-6 lg:sticky lg:top-24">
               <h3 className="flex items-center gap-2 font-bold text-gray-700 mb-4">
                 <FileText size={16} className="text-[#fd6969]" />
-                পলিসি সমূহ
+                {t("footer.policies", "পলিসি সমূহ")}
               </h3>
               <ul className="space-y-1">
                 {policyNav.map((p) => (
@@ -86,7 +85,7 @@ export default function PolicyPage({ title, subtitle, updated, sections, policyN
                           : "text-gray-600 hover:bg-red-50/60 hover:text-[#fd6969]"
                       }`}
                     >
-                      <ChevronRight size={14} className="text-[#fd6969]" strokeWidth={3} />
+                      <ChevronRight size={14} className={`text-[#fd6969] ${isRTL ? "rotate-180" : ""}`} strokeWidth={3} />
                       {p.label}
                     </Link>
                   </li>
@@ -94,8 +93,7 @@ export default function PolicyPage({ title, subtitle, updated, sections, policyN
               </ul>
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  নিকাহ্ দ্বীন — মুসলিম পাত্র-পাত্রীর বিশ্বস্ত বায়োডাটা প্ল্যাটফর্ম। আপনার
-                  তথ্যের নিরাপত্তা ও আস্থাই আমাদের অগ্রাধিকার।
+                  {t("footer.aboutText", "নিকাহ্ দ্বীন — মুসলিম পাত্র-পাত্রীর বিশ্বস্ত বায়োডাটা প্ল্যাটফর্ম। আপনার তথ্যের নিরাপত্তা ও আস্থাই আমাদের অগ্রাধিকার।")}
                 </p>
               </div>
             </div>

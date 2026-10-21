@@ -8,6 +8,7 @@ const requiredInProd = [
   "MONGODB_URI",
   "JWT_ACCESS_SECRET",
   "JWT_REFRESH_SECRET",
+  "GUARDIAN_SESSION_SECRET",
 ];
 
 if (isProd) {
@@ -38,6 +39,14 @@ const env = {
     process.env.JWT_REFRESH_SECRET || "dev-refresh-secret-change-me-in-production",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
 
+  // Guardian/Family — অভিভাবকের নিজস্ব identity (সদস্যের access-token থেকে আলাদা
+  // সিক্রেট): consent link সাইন ও guardian-session ইস্যু হয় এই সিক্রেটে।
+  // member authenticate() এই সিক্রেট যাচাই করে না — দুই জগৎ পরস্পর অচল।
+  GUARDIAN_SESSION_SECRET:
+    process.env.GUARDIAN_SESSION_SECRET || "dev-guardian-session-secret-change-me",
+  GUARDIAN_SESSION_EXPIRES_IN: process.env.GUARDIAN_SESSION_EXPIRES_IN || "24h",
+  GUARDIAN_LINK_EXPIRES_IN: process.env.GUARDIAN_LINK_EXPIRES_IN || "7d",
+
   // রোটেশনের পর এই সেকেন্ডের ভেতরে পুরনো refresh token আবার এলে সেটি
   // আক্রমণ নয় — কনকারেন্ট ট্যাব/রিস্টার্ট-পরবর্তী বেনাইন রেস ধরা হয়
   // (রিফ্রেশ-স্ট্যাম্পিডে ফ্যামিলি-রিভোকে লগইন মারা যায় না)। গ্রেস শেষে
@@ -54,6 +63,15 @@ const env = {
 
   // Cost (in connects) for a member to view another member's biodata.
   VIEW_CONNECT_COST: parseInt(process.env.VIEW_CONNECT_COST || "1", 10),
+
+  // Cost (in connects) to unlock a privacy-protected photo (PHOTO_UNLOCK ledger).
+  // 0 disables the photo charge (photos stay behind membership/match rules).
+  PHOTO_UNLOCK_COST: parseInt(process.env.PHOTO_UNLOCK_COST || "1", 10),
+
+  // Cost (in connects) for a guardian-to-guardian contact request (the
+  // "guardian connection" billable action). 0 (default) keeps it free — the
+  // original behavior.
+  GUARDIAN_REQUEST_COST: parseInt(process.env.GUARDIAN_REQUEST_COST || "0", 10),
 
   // In-memory / local uploads folder. Swap for S3/Cloudinary in production.
   UPLOAD_DIR: process.env.UPLOAD_DIR || "uploads",

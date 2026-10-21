@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Send, ArrowLeft, Ban, CheckCircle2, Check, CheckCheck, Clock, CreditCard, TriangleAlert } from "lucide-react";
+import { Search, Send, ArrowLeft, Ban, CheckCircle2, Check, CheckCheck, Clock, CreditCard, TriangleAlert, BookOpen, ChevronDown, ChevronUp, HeartHandshake, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { conversationApi, blockApi, userApi, tokenStore } from "@/lib/api";
+import { conversationApi, blockApi, userApi, biodataApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { getAdabForReligions, RELIGIOUS_PLEDGE_TEXT } from "@/lib/religiousAdab";
 import {
   ICE_BREAKER_TEXT,
   asArray,
@@ -50,6 +51,9 @@ const MessagingApp = () => {
   const [loading, setLoading] = useState(true);
   const [blockedByMe, setBlockedByMe] = useState(false);
   const [blockBusy, setBlockBusy] = useState(false);
+  const [myBiodata, setMyBiodata] = useState(null);
+  const [showAdabDetails, setShowAdabDetails] = useState(false);
+  const [adabPledged, setAdabPledged] = useState(false);
   // সদস্য-খোঁজা: কথোপকথনের বাইরে নতুন মানুষের সাথে শুরু করার জন্য
   const [memberResults, setMemberResults] = useState(null); // null = বন্ধ, [] = ফলাফল নেই
   const [searchBusy, setSearchBusy] = useState(false);
@@ -109,6 +113,28 @@ const MessagingApp = () => {
       cancelled = true;
     };
   }, [loadConversations]);
+
+  useEffect(() => {
+    if (user?.id) {
+      biodataApi.mine().then((b) => setMyBiodata(b)).catch(() => {});
+      try {
+        const stored = localStorage.getItem("nikahdeen_adab_pledge_accepted");
+        if (stored === "true") setAdabPledged(true);
+      } catch {}
+    }
+  }, [user?.id]);
+
+  const handleAcceptPledge = () => {
+    setAdabPledged(true);
+    try {
+      localStorage.setItem("nikahdeen_adab_pledge_accepted", "true");
+    } catch {}
+  };
+
+  const myReligion = myBiodata?.religion || activeChat?.me?.religion || "Islam";
+  const partnerReligion = activeChat?.partner?.religion;
+  const isCrossReligion = Boolean(myReligion && partnerReligion && myReligion !== partnerReligion);
+  const adabData = getAdabForReligions(myReligion, partnerReligion);
 
   const openChat = useCallback(
     async (conversation) => {
@@ -202,6 +228,7 @@ const MessagingApp = () => {
 
   const handleSendMessage = async () => {
     if (!canSendMessage(inputText, activeChat, blockedByMe)) return;
+    if (!adabPledged) handleAcceptPledge();
     const text = inputText;
     const tmpId = `tmp-${Date.now()}`;
     setInputText("");
@@ -543,9 +570,19 @@ const MessagingApp = () => {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 text-sm">
-                    {activeChat.partner?.name || "ব্যবহারকারী"}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-800 text-sm">
+                      {activeChat.partner?.name || "ব্যবহারকারী"}
+                    </h3>
+                    {activeChat.partner?.religion && (
+                      <span className="badge badge-outline badge-xs text-[10px] px-1.5 py-0.5 border-gray-300 text-gray-600">
+                        {activeChat.partner.religion === "Islam" ? "ইসলাম" :
+                         activeChat.partner.religion === "Hinduism" ? "সনাতন" :
+                         activeChat.partner.religion === "Christianity" ? "খ্রিস্টান" :
+                         activeChat.partner.religion === "Buddhism" ? "বৌদ্ধ" : activeChat.partner.religion}
+                      </span>
+                    )}
+                  </div>
                   {partnerTyping ? (
                     <p className="text-[11px] text-[#fd6969] animate-pulse">টাইপ করছেন...</p>
                   ) : onlineMap[activeChat.partner?.id] ? (
@@ -573,67 +610,147 @@ const MessagingApp = () => {
               )}
             </div>
 
+            {/* Religious Adab Banner */}
+            <div className={`px-4 py-2 border-b transition-colors ${adabData.bgColor}`}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <BookOpen size={15} className={`shrink-0 ${adabData.iconColor}`} />
+                  <span className="font-semibold text-xs truncate">{adabData.title}</span>
+                  <span className="text-[11px] opacity-75 hidden md:inline truncate">— {adabData.subtitle}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdabDetails((prev) => !prev)}
+                  className="btn btn-ghost btn-xs text-[11px] px-2 h-6 min-h-0 flex items-center gap-1 opacity-90 hover:opacity-100 shrink-0"
+                >
+                  <span>{showAdabDetails ? "সংক্ষিপ্ত" : "আদব নির্দেশিকা"}</span>
+                  {showAdabDetails ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+              </div>
+              {showAdabDetails && (
+                <div className="mt-2 pt-2 border-t border-current/15 space-y-1">
+                  {adabData.rules.map((rule, idx) => (
+                    <div key={idx} className="flex items-start gap-1.5 text-[11px] leading-relaxed">
+                      <span className="font-bold shrink-0">•</span>
+                      <span>{rule}</span>
+                    </div>
+                  ))}
+                  {isCrossReligion && (
+                    <p className="text-[11px] font-semibold mt-1.5 text-purple-800 bg-purple-100/70 rounded px-2 py-1">
+                      নোট: এটি একটি আন্তঃধর্মীয় যোগাযোগ। উভয় পক্ষের অনুমোদন সাপেক্ষে উন্মুক্ত। পরস্পরের বিশ্বাসকে পূর্ণ শ্রদ্ধা করুন।
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Message Container */}
             <div className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8 chat-scroll">
-              {messages.map((msg) => {
-                const isMe = msg.sender === user?.id;
-                const kind = receiptKind(msg, user?.id);
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                  >
-                    <div
-                      className={`flex items-center gap-3 mb-2 ${isMe ? "flex-row-reverse" : ""}`}
-                    >
-                      <img
-                        src={`https://i.pravatar.cc/150?u=${isMe ? "me" : activeChat.partner?.id || activeChat.id}`}
-                        className="w-8 h-8 rounded-full"
-                        alt="avatar"
-                      />
-                      <div className={isMe ? "text-right" : "text-left"}>
-                        <h5 className="text-[12px] font-bold text-gray-800">
-                          {isMe ? "আমি" : activeChat.partner?.name || "ব্যবহারকারী"}
-                        </h5>
-                        <p className="text-[10px] text-gray-400">
-                          {timeLabel(msg.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`max-w-[85%] md:max-w-[70%] p-4 rounded-2xl text-sm shadow-sm ${
-                        isMe
-                          ? "bg-[#fff5f5] text-gray-700 rounded-tr-none border border-red-50"
-                          : "bg-gray-50 text-gray-700 rounded-tl-none border border-gray-100"
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                    {kind && (
-                      <span
-                        className="flex items-center gap-1 mt-1 text-gray-400"
-                        aria-label={kind}
-                        title={
-                          kind === "read"
-                            ? "পড়েছেন"
-                            : kind === "sent"
-                              ? "পাঠানো হয়েছে"
-                              : "পাঠানো হচ্ছে"
-                        }
-                      >
-                        {kind === "pending" ? (
-                          <Clock size={12} />
-                        ) : kind === "sent" ? (
-                          <Check size={14} />
-                        ) : (
-                          <CheckCheck size={14} className="text-[#fd6969]" />
-                        )}
-                      </span>
-                    )}
+              {messages.length === 0 ? (
+                <div className="max-w-md mx-auto my-4 p-5 rounded-2xl bg-white border border-gray-200/80 shadow-sm text-center">
+                  <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3 ${adabData.bgColor}`}>
+                    <HeartHandshake size={24} className={adabData.iconColor} />
                   </div>
-                );
-              })}
+                  <h4 className="font-bold text-gray-800 text-base mb-1">{adabData.title}</h4>
+                  <p className="text-xs text-gray-500 mb-4">{adabData.subtitle}</p>
+
+                  <div className="text-left bg-gray-50 rounded-xl p-3.5 border border-gray-100 space-y-2 mb-4 text-xs text-gray-700">
+                    <p className="font-semibold text-gray-800 text-[12px] border-b border-gray-200/60 pb-1.5 mb-1.5">
+                      যোগাযোগের গুরুত্বপূর্ণ শিষ্টাচার:
+                    </p>
+                    {adabData.rules.map((rule, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="text-[#fd6969] font-bold shrink-0">•</span>
+                        <span className="leading-relaxed">{rule}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {!adabPledged ? (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl mb-4 text-left">
+                      <div className="flex items-start gap-2 text-xs text-amber-900 mb-2.5">
+                        <ShieldCheck size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                        <p className="leading-relaxed font-medium">{RELIGIOUS_PLEDGE_TEXT}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAcceptPledge}
+                        className="btn btn-sm w-full bg-emerald-600 hover:bg-emerald-700 text-white border-none gap-2 shadow-sm"
+                      >
+                        <CheckCircle2 size={16} /> আমি অঙ্গীকারে সম্মতি জানাচ্ছি
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 py-2 px-3 rounded-lg border border-emerald-200 mb-4 font-medium">
+                      <CheckCircle2 size={15} /> আপনি ধর্মীয় আদব ও শিষ্টাচার রক্ষার অঙ্গীকার করেছেন
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400">
+                    শালীন সম্ভাষণ ও শুভেচ্ছার মাধ্যমে কথোপকথন শুরু করতে নিচে মেসেজ লিখুন।
+                  </p>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const isMe = msg.sender === user?.id;
+                  const kind = receiptKind(msg, user?.id);
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`flex items-center gap-3 mb-2 ${isMe ? "flex-row-reverse" : ""}`}
+                      >
+                        <img
+                          src={`https://i.pravatar.cc/150?u=${isMe ? "me" : activeChat.partner?.id || activeChat.id}`}
+                          className="w-8 h-8 rounded-full"
+                          alt="avatar"
+                        />
+                        <div className={isMe ? "text-right" : "text-left"}>
+                          <h5 className="text-[12px] font-bold text-gray-800">
+                            {isMe ? "আমি" : activeChat.partner?.name || "ব্যবহারকারী"}
+                          </h5>
+                          <p className="text-[10px] text-gray-400">
+                            {timeLabel(msg.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`max-w-[85%] md:max-w-[70%] p-4 rounded-2xl text-sm shadow-sm ${
+                          isMe
+                            ? "bg-[#fff5f5] text-gray-700 rounded-tr-none border border-red-50"
+                            : "bg-gray-50 text-gray-700 rounded-tl-none border border-gray-100"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                      {kind && (
+                        <span
+                          className="flex items-center gap-1 mt-1 text-gray-400"
+                          aria-label={kind}
+                          title={
+                            kind === "read"
+                              ? "পড়েছেন"
+                              : kind === "sent"
+                                ? "পাঠানো হয়েছে"
+                                : "পাঠানো হচ্ছে"
+                          }
+                        >
+                          {kind === "pending" ? (
+                            <Clock size={12} />
+                          ) : kind === "sent" ? (
+                            <Check size={14} />
+                          ) : (
+                            <CheckCheck size={14} className="text-[#fd6969]" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
+              )}
               <div ref={scrollRef} />
             </div>
 

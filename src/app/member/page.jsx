@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import ConnectPackShop from "@/components/ConnectPackShop";
 
 const MembershipPlan = () => {
   const plans = [
@@ -127,6 +128,9 @@ const MembershipPlan = () => {
             </tfoot>
           </table>
         </div>
+
+        {/* শুধু কানেক্ট — connect packs straight into checkout */}
+        <ConnectPackShop />
       </div>
     </div>
   );

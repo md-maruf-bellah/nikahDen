@@ -264,4 +264,61 @@ describe("BIODATAS", () => {
       assert.equal(denied.status, 403);
     });
   });
+
+  describe("seen / profile views & like links", () => {
+    it("tracks profile views, increments count, notifies owner, and lists in /me/views", async () => {
+      const bride = await createApprovedBiodata({ firstName: "Fatima", lastName: "Zahra", gender: "FEMALE" });
+      const groom = await createApprovedBiodata({ firstName: "Rahim", lastName: "Khan", gender: "MALE" });
+
+      // Bride sets contactVisibility to PUBLIC so views don't require connects
+      await request.put("/api/v1/privacy/me").set(auth(bride.member.accessToken)).send({ contactVisibility: "PUBLIC" });
+
+      // Groom views Bride's biodata
+      const view1 = await request.get(`/api/v1/biodatas/${bride.biodata.id}`).set(auth(groom.member.accessToken));
+      assert.equal(view1.status, 200);
+
+      // Check Bride received a BIODATA_VIEW notification
+      const notifs1 = await request.get("/api/v1/notifications").set(auth(bride.member.accessToken));
+      assert.equal(notifs1.status, 200);
+      const viewNotif = notifs1.body.data.items.find((n) => n.type === "BIODATA_VIEW");
+      assert.ok(viewNotif, "Owner should receive a BIODATA_VIEW notification");
+      assert.equal(viewNotif.data.viewerBiodataId, groom.biodata.id);
+
+      // Groom views Bride's biodata again
+      const view2 = await request.get(`/api/v1/biodatas/${bride.biodata.id}`).set(auth(groom.member.accessToken));
+      assert.equal(view2.status, 200);
+
+      // Bride checks /api/v1/biodatas/me/views
+      const viewsRes = await request.get("/api/v1/biodatas/me/views").set(auth(bride.member.accessToken));
+      assert.equal(viewsRes.status, 200);
+      assert.equal(viewsRes.body.data.items.length, 1);
+      const viewerRecord = viewsRes.body.data.items[0];
+      assert.equal(viewerRecord.count, 2, "Count should be 2 after 2 views");
+      assert.equal(viewerRecord.viewerName, "Rahim Khan");
+      assert.equal(viewerRecord.biodata.id, groom.biodata.id);
+      assert.equal(viewsRes.body.data.stats.totalViews, 2);
+      assert.equal(viewsRes.body.data.stats.uniqueViewers, 1);
+    });
+
+    it("populates liker biodata in receivedLikes and notification data", async () => {
+      const bride = await createApprovedBiodata({ firstName: "Amina", lastName: "Khatun", gender: "FEMALE" });
+      const groom = await createApprovedBiodata({ firstName: "Karim", lastName: "Uddin", gender: "MALE" });
+
+      // Groom likes Bride
+      const likeRes = await request.post(`/api/v1/biodatas/${bride.biodata.id}/like`).set(auth(groom.member.accessToken));
+      assert.equal(likeRes.status, 201);
+
+      // Bride checks notifications
+      const notifs = await request.get("/api/v1/notifications").set(auth(bride.member.accessToken));
+      const likeNotif = notifs.body.data.items.find((n) => n.type === "BIODATA_LIKE");
+      assert.ok(likeNotif, "Bride should receive BIODATA_LIKE notification");
+      assert.equal(likeNotif.data.likerBiodataId, groom.biodata.id);
+
+      // Bride checks /api/v1/biodatas/likes/received
+      const recLikes = await request.get("/api/v1/biodatas/likes/received").set(auth(bride.member.accessToken));
+      assert.equal(recLikes.status, 200);
+      assert.equal(recLikes.body.data.length, 1);
+      assert.equal(recLikes.body.data[0].from.biodata.id, groom.biodata.id);
+    });
+  });
 });

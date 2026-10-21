@@ -74,7 +74,7 @@ describe("start-chat-button core — resolveGuardReason", () => {
     // কম্পোনেন্টের চুক্তি: প্রতিটা iconKey-এর lucide আইকন আছে — কী-সেট এক রাখা জরুরি
     assert.deepEqual(
       Object.keys(REASON_LABELS).sort(),
-      ["LIMIT_REACHED", "NO_PACKAGE", "UPGRADE_REQUIRED", "blocked"],
+      ["CROSS_RELIGION_RESTRICTED", "LIMIT_REACHED", "NO_PACKAGE", "UPGRADE_REQUIRED", "blocked"],
     );
     for (const { iconKey, text } of Object.values(REASON_LABELS)) {
       assert.equal(typeof iconKey, "string");

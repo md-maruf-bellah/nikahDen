@@ -2,6 +2,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/ApiResponse.js";
 import { toPublicUrl } from "../../middleware/upload.middleware.js";
 import * as biodataService from "./biodata.service.js";
+import { unlockBiodataPhoto } from "../privacy/privacy.service.js";
 import { computeCompletion, missingRequired } from "./biodata.completion.js";
 
 export const list = asyncHandler(async (req, res) => {
@@ -19,10 +20,21 @@ export const similar = asyncHandler(async (req, res) => {
   return sendSuccess(res, "Similar biodatas fetched", items);
 });
 
+// Point-unlock for privacy-protected photos (separate configurable charge).
+export const unlockPhoto = asyncHandler(async (req, res) => {
+  const result = await unlockBiodataPhoto(req.user.id, req.params.id);
+  return sendSuccess(res, "Photo unlocked", result);
+});
+
 // ---- own biodata ----
 export const getMine = asyncHandler(async (req, res) => {
   const biodata = await biodataService.getMyBiodata(req.user.id);
   return sendSuccess(res, "My biodata", biodata);
+});
+
+export const getMineViews = asyncHandler(async (req, res) => {
+  const { items, stats, pagination } = await biodataService.myBiodataViews(req.user.id, req.query);
+  return sendSuccess(res, "People who viewed your biodata", { items, stats }, pagination);
 });
 
 // হালকা এন্ডপয়েন্ট — ড্যাশবোর্ডের প্রগ্রেস রিং প্রতি লোডে পুরো বায়োডাটা না আনিয়ে রিফ্রেশ করতে।

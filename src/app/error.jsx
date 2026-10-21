@@ -7,10 +7,20 @@ import Link from "next/link";
  * রুট-লেভেল error boundary — রেন্ডার-সময়ের অপ্রত্যাশিত ত্রুটি ধরে ফ্যালব্যাক দেখায়।
  * Next ১৬.২+ `unstable_retry` দিয়ে সেগমেন্ট আবার রেন্ডার/রিফেচ হয়; ত্রুটি কনসোলে লগ হয়।
  */
-export default function Error({ error, unstable_retry }) {
+export default function Error({ error, reset, unstable_retry }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  const handleRetry = () => {
+    if (typeof reset === "function") {
+      reset();
+    } else if (typeof unstable_retry === "function") {
+      unstable_retry();
+    } else {
+      window.location.reload();
+    }
+  };
 
   return (
     <main className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-16 text-center">
@@ -23,7 +33,7 @@ export default function Error({ error, unstable_retry }) {
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <button
           type="button"
-          onClick={() => unstable_retry()}
+          onClick={handleRetry}
           className="btn bg-[#FD6969] hover:bg-[#e85a5a] border-none text-white"
         >
           আবার চেষ্টা করুন

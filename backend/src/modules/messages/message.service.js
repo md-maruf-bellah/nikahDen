@@ -61,6 +61,15 @@ export async function myConversations(userId, { page = 1, limit = 20, search } =
       },
     },
     {
+      $lookup: {
+        from: "biodatas",
+        localField: "participants",
+        foreignField: "user",
+        as: "participantBiodatas",
+        pipeline: [{ $project: { user: 1, religion: 1, allowCrossReligion: 1 } }],
+      },
+    },
+    {
       // Unread = messages addressed to me that are still only SENT (not READ).
       $lookup: {
         from: "messages",
@@ -87,10 +96,26 @@ export async function myConversations(userId, { page = 1, limit = 20, search } =
   const items = conversations.map((c) => {
     const partner = c.participantUsers.find((u) => u._id.toString() !== userId) || null;
     const me = c.participantUsers.find((u) => u._id.toString() === userId) || null;
+    const partnerBio = c.participantBiodatas?.find((b) => b.user.toString() !== userId);
+    const myBio = c.participantBiodatas?.find((b) => b.user.toString() === userId);
     return {
       id: c._id.toString(),
-      partner: partner ? { id: partner._id.toString(), name: `${partner.firstName} ${partner.lastName}`.trim(), avatar: partner.avatar } : null,
-      me: me ? { id: me._id.toString(), name: `${me.firstName} ${me.lastName}`.trim() } : null,
+      partner: partner
+        ? {
+            id: partner._id.toString(),
+            name: `${partner.firstName} ${partner.lastName}`.trim(),
+            avatar: partner.avatar,
+            religion: partnerBio?.religion || null,
+            allowCrossReligion: Boolean(partnerBio?.allowCrossReligion),
+          }
+        : null,
+      me: me
+        ? {
+            id: me._id.toString(),
+            name: `${me.firstName} ${me.lastName}`.trim(),
+            religion: myBio?.religion || null,
+          }
+        : null,
       lastMessage: c.allMessages || null,
       lastMessageAt: c.lastMessageAt,
       updatedAt: c.updatedAt,

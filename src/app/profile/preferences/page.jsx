@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, SlidersHorizontal, Loader2, Search, AlertCircle, Sparkles } from "lucide-react";
 import { preferencesApi, biodataApi } from "@/lib/api";
+import { defaultAvatarFor } from "@/lib/avatar";
 
 const DIVISIONS = ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "সিলেট", "বরিশাল", "খুলনা", "রংপুর", "ময়মনসিংহ"];
 const RELIGIONS = [
@@ -286,11 +287,14 @@ export default function PreferencesPage() {
               <div key={m.id} className="bg-base-100 rounded-lg border border-base-300 p-3 flex flex-col gap-2">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 shrink-0">
-                    {m.profileImage ? (
-                      <Image src={m.profileImage} alt={m.fullName || "প্রোফাইল"} width={56} height={56} unoptimized className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">{(m.fullName || "?").slice(0, 1)}</div>
-                    )}
+                    <Image
+                      src={m.profileImage || defaultAvatarFor(m.gender)}
+                      alt={m.fullName || "প্রোফাইল"}
+                      width={56}
+                      height={56}
+                      unoptimized
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <a href={`/details?id=${m.id}`} className="font-bold text-sm truncate block hover:text-red-500">

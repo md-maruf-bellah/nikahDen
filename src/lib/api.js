@@ -19,8 +19,14 @@ const ACCESS_KEY = "nk_access";
 const REFRESH_KEY = "nk_refresh";
 
 export const tokenStore = {
-  getAccess: () => (typeof window === "undefined" ? null : window.localStorage.getItem(ACCESS_KEY)),
-  getRefresh: () => (typeof window === "undefined" ? null : window.localStorage.getItem(REFRESH_KEY)),
+  getAccess: () =>
+    typeof window === "undefined"
+      ? null
+      : window.localStorage.getItem(ACCESS_KEY),
+  getRefresh: () =>
+    typeof window === "undefined"
+      ? null
+      : window.localStorage.getItem(REFRESH_KEY),
   set(access, refresh) {
     window.localStorage.setItem(ACCESS_KEY, access);
     if (refresh) window.localStorage.setItem(REFRESH_KEY, refresh);
@@ -32,7 +38,10 @@ export const tokenStore = {
 };
 
 export class ApiError extends Error {
-  constructor(message, { status = 0, errorCode = "NETWORK_ERROR", details, data = null } = {}) {
+  constructor(
+    message,
+    { status = 0, errorCode = "NETWORK_ERROR", details, data = null } = {},
+  ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
@@ -73,7 +82,17 @@ function refreshTokens() {
   return refreshInflight;
 }
 
-async function request(path, { method = "GET", body, params, auth = true, retried = false, raw = false } = {}) {
+async function request(
+  path,
+  {
+    method = "GET",
+    body,
+    params,
+    auth = true,
+    retried = false,
+    raw = false,
+  } = {},
+) {
   const url = `${API_BASE}${path}${buildQuery(params)}`;
   const headers = {};
   const isForm = typeof FormData !== "undefined" && body instanceof FormData;
@@ -91,7 +110,9 @@ async function request(path, { method = "GET", body, params, auth = true, retrie
       credentials: "include",
     });
   } catch {
-    throw new ApiError("Cannot reach the server. Is the backend running?", { status: 0 });
+    throw new ApiError("Cannot reach the server. Is the backend running?", {
+      status: 0,
+    });
   }
 
   const json = await res.json().catch(() => ({}));
@@ -116,7 +137,8 @@ async function request(path, { method = "GET", body, params, auth = true, retrie
   }
 
   // raw → full envelope ({ data, pagination }) for list endpoints.
-  if (raw) return { data: json.data ?? null, pagination: json.pagination ?? null };
+  if (raw)
+    return { data: json.data ?? null, pagination: json.pagination ?? null };
   return json.data ?? null;
 }
 
@@ -137,14 +159,17 @@ export const authApi = {
   register: (data) => api.post("/auth/register", data),
   login: (data) => api.post("/auth/login", data),
   me: () => api.get("/auth/me"),
-  logout: () => api.post("/auth/logout", { refreshToken: tokenStore.getRefresh() }),
+  logout: () =>
+    api.post("/auth/logout", { refreshToken: tokenStore.getRefresh() }),
   changePassword: (data) => api.patch("/auth/change-password", data),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
-  resetPassword: (token, newPassword) => api.post("/auth/reset-password", { token, newPassword }),
+  resetPassword: (token, newPassword) =>
+    api.post("/auth/reset-password", { token, newPassword }),
   // OAuth — কোন প্রোভাইডার কনফিগার করা আছে + one-time কোড এক্সচেঞ্জ
   oauthProviders: () => api.get("/auth/oauth/providers"),
   oauthExchange: (code) => api.post("/auth/oauth/exchange", { code }),
-  oauthStartUrl: (provider) => `${API_ORIGIN}/api/v1/auth/oauth/${provider}/start`,
+  oauthStartUrl: (provider) =>
+    `${API_ORIGIN}/api/v1/auth/oauth/${provider}/start`,
 };
 
 // ---------------------------------------------------------------------------
@@ -164,14 +189,28 @@ export const biodataApi = {
   unlike: (id) => api.del(`/biodatas/${id}/like`),
   likesSent: (params) => api.list("/biodatas/likes/sent", params),
   likesReceived: (params) => api.list("/biodatas/likes/received", params),
+  views: (params) => api.list("/biodatas/me/views", params),
   // photos — multipart upload + main-photo / delete management
   uploadPhoto: (file) => {
     const fd = new FormData();
     fd.append("photo", file);
     return api.post("/biodatas/me/photos", fd);
   },
-  setProfilePhoto: (biodataId, url) => api.patch(`/biodatas/${biodataId}/profile-photo`, { url }),
-  deletePhoto: (biodataId, index) => api.del(`/biodatas/${biodataId}/photos/${index}`),
+  setProfilePhoto: (biodataId, url) =>
+    api.patch(`/biodatas/${biodataId}/profile-photo`, { url }),
+  deletePhoto: (biodataId, index) =>
+    api.del(`/biodatas/${biodataId}/photos/${index}`),
+  // Point-unlock for privacy-protected photos (one-time per biodata)
+  unlockPhoto: (biodataId) =>
+    api.post(`/biodatas/${biodataId}/unlock-photo`, {}),
+};
+
+// ---------------------------------------------------------------------------
+// Profile privacy (photo + contact visibility policy)
+// ---------------------------------------------------------------------------
+export const privacyApi = {
+  mine: () => api.get("/privacy/me"),
+  save: (body) => api.put("/privacy/me", body),
 };
 
 // ---------------------------------------------------------------------------
@@ -181,6 +220,8 @@ export const membershipApi = {
   plans: () => api.get("/membership/plans"),
   packs: () => api.get("/membership/packs"),
   mine: () => api.get("/membership/me"),
+  // raw envelope — purchase credits + spends behind the current balance
+  ledger: (params) => api.list("/membership/ledger", params),
 };
 
 export const orderApi = {
@@ -205,6 +246,14 @@ export const notificationApi = {
   remove: (id) => api.del(`/notifications/${id}`),
 };
 
+export const adminNotificationApi = {
+  list: (params) => api.list("/admin/notifications", params),
+  read: (id) => api.patch(`/admin/notifications/${id}/read`, {}),
+  readAll: () => api.patch("/admin/notifications/read-all", {}),
+  delete: (id) => api.del(`/admin/notifications/${id}`),
+  clearAll: (params) => api.del(`/admin/notifications`, params),
+};
+
 // ---------------------------------------------------------------------------
 // Partner preferences + matching
 // ---------------------------------------------------------------------------
@@ -218,7 +267,8 @@ export const userApi = {
   // member-directory search (messenger-এ নতুন কথোপকথন শুরুর জন্য)
   search: (q, limit) => api.get("/users/search", { q, limit }),
   // guard-পূর্ব প্রিভিউ — rows-এ block/limit নিষ্ক্রিয় দেখানোর জন্য
-  searchIntent: (ids) => api.get("/users/search-intent", { ids: ids.join(",") }),
+  searchIntent: (ids) =>
+    api.get("/users/search-intent", { ids: ids.join(",") }),
 };
 
 export const conversationApi = {
@@ -267,8 +317,29 @@ export const adminApi = {
   oauthEvents: (params) => api.get("/admin/oauth/events", params),
   // Contact spam-drop হিস্ট্রি (capped collection — restart-persistent)
   contactEvents: (params) => api.get("/admin/contact/events", params),
+  // অ্যাডমিন অ্যাকশন অডিট-ট্রেইল; prefix=GUARDIAN_ দিলে শুধু গার্ডিয়ান-পরিবার
+  auditEvents: (params) => api.get("/admin/audit/events", params),
+  // গার্ডিয়ান-লিংক রিভিউ তালিকা (status/q/page/limit)
+  guardians: (params) => api.get("/admin/guardians", params),
   moderate: (id, status, rejectionReason) =>
-    api.patch(`/biodatas/${id}/status`, rejectionReason ? { status, rejectionReason } : { status }),
+    api.patch(
+      `/biodatas/${id}/status`,
+      rejectionReason ? { status, rejectionReason } : { status },
+    ),
+};
+
+// ---------------------------------------------------------------------------
+// Marriage & Hide ID
+// ---------------------------------------------------------------------------
+export const marriageApi = {
+  candidates: () => api.get("/marriages/partners-candidates"),
+  declare: (body) => api.post("/marriages/declare", body),
+  mine: () => api.get("/marriages/me"),
+  unhide: () => api.post("/marriages/unhide"),
+  adminList: (params) => api.list("/marriages/admin", params),
+  adminCreate: (body) => api.post("/marriages/admin", body),
+  adminUpdate: (id, body) => api.patch(`/marriages/admin/${id}`, body),
+  adminDelete: (id) => api.del(`/marriages/admin/${id}`),
 };
 
 // ---------------------------------------------------------------------------

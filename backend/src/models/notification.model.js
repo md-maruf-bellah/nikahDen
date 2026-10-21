@@ -12,11 +12,20 @@ const notificationSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     body: { type: String, default: "", maxlength: 2000 },
     isRead: { type: Boolean, default: false, index: true },
+    forAdmin: { type: Boolean, default: false, index: true },
+    adminCategory: {
+      type: String,
+      enum: ["USER", "PAYMENT", "BIODATA", "MARRIAGE", "SUPPORT", "SYSTEM", null],
+      default: null,
+      index: true,
+    },
     // Structured link target, e.g. { kind: "biodata", id: "..." }
     data: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }
 );
+
+notificationSchema.index({ forAdmin: 1, createdAt: -1 });
 
 notificationSchema.index({ user: 1, createdAt: -1 });
 

@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
-import { Calendar, CheckCheck, Clock, Mail, MailOpen, X } from "lucide-react";
+import Link from "next/link";
+import { Calendar, CheckCheck, Clock, Mail, MailOpen, X, ExternalLink } from "lucide-react";
 import { notificationApi } from "@/lib/api";
 
 const NotificationList = () => {
@@ -131,6 +132,29 @@ const NotificationList = () => {
               <p className=" text-xs leading-relaxed mb-3 line-clamp-2 md:line-clamp-none">
                 {item.body}
               </p>
+
+              {/* Action Link if notification points to a biodata or tab */}
+              {(item.data?.viewerBiodataId || item.data?.likerBiodataId || (item.data?.kind === "biodata" && item.data?.id)) ? (
+                <div className="mb-3">
+                  <Link
+                    href={`/details?id=${item.data.viewerBiodataId || item.data.likerBiodataId || item.data.id}`}
+                    className="btn btn-xs bg-[#fd6969] hover:bg-[#eb5252] text-white border-none gap-1 font-medium inline-flex items-center"
+                  >
+                    <ExternalLink size={12} />
+                    বায়োডাটা দেখুন
+                  </Link>
+                </div>
+              ) : item.data?.targetTab ? (
+                <div className="mb-3">
+                  <Link
+                    href={`/profile?tab=${item.data.targetTab}`}
+                    className="btn btn-xs bg-[#fd6969] hover:bg-[#eb5252] text-white border-none gap-1 font-medium inline-flex items-center"
+                  >
+                    <ExternalLink size={12} />
+                    বিস্তারিত দেখুন
+                  </Link>
+                </div>
+              ) : null}
 
               {/* Footer Actions & Info */}
               <div className="flex flex-wrap items-center gap-y-4 gap-x-8  text-xs font-medium pt-1 border-t border-gray-50">

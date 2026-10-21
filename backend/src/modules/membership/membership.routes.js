@@ -6,6 +6,7 @@ import { ROLES, PERMISSIONS } from "../../constants/index.js";
 import {
   idParam,
   listQuery,
+  ledgerQuery,
   planSchema,
   planUpdateSchema,
   packSchema,
@@ -21,6 +22,9 @@ router.get("/packs", validate(listQuery, "query"), membershipController.listPack
 
 // My membership dashboard
 router.get("/me", authenticate, membershipController.myMembership);
+
+// My connect ledger — purchase credits + spends, always scoped to the caller
+router.get("/ledger", authenticate, validate(ledgerQuery, "query"), membershipController.myLedger);
 
 // Admin management
 router.use("/plans/:id", authenticate, authorize(ROLES.ADMIN, ROLES.SUPERADMIN), requirePermission(PERMISSIONS.MEMBERSHIP_MANAGE));

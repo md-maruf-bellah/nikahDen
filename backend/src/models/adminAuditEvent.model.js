@@ -18,7 +18,24 @@ export const ADMIN_AUDIT_CAP = { size: 256 * 1024, max: 500 };
 
 const auditEventSchema = new mongoose.Schema(
   {
-    action: { type: String, required: true, enum: ["UNLOCK", "USER_UPDATE", "DELETE"] },
+    action: {
+      type: String,
+      required: true,
+      enum: [
+        "UNLOCK",
+        "USER_UPDATE",
+        "DELETE",
+        "GUARDIAN_DECLARE",
+        "GUARDIAN_SESSION_OPENED",
+        "GUARDIAN_CONSENT",
+        "GUARDIAN_VERIFY",
+        "GUARDIAN_REVOKE",
+        "GUARDIAN_CONTACT_REQUEST",
+        "GUARDIAN_CONTACT_APPROVE",
+        "GUARDIAN_CONTACT_DENY",
+        "GUARDIAN_CONTACT_TEARDOWN",
+      ],
+    },
     // যে অ্যাডমিন করেছে
     actorId: { type: String, default: "" },
     actorRole: { type: String, default: "" },

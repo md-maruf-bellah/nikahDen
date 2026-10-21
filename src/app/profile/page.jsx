@@ -11,9 +11,12 @@ import {
   MessageSquare,
   LogOut,
   Edit3,
+  ShieldCheck,
   Menu,
   X,
   Ban,
+  Eye,
+  HeartHandshake,
 } from "lucide-react";
 import Image from "next/image";
 import profile from "./../../../assets/member/alem.png";
@@ -21,17 +24,22 @@ import MessagingPage from "./message/MessagingPage";
 import PreferencesPage from "./preferences/page";
 import ProfileData from "./biodata/page";
 import LikeList from "./likeList/page";
+import ProfileViews from "./views/page";
 import MemberShip from "./memberShip/page";
+import MarriagePage from "./marriage/page";
 import NotificationList from "./notification/page";
 import MembershipDashboard from "./memberAndPackage/page";
 import BlockedList from "./blocked/page";
+import PrivacySettingsPage from "./privacy/page";
 // Navbar এখন root layout-এর SiteChrome থেকে আসে
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { tokenStore } from "@/lib/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("ড্যাশবোর্ড");
+  const { t, isRTL, language } = useLanguage();
+  const [activeTabKey, setActiveTabKey] = useState("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -51,80 +59,96 @@ const Dashboard = () => {
   }, [loading, user, router]);
 
   const menuItems = [
-    { icon: <LayoutDashboard size={18} />, label: "ড্যাশবোর্ড" },
-    { icon: <FileText size={18} />, label: "বায়োডাটা" },
-    { icon: <Heart size={18} />, label: "পছন্দের তালিকা" },
-    { icon: <Users size={18} />, label: "আপনাকে যারা পছন্দ করেছেন" },
-    { icon: <SlidersHorizontal size={18} />, label: "প্রেফারেন্স ও ম্যাচ" },
-    { icon: <CreditCard size={18} />, label: "মেম্বারশিপ" },
-    { icon: <Bell size={18} />, label: "নোটিফিকেশন" },
-    { icon: <MessageSquare size={18} />, label: "মেসেজিং" },
-    { icon: <Ban size={18} />, label: "ব্লক তালিকা" },
-    { icon: <LogOut size={18} />, label: "লগ আউট" },
+    { key: "dashboard", icon: <LayoutDashboard size={18} />, label: t("profile.dashboard", "ড্যাশবোর্ড") },
+    { key: "biodata", icon: <FileText size={18} />, label: t("profile.biodata", "বায়োডাটা") },
+    { key: "favorites", icon: <Heart size={18} />, label: t("profile.favorites", "পছন্দের তালিকা") },
+    { key: "whoLikedYou", icon: <Users size={18} />, label: t("profile.whoLikedYou", "আপনাকে যারা পছন্দ করেছেন") },
+    { key: "profileViews", icon: <Eye size={18} />, label: t("profile.profileViews", "কারা দেখেছেন") },
+    { key: "marriage", icon: <HeartHandshake size={18} />, label: t("profile.marriage", "বিবাহ ও আইডি হাইড") },
+    { key: "preferences", icon: <SlidersHorizontal size={18} />, label: t("profile.preferences", "প্রেফারেন্স ও ম্যাচ") },
+    { key: "membership", icon: <CreditCard size={18} />, label: t("profile.membership", "মেম্বারশিপ") },
+    { key: "notification", icon: <Bell size={18} />, label: t("profile.notifications", "নোটিফিকেশন") },
+    { key: "message", icon: <MessageSquare size={18} />, label: t("profile.messaging", "মেসেজিং") },
+    { key: "blocked", icon: <Ban size={18} />, label: t("profile.blockedList", "ব্লক তালিকা") },
+    { key: "privacy", icon: <ShieldCheck size={18} />, label: t("profile.privacy", "প্রাইভেসি") },
+    { key: "logout", icon: <LogOut size={18} />, label: t("profile.logout", "লগ আউট") },
   ];
 
   // মেনু আইটেম → কনটেন্ট ম্যাপিং; লগ আউট আলাদাভাবে হ্যান্ডেল হয়
   const renderContent = () => {
-    switch (activeTab) {
-      case "ড্যাশবোর্ড":
+    switch (activeTabKey) {
+      case "dashboard":
         return <MembershipDashboard />;
-      case "বায়োডাটা":
+      case "biodata":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <ProfileData />
           </div>
         );
-      case "পছন্দের তালিকা":
+      case "favorites":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <LikeList />
           </div>
         );
-      case "আপনাকে যারা পছন্দ করেছেন":
+      case "whoLikedYou":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <LikeList received />
           </div>
         );
-      case "প্রেফারেন্স ও ম্যাচ":
+      case "profileViews":
+        return (
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
+            <ProfileViews />
+          </div>
+        );
+      case "marriage":
+        return (
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
+            <MarriagePage />
+          </div>
+        );
+      case "preferences":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <PreferencesPage />
           </div>
         );
-      case "মেম্বারশিপ":
+      case "membership":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <MemberShip />
           </div>
         );
-      case "নোটিফিকেশন":
+      case "notification":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <NotificationList />
           </div>
         );
-
-      case "মেসেজিং":
+      case "message":
         return (
           <div className="">
             <MessagingPage />
           </div>
         );
-      case "ব্লক তালিকা":
+      case "blocked":
         return (
           <div className="border border-primary/15 rounded-lg overflow-hidden">
             <BlockedList />
+          </div>
+        );
+      case "privacy":
+        return (
+          <div className="border border-primary/15 rounded-lg overflow-hidden">
+            <PrivacySettingsPage />
           </div>
         );
       default:
         return null;
     }
   };
-
-  useEffect(() => {
-    // when i click on the menu item then the sidebar will be closed in mobile view
-  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -133,7 +157,7 @@ const Dashboard = () => {
 
   // ড্যাশবোর্ডের কমপ্লিশন-কার্ড থেকে বায়োডাটা ট্যাবে যাওয়ার ইভেন্ট
   useEffect(() => {
-    const openBiodata = () => setActiveTab("বায়োডাটা");
+    const openBiodata = () => setActiveTabKey("biodata");
     window.addEventListener("open-biodata-tab", openBiodata);
     return () => window.removeEventListener("open-biodata-tab", openBiodata);
   }, []);
@@ -141,8 +165,26 @@ const Dashboard = () => {
   // ?tab= query — notification bell-এর "সব দেখুন" গভীর-লিংক
   useEffect(() => {
     const tab = searchParams?.get("tab");
-    if (tab && menuItems.some((m) => m.label === tab)) {
-      setActiveTab(tab);
+    if (tab) {
+      const normalized = tab.toLowerCase();
+      const target = menuItems.find(
+        (m) =>
+          m.key.toLowerCase() === normalized ||
+          m.label?.toLowerCase() === normalized ||
+          (m.key === "notification" && (tab === "নোটিফিকেশন" || normalized === "notifications")) ||
+          (m.key === "profileViews" && (tab === "কারা দেখেছেন" || normalized === "views")) ||
+          (m.key === "whoLikedYou" && tab === "আপনাকে যারা পছন্দ করেছেন") ||
+          (m.key === "marriage" && (tab === "বিবাহ" || normalized === "marriage" || tab === "বিবাহ ও আইডি হাইড"))
+      );
+      if (target) {
+        let cancelled = false;
+        Promise.resolve().then(() => {
+          if (!cancelled) setActiveTabKey(target.key);
+        });
+        return () => {
+          cancelled = true;
+        };
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -151,11 +193,14 @@ const Dashboard = () => {
     <div>
       <div className="min-h-screen p-4 md:p-8">
         {/* Mobile Toggle Button */}
-        <div className="lg:hidden flex justify-between items-center mb-4  p-3 rounded-lg border border-red-200">
-          <h2 className="font-bold text-red-500">{activeTab}</h2>
+        <div className="lg:hidden flex justify-between items-center mb-4 p-3 rounded-lg border border-red-200">
+          <h2 className="font-bold text-red-500">
+            {menuItems.find((m) => m.key === activeTabKey)?.label || t("profile.dashboard", "ড্যাশবোর্ড")}
+          </h2>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 bg-red-50 text-red-500 rounded-md"
+            aria-label="Toggle Menu"
           >
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -165,10 +210,10 @@ const Dashboard = () => {
           {/* Sidebar */}
           <div
             className={`
-          lg:col-span-3 bg-base-100 rounded-lg border  border-primary/15 overflow-hidden h-fit 
-          fixed lg:relative z-50 lg:z-0 top-0 left-0 w-64 lg:w-full h-full lg:h-auto
+          lg:col-span-3 bg-base-100 rounded-lg border border-primary/15 overflow-hidden h-fit 
+          fixed lg:relative z-50 lg:z-0 top-0 ${isRTL ? "right-0" : "left-0"} w-64 lg:w-full h-full lg:h-auto
           transition-transform duration-300 ease-in-out
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${isSidebarOpen ? "translate-x-0" : isRTL ? "translate-x-full lg:translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
           >
             <div className="p-6 text-center border-b border-gray-100 relative">
@@ -180,24 +225,24 @@ const Dashboard = () => {
                   width={96}
                   height={96}
                 />
-                <button className="absolute bottom-0 right-0  p-1 rounded-full shadow-md border border-gray-100">
-                  <Edit3 size={14} className="" />
+                <button className="absolute bottom-0 right-0 p-1 rounded-full shadow-md border border-gray-100" aria-label="Edit Profile">
+                  <Edit3 size={14} />
                 </button>
               </div>
               <h3 className="mt-4 font-bold text-lg">
-                {user?.firstName || user?.name || "সদস্য"}
+                {user?.firstName || user?.name || t("profile.welcome", "সদস্য")}
               </h3>
-              <p className="text-xs ">
+              <p className="text-xs">
                 {user?.email || "—"}
               </p>
             </div>
 
             <nav className="py-4">
               <h4 className="px-6 text-sm font-bold mb-4 uppercase tracking-wider">
-                ড্যাশবোর্ড
+                {t("profile.dashboard", "ড্যাশবোর্ড")}
               </h4>
               {menuItems.map((item, index) =>
-                item.label === "লগ আউট" ? (
+                item.key === "logout" ? (
                   <button
                     key={index}
                     onClick={handleLogout}
@@ -210,13 +255,13 @@ const Dashboard = () => {
                   <button
                     key={index}
                     onClick={() => {
-                      setActiveTab(item.label);
-                      setIsSidebarOpen(false); // মোবাইল মেনু বন্ধ করার জন্য
+                      setActiveTabKey(item.key);
+                      setIsSidebarOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-6 py-3 text-sm transition-colors ${
-                      activeTab === item.label
+                      activeTabKey === item.key
                         ? "bg-base-200 text-red-500 border-r-4 border-red-500 font-bold"
-                        : " hover:bg-base-200 hover:text-red-500 cursor-pointer"
+                        : "hover:bg-base-200 hover:text-red-500 cursor-pointer"
                     }`}
                   >
                     {item.icon}

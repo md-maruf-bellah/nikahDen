@@ -10,10 +10,12 @@ import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
 import { authApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 
 const Register = () => {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const { t, isRTL, language } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -73,12 +75,12 @@ const Register = () => {
           <div className="flex items-center gap-2 mb-8">
             <Image src={logo} alt="logo" width={40} height={40} />
             <h1 className="text-3xl font-extrabold tracking-tight">
-              নিকাহ্<span className="text-[#FD6969]">দ্বীন</span>
+              {t("common.siteName", "নিকাহ্")}<span className="text-[#FD6969]">{t("common.siteNameHighlight", "দ্বীন")}</span>
             </h1>
           </div>
 
           <h2 className="text-2xl font-bold text-gray-800 mb-8">
-            একাউন্ট তৈরি করুন
+            {t("auth.registerTitle", "একাউন্ট তৈরি করুন")}
           </h2>
 
           {error && (
@@ -93,9 +95,9 @@ const Register = () => {
               <div className="relative">
                 <label
                   htmlFor="reg-first-name"
-                  className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                  className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
                 >
-                  নামের প্রথম অংশ
+                  {language === "bn" ? "নামের প্রথম অংশ" : t("auth.firstNameLabel", "নামের প্রথম অংশ")}
                 </label>
                 <input
                   type="text"
@@ -111,9 +113,9 @@ const Register = () => {
               <div className="relative">
                 <label
                   htmlFor="reg-last-name"
-                  className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                  className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
                 >
-                  নামের শেষ অংশ
+                  {language === "bn" ? "নামের শেষ অংশ" : t("auth.lastNameLabel", "নামের শেষ অংশ")}
                 </label>
                 <input
                   type="text"
@@ -131,9 +133,9 @@ const Register = () => {
             <div className="relative">
               <label
                 htmlFor="reg-email"
-                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
               >
-                ই-মেইল
+                {language === "bn" ? "ই-মেইল" : t("auth.emailLabel", "ই-মেইল")}
               </label>
               <input
                 type="email"
@@ -151,9 +153,9 @@ const Register = () => {
             <div className="relative">
               <label
                 htmlFor="reg-password"
-                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
               >
-                পাসওয়ার্ড
+                {language === "bn" ? "পাসওয়ার্ড" : t("auth.passwordLabel", "পাসওয়ার্ড")}
               </label>
               <div className="relative">
                 <input
@@ -164,16 +166,24 @@ const Register = () => {
                   minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="কমপক্ষে ৮ অক্ষর"
+                  placeholder="***********"
                   className="input input-bordered w-full pt-2 h-12 focus:outline-none focus:border-red-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                  aria-label={
+                    language === "bn"
+                      ? showPassword
+                        ? "পাসওয়ার্ড লুকান"
+                        : "পাসওয়ার্ড দেখুন"
+                      : showPassword
+                      ? t("auth.hidePassword", "পাসওয়ার্ড লুকান")
+                      : t("auth.showPassword", "পাসওয়ার্ড দেখুন")
+                  }
                   aria-pressed={showPassword}
                   aria-controls="reg-password"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400`}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -193,18 +203,7 @@ const Register = () => {
                 htmlFor="terms"
                 className="text-sm text-gray-600 cursor-pointer"
               >
-                আমি আপনাদের সকল{" "}
-                <Link href="/terms" className="text-red-500 underline hover:text-[#e85a5a]">
-                  শর্তাবলী
-                </Link>,{" "}
-                <Link href="/privacy" className="text-red-500 underline hover:text-[#e85a5a]">
-                  প্রাইভেসি পলিসি
-                </Link>{" "}
-                ও{" "}
-                <Link href="/refund" className="text-red-500 underline hover:text-[#e85a5a]">
-                  রিফান্ড পলিসি
-                </Link>{" "}
-                পড়েছি এবং সম্মত।
+                {t("auth.termsAgreement", "রেজিস্ট্রেশন করার মাধ্যমে আপনি আমাদের শর্তাবলী ও প্রাইভেসি পলিসিতে সম্মতি দিচ্ছেন।")}
               </label>
             </div>
 
@@ -217,43 +216,43 @@ const Register = () => {
               {loading ? (
                 <span className="loading loading-spinner loading-sm"></span>
               ) : (
-                "কন্টিনিউ করুন"
+                t("auth.registerBtn", "কন্টিনিউ করুন")
               )}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="divider text-gray-400 text-sm my-8">or</div>
+          <div className="divider text-gray-400 text-sm my-8">{t("auth.orContinueWith", "or")}</div>
 
           {/* Social Logins */}
           <div className="space-y-4">
             <button
               type="button"
               disabled={!oauthAvailable.google}
-              title={oauthAvailable.google ? "গুগল দিয়ে সাইন আপ" : "গুগল লগইন এখনো কনফিগার করা হয়নি"}
+              title={oauthAvailable.google ? "Google" : "Google OAuth"}
               onClick={() => { window.location.href = authApi.oauthStartUrl("google"); }}
-              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12  flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
+              className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FcGoogle size={22} />
-              Sign up with Google
+              {t("auth.googleLogin", "Sign up with Google")}
             </button>
             <button
               type="button"
               disabled={!oauthAvailable.facebook}
-              title={oauthAvailable.facebook ? "ফেসবুক দিয়ে সাইন আপ" : "ফেসবুক লগইন এখনো কনফিগার করা হয়নি"}
+              title={oauthAvailable.facebook ? "Facebook" : "Facebook OAuth"}
               onClick={() => { window.location.href = authApi.oauthStartUrl("facebook"); }}
-              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12  flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
+              className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FaFacebook size={22} />
-              Sign up with Facebook
+              {t("auth.facebookLogin", "Sign up with Facebook")}
             </button>
           </div>
 
           {/* Footer Link */}
           <p className="text-center mt-8 text-sm text-gray-600 font-medium">
-            আমার একাউন্ট রয়েছে{" "}
+            {t("auth.hasAccount", "আমার একাউন্ট রয়েছে")}{" "}
             <Link href="/login" className="text-red-500 underline font-bold">
-              লগইন করুন
+              {t("auth.loginBtn", "লগইন করুন")}
             </Link>
           </p>
         </div>

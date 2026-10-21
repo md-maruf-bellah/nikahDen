@@ -113,6 +113,7 @@ export const listBiodatasSchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().optional(),
   search: z.string().trim().max(120).optional(),
+  biodataNo: z.string().trim().max(50).optional(),
   gender: z.enum(ENUM_ARRAYS.GENDERS).optional(),
   religion: z.enum(ENUM_ARRAYS.RELIGIONS).optional(),
   maritalStatus: z.enum(ENUM_ARRAYS.MARITAL_STATUSES).optional(),

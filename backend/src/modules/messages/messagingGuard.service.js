@@ -76,6 +76,21 @@ function sentMessageCount(senderId, recipientId) {
  * @throws 403 `BLOCKED` — যেকোনো দিক থেকে block (নীরব দেয়াল)
  */
 export async function assertMessagingPermission(senderId, recipientId) {
+  // ধর্মভিত্তিক ইন্টারঅ্যাকশন চেক: স্বধর্মীয় সংরক্ষণ ও পারমিশন নীতি
+  const [senderBio, recipientBio] = await Promise.all([
+    Biodata.findOne({ user: senderId }).select("religion").lean(),
+    Biodata.findOne({ user: recipientId }).select("religion allowCrossReligion").lean(),
+  ]);
+
+  if (senderBio?.religion && recipientBio?.religion && senderBio.religion !== recipientBio.religion) {
+    if (!recipientBio.allowCrossReligion) {
+      throw ApiError.forbidden(
+        "এই পাত্র/পাত্রী শুধুমাত্র স্বধর্মীয় সদস্যদের সাথে যোগাযোগ ও প্রস্তাবের অনুমতি রেখেছেন।",
+        GUARD_ERROR_CODES.CROSS_RELIGION_RESTRICTED
+      );
+    }
+  }
+
   // প্রথমে সস্তা চেকগুলো: match + plan (একটাই batch)
   const [matched, plan] = await Promise.all([isMatchBetween(senderId, recipientId), activePlanFor(senderId)]);
 

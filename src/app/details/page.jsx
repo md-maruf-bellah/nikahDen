@@ -7,10 +7,10 @@ import { Check } from "lucide-react";
 import Link from "next/link";
 import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
-import man from "./../../../assets/member/alem.png";
+import { defaultAvatarFor } from "@/lib/avatar";
 import SimilarBiodataSlider from "./SimilarBiodataSlider";
 import { biodataApi, blockApi, tokenStore } from "@/lib/api";
-import { CreditCard, LogIn, ArrowLeft, Ban, CheckCircle2, MessageCircle } from "lucide-react";
+import { CreditCard, LogIn, ArrowLeft, Ban, CheckCircle2, MessageCircle, Printer } from "lucide-react";
 import StartChatButton from "@/components/StartChatButton";
 
 function Section({ title, rows }) {
@@ -50,6 +50,8 @@ function DetailsBody() {
   const [like, setLike] = useState(false);
   const [blockedByMe, setBlockedByMe] = useState(false);
   const [blockBusy, setBlockBusy] = useState(false);
+  const [unlockBusy, setUnlockBusy] = useState(false);
+  const [unlockMsg, setUnlockMsg] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +113,35 @@ function DetailsBody() {
       }
     } catch {
       /* keep state */
+    }
+  };
+
+  // প্রাইভেসি-সুরক্ষিত ছবির পয়েন্ট-আনলক (একবার; পূর্বে কেনা ফুল ভিউতে ফ্রি)
+  const handleUnlockPhoto = async () => {
+    if (!tokenStore.getAccess()) {
+      router.push("/login");
+      return;
+    }
+    if (unlockBusy) return;
+    setUnlockBusy(true);
+    setUnlockMsg("");
+    try {
+      await biodataApi.unlockPhoto(id);
+      try {
+        const fresh = await biodataApi.get(id);
+        setBiodata(fresh);
+        setLike(Boolean(fresh.likedByMe));
+      } catch {
+        setUnlockMsg("ছবি আনলক হয়েছে; ফুল বায়োডাটা দেখতে সাময়িকভাবে কানেক্ট দরকার।");
+      }
+    } catch (err) {
+      setUnlockMsg(
+        err.errorCode === "CONNECTS_INSUFFICIENT"
+          ? "পর্যাপ্ত পয়েন্ট নেই — মেম্বারশিপ বা কানেক্ট প্যাক কিনুন।"
+          : err.message || "ছবি খুলতে সমস্যা হয়েছে।"
+      );
+    } finally {
+      setUnlockBusy(false);
     }
   };
 
@@ -214,13 +245,40 @@ function DetailsBody() {
       <div className="max-w-7xl mx-auto px-4 py-6 px-10">
         {/* Top Info */}
         <div className="flex flex-col lg:flex-row gap-4 items-center mb-6">
-          <Image
-            src={biodata.profileImage || man}
-            width={180}
-            height={180}
-            alt="profile"
-            className="rounded"
-          />
+          {biodata.photoLocked ? (
+            <div className="w-[180px] h-[180px] rounded overflow-hidden border border-primary/30 bg-base-100 flex flex-col items-center justify-center text-center">
+              <Image
+                src={defaultAvatarFor(biodata.gender, biodata.religion)}
+                width={180}
+                height={120}
+                alt="profile"
+                className="object-cover opacity-70"
+              />
+              <button
+                onClick={handleUnlockPhoto}
+                disabled={unlockBusy}
+                className="btn btn-xs btn-outline mt-2 mx-2"
+                style={{ color: "#f25f5c", borderColor: "#f25f5c" }}
+              >
+                {unlockBusy
+                  ? "খোলা হচ্ছে..."
+                  : `ছবি দেখুন (${biodata.photoUnlockCost || 1} পয়েন্ট)`}
+              </button>
+            </div>
+          ) : (
+            <Image
+              src={biodata.profileImage || defaultAvatarFor(biodata.gender, biodata.religion)}
+              width={180}
+              height={180}
+              alt="profile"
+              className="rounded object-cover"
+            />
+          )}
+          {unlockMsg && (
+            <p className="text-xs text-red-500 mt-2 w-full lg:text-left text-center">
+              {unlockMsg}
+            </p>
+          )}
 
           <div className="text-center lg:text-left flex-1">
             <h2 className="font-semibold text-2xl lg:text-3xl mb-2">
@@ -260,7 +318,7 @@ function DetailsBody() {
                 onClick={handleBlockToggle}
                 disabled={blockBusy}
                 title={blockedByMe ? "আনব্লক করুন" : "এই সদস্যকে ব্লক করুন — তিনি জানতে পারবেন না"}
-                className={`btn btn-sm mt-3 ml-2 border-none gap-1 ${
+                className={`btn btn-sm mt-3 ml-2 border-none gap-1 print:hidden ${
                   blockedByMe
                     ? "bg-green-50 text-green-600 hover:bg-green-100"
                     : "bg-red-50 text-red-500 hover:bg-red-100"
@@ -270,6 +328,15 @@ function DetailsBody() {
                 {blockedByMe ? "আনব্লক" : "ব্লক"}
               </button>
             )}
+
+            {/* Print / PDF Download Button */}
+            <button
+              onClick={() => typeof window !== "undefined" && window.print()}
+              title="বায়োডাটা প্রিন্ট বা PDF ডাউনলোড করুন"
+              className="btn btn-sm mt-3 ml-2 border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 gap-1 print:hidden"
+            >
+              <Printer size={16} /> প্রিন্ট / PDF
+            </button>
           </div>
         </div>
 
@@ -394,7 +461,9 @@ function DetailsBody() {
         <div className="divider my-10"></div>
 
         {/* Similar */}
-        {similar.length > 0 && <SimilarBiodataSlider profiles={similar} />}
+        <div className="print:hidden">
+          {similar.length > 0 && <SimilarBiodataSlider profiles={similar} />}
+        </div>
       </div>
     </div>
   );

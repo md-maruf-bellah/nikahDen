@@ -4,32 +4,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { FcLikePlaceholder, FcLike } from "react-icons/fc";
-
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/navigation";
-import ManTestomonial from "./ManTestomonial";
-
-import boy from "./../../../assets/member/alem.png";
-import girl from "./../../../assets/member/alema.png";
-
+import { defaultAvatarFor } from "@/lib/avatar";
 import { biodataApi, tokenStore } from "@/lib/api";
 import StartChatButton from "../StartChatButton";
+import { useLanguage } from "@/lib/language-context";
+import { getReligionMeta } from "@/lib/religiousAdab";
 
 export const maleProfiles = [];
 export const femaleProfiles = [];
 
-function ProfileCard({ profile }) {
+export function ProfileCard({ profile }) {
   const router = useRouter();
   const [like, setLike] = useState(Boolean(profile.likedByMe));
   const [busy, setBusy] = useState(false);
 
-  const toggleLike = async () => {
+  const toggleLike = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!tokenStore.getAccess()) {
       router.push("/login");
       return;
@@ -52,8 +52,18 @@ function ProfileCard({ profile }) {
   };
 
   return (
-    <div className="card  relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
-      {/* Like Button (same as before) */}
+    <div className="card relative border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all overflow-hidden">
+      {/* Left-side Religion Badge */}
+      {profile.religion && (
+        <div className="absolute left-2.5 top-2.5 z-10 pointer-events-none">
+          <span className={`badge badge-sm font-semibold gap-1 px-2.5 py-2 border text-[11px] tracking-wide rounded-full shadow-md ${getReligionMeta(profile.religion).badgeClass}`}>
+            <span>{getReligionMeta(profile.religion).icon}</span>
+            <span>{getReligionMeta(profile.religion).label}</span>
+          </span>
+        </div>
+      )}
+
+      {/* Like Button */}
       <div className="absolute right-2 top-2 z-10 cursor-pointer">
         {like ? (
           <FcLike size={24} onClick={toggleLike} />
@@ -62,16 +72,16 @@ function ProfileCard({ profile }) {
         )}
       </div>
 
-      {/* Image (same) */}
+      {/* Image */}
       <Image
-        src={profile.profileImage || boy}
+        src={profile.profileImage || defaultAvatarFor(profile.gender, profile.religion)}
         alt={profile.fullName || "profile"}
         width={400}
         height={350}
-        className="w-full h-full border rounded-tl-xl rounded-tr-xl"
+        className="w-full h-full border rounded-tl-xl rounded-tr-xl object-cover"
       />
 
-      {/* Body (UNCHANGED DESIGN) */}
+      {/* Body */}
       <div className="card-body items-center text-center p-4">
         <h2 className="font-bold text-base truncate w-full">
           {profile.fullName}
@@ -107,65 +117,106 @@ function ProfileCard({ profile }) {
   );
 }
 
-function ProfileSection({ title, profiles }) {
+function ProfileSection({ title, subtitle, countBadge, profiles, sectionKey, viewAllHref }) {
+  const { t, isRTL } = useLanguage();
+  const prevClass = `prev-btn-${sectionKey}`;
+  const nextClass = `next-btn-${sectionKey}`;
+
   return (
-    <section className="py-32">
-      <div className="max-w-7xl mx-auto px-4 lg:px-16">
-        {/* Title SAME */}
-        <div className="text-center mb-8">
-          <h2 className="text-4xl  font-bold py-5">{title}</h2>
+    <section className="py-14 md:py-18 relative">
+      <div className="max-w-7xl mx-auto px-4 lg:px-12">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 pb-4 border-b border-base-200">
+          <div>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl md:text-3xl font-extrabold text-base-content tracking-tight">
+                {title}
+              </h2>
+              {countBadge && (
+                <span className="badge bg-[#fd6969]/10 text-[#fd6969] border border-[#fd6969]/30 text-xs font-semibold px-2.5 py-1">
+                  {countBadge}
+                </span>
+              )}
+            </div>
+            {subtitle && (
+              <p className="text-sm md:text-base text-base-content/70 mt-1.5">
+                {subtitle}
+              </p>
+            )}
+          </div>
+
+          {/* Controls & View All link */}
+          <div className="flex items-center gap-3 self-end md:self-auto">
+            <Link
+              href={viewAllHref || "/list"}
+              className="text-sm font-semibold text-[#fd6969] hover:underline flex items-center gap-1 group"
+            >
+              <span>{t("common.viewAll", "সকল প্রোফাইল")}</span>
+              <ArrowRight size={16} className={`group-hover:translate-x-1 transition-transform ${isRTL ? "rotate-180" : ""}`} />
+            </Link>
+
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                className={`${prevClass} btn btn-sm btn-circle btn-outline border-base-300 hover:border-[#fd6969] hover:bg-[#fd6969] hover:text-white transition-all`}
+                aria-label="Previous slide"
+              >
+                <ChevronLeft size={16} className={isRTL ? "rotate-180" : ""} />
+              </button>
+              <button
+                className={`${nextClass} btn btn-sm btn-circle btn-outline border-base-300 hover:border-[#fd6969] hover:bg-[#fd6969] hover:text-white transition-all`}
+                aria-label="Next slide"
+              >
+                <ChevronRight size={16} className={isRTL ? "rotate-180" : ""} />
+              </button>
+            </div>
+          </div>
         </div>
 
+        {/* Carousel Slider */}
         <div className="relative">
-          {/* LEFT BUTTON (same style) */}
-          <button className="prev-btn btn btn-square btn-md absolute bg-gray-700 text-white left-[-45px] top-1/2 -translate-y-1/2 z-10 hidden md:flex">
-            <ChevronLeft size={18} />
-          </button>
-
-          {/* RIGHT BUTTON (same style) */}
-          <button className="next-btn btn btn-square btn-md absolute bg-gray-700 text-white right-[-45px] top-1/2 -translate-y-1/2 z-10 hidden md:flex">
-            <ChevronRight size={18} />
-          </button>
-
-          {/* ONLY GRID → SWIPER CHANGE */}
           <Swiper
             modules={[Navigation, Autoplay]}
             navigation={{
-              prevEl: ".prev-btn",
-              nextEl: ".next-btn",
+              prevEl: `.${prevClass}`,
+              nextEl: `.${nextClass}`,
             }}
             autoplay={{
-              delay: 2000,
+              delay: 4000,
               disableOnInteraction: false,
+              pauseOnMouseEnter: true,
             }}
             loop={profiles.length > 4}
-            spaceBetween={16}
+            spaceBetween={20}
             breakpoints={{
-              0: { slidesPerView: 2 }, // same feel as grid
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 4 },
+              0: { slidesPerView: 1.25, spaceBetween: 12 },
+              480: { slidesPerView: 2, spaceBetween: 14 },
+              768: { slidesPerView: 3, spaceBetween: 18 },
+              1024: { slidesPerView: 4, spaceBetween: 20 },
             }}
           >
             {profiles.map((p, i) => (
-              <SwiperSlide key={p.id || i}>
+              <SwiperSlide key={p.id || i} className="h-auto">
                 <ProfileCard profile={p} />
               </SwiperSlide>
             ))}
           </Swiper>
+
           {profiles.length === 0 && (
-            <p className="text-center text-gray-400 py-10">
-              এখনো কোনো বায়োডাটা অনুমোদিত হয়নি।
-            </p>
+            <div className="text-center py-16 bg-base-200/50 rounded-2xl border border-dashed border-base-300">
+              <p className="text-gray-400">
+                {t("common.loading", "বায়োডাটা লোড হচ্ছে...")}
+              </p>
+            </div>
           )}
         </div>
 
-        {/* Footer SAME */}
-        <div className="text-center mt-10">
+        {/* Mobile View All Button */}
+        <div className="text-center mt-6 sm:hidden">
           <Link
-            href="/list"
-            className="btn bg-[#fd6969] text-lg px-7 text-white"
+            href={viewAllHref || "/list"}
+            className="btn bg-[#fd6969] hover:bg-[#e05858] text-sm text-white w-full rounded-xl"
           >
-            আরো দেখুন
+            {t("common.viewAll", "আরো দেখুন")}
           </Link>
         </div>
       </div>
@@ -174,25 +225,29 @@ function ProfileSection({ title, profiles }) {
 }
 
 export default function ProfileSections() {
-  const [all, setAll] = useState([]);
-  const [females, setFemales] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const { language } = useLanguage();
+  const [grooms, setGrooms] = useState([]);
+  const [brides, setBrides] = useState([]);
+  const [latest, setLatest] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [{ data: latest }, { data: brides }] = await Promise.all([
-          biodataApi.list({ limit: 10, sortBy: "createdAt", sortOrder: "desc" }),
-          biodataApi.list({ limit: 10, gender: "FEMALE", sortBy: "createdAt", sortOrder: "desc" }),
+        const [groomsRes, bridesRes, latestRes] = await Promise.all([
+          biodataApi.list({ limit: 12, gender: "MALE", sortBy: "createdAt", sortOrder: "desc" }),
+          biodataApi.list({ limit: 12, gender: "FEMALE", sortBy: "createdAt", sortOrder: "desc" }),
+          biodataApi.list({ limit: 12, sortBy: "createdAt", sortOrder: "desc" }),
         ]);
         if (cancelled) return;
-        setAll(latest || []);
-        setFemales(brides || []);
+        setGrooms(groomsRes?.data || []);
+        setBrides(bridesRes?.data || []);
+        setLatest(latestRes?.data || []);
       } catch {
         /* backend offline — keep empty state */
       } finally {
-        if (!cancelled) setLoaded(true);
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -200,13 +255,56 @@ export default function ProfileSections() {
     };
   }, []);
 
+  const isEn = language === "en";
+  const isAr = language === "ar";
+
+  const titles = {
+    grooms: isEn ? "Groom Biodatas" : isAr ? "سير ذاتية للعرسان" : "পাত্রের বায়োডাটা",
+    groomsSub: isEn
+      ? "Verified & practicing Muslim grooms ready for marriage"
+      : isAr
+      ? "سير ذاتية لشباب ملتزمين ومؤهلين للزواج الشرعي"
+      : "দ্বীনদার ও যোগ্য পাত্রদের অনুমোদিত বায়োডাটা • সরাসরি অভিভাবকের সাথে যোগাযোগ",
+    brides: isEn ? "Bride Biodatas" : isAr ? "سير ذاتية للعرائس" : "পাত্রীর বায়োডাটা",
+    bridesSub: isEn
+      ? "Practicing & modesty-conscious Muslim brides"
+      : isAr
+      ? "سير ذاتية لفتيات صالحات وملتزمات بالحجاب الشرعي"
+      : "পর্দাশীল ও পরহেযগার পাত্রীদের অনুমোদিত বায়োডাটা • সুন্নাহ সম্মত প্রস্তাব",
+    latest: isEn ? "Recent Biodatas" : isAr ? "أحدث السير الذاتية" : "সর্বশেষ বায়োডাটা",
+    latestSub: isEn
+      ? "Newly submitted and verified profiles on Nikah Deen"
+      : isAr
+      ? "أحدث الملفات الشخصية المعتمدة في المنصة"
+      : "নিকাহ্ দ্বীন প্ল্যাটফর্মে সদ্য অনুমোদিত নতুন পাত্র-পাত্রীর বায়োডাটা",
+  };
+
   return (
-    <>
-      <ProfileSection title="পাত্র-পাত্রীর বায়োডাটা" profiles={all} />
+    <div className="space-y-4">
+      {/* 1. পাত্রের বায়োডাটা (Grooms Section) - 100% REAL DATA FROM MONGODB */}
+      <ProfileSection
+        title={titles.grooms}
+        subtitle={titles.groomsSub}
+        countBadge={grooms.length ? `${grooms.length} টি প্রোফাইল` : null}
+        profiles={grooms}
+        sectionKey="grooms"
+        viewAllHref="/list?gender=MALE"
+      />
 
-      <ManTestomonial />
+      {/* Decorative Islamic separator */}
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="h-px bg-gradient-to-r from-transparent via-[#fd6969]/30 to-transparent my-4" />
+      </div>
 
-      <ProfileSection title="পাত্রীর বায়োডাটা" profiles={females} />
-    </>
+      {/* 2. পাত্রীর বায়োডাটা (Brides Section) - 100% REAL DATA FROM MONGODB */}
+      <ProfileSection
+        title={titles.brides}
+        subtitle={titles.bridesSub}
+        countBadge={brides.length ? `${brides.length} টি প্রোফাইল` : null}
+        profiles={brides}
+        sectionKey="brides"
+        viewAllHref="/list?gender=FEMALE"
+      />
+    </div>
   );
-}
+}

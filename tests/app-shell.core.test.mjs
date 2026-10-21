@@ -1,5 +1,7 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import React from "react";
 import {
   setupDom,
@@ -179,5 +181,40 @@ describe("login/register ফর্ম — অ্যাক্সেসিবি�
       assert.equal(input.id, id, `${label}: id`);
       assert.equal(input.getAttribute("autocomplete"), ac, `${label}: autoComplete`);
     }
+  });
+});
+
+describe("Typography & Fonts — Inter, Noto Sans Bengali, Noto Naskh Arabic", () => {
+  const layoutPath = path.resolve("./src/app/layout.js");
+  const globalsCssPath = path.resolve("./src/app/globals.css");
+
+  it("layout.js loads Inter, Noto_Sans_Bengali, and Noto_Naskh_Arabic with proper variable bindings", () => {
+    assert.ok(fs.existsSync(layoutPath), "layout.js must exist");
+    const code = fs.readFileSync(layoutPath, "utf8");
+
+    assert.ok(code.includes("Noto_Sans_Bengali"), "layout.js must import Noto_Sans_Bengali");
+    assert.ok(code.includes("Noto_Naskh_Arabic"), "layout.js must import Noto_Naskh_Arabic");
+    assert.ok(code.includes("Inter"), "layout.js must import Inter");
+
+    assert.ok(code.includes("--font-noto"), "Noto_Sans_Bengali should define --font-noto variable");
+    assert.ok(code.includes("--font-arabic"), "Noto_Naskh_Arabic should define --font-arabic variable");
+    assert.ok(code.includes("--font-latin"), "Inter should define --font-latin variable");
+
+    assert.ok(code.includes("notoSansBengali.variable"), "HTML element must bind notoSansBengali.variable");
+    assert.ok(code.includes("notoNaskhArabic.variable"), "HTML element must bind notoNaskhArabic.variable");
+    assert.ok(code.includes("inter.variable"), "HTML element must bind inter.variable");
+  });
+
+  it("globals.css sets up font fallbacks and multi-language typography rules", () => {
+    assert.ok(fs.existsSync(globalsCssPath), "globals.css must exist");
+    const css = fs.readFileSync(globalsCssPath, "utf8");
+
+    assert.ok(css.includes("Noto Sans Bengali"), "globals.css must declare Noto Sans Bengali");
+    assert.ok(css.includes("Noto Naskh Arabic"), "globals.css must declare Noto Naskh Arabic");
+    assert.ok(css.includes("Inter"), "globals.css must declare Inter");
+
+    assert.ok(css.includes('html[lang="en"]'), "globals.css must style English (en)");
+    assert.ok(css.includes('html[lang="ar"]') || css.includes("lang-ar"), "globals.css must style Arabic (ar)");
+    assert.ok(css.includes('[dir="rtl"]'), "globals.css must handle RTL direction");
   });
 });

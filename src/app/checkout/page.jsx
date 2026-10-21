@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { membershipApi, orderApi, tokenStore } from "@/lib/api";
+import { checkoutSummary, connectCountOf } from "@/lib/connects.core.mjs";
 
 function CheckoutBody() {
   const router = useRouter();
@@ -66,8 +67,11 @@ function CheckoutBody() {
   };
 
   const item = orderKind === "PACK" ? pack : plan;
-  const discount = coupon && item ? Math.floor((item.price * coupon.discountPercent) / 100) : 0;
-  const total = item ? item.price - discount : 0;
+  // Summary is item-driven, so pack checkouts price their own item (the old
+  // plan-only line showed "—" / ৳0 whenever a seeker bought connects).
+  const summary = checkoutSummary(item, coupon?.discountPercent || 0);
+  const discount = summary?.discount ?? 0;
+  const total = summary?.total ?? 0;
 
   const placeOrder = async () => {
     if (!item || placing) return;
@@ -150,32 +154,31 @@ function CheckoutBody() {
                       </option>
                     ))}
                   </select>
-
-                  {/* Item Row */}
-                  {item && (
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-800 font-bold text-sm">
-                        {item.nameBn || item.name}
-                        {orderKind === "PACK" && item.connectCount ? (
-                          <span className="ml-2 badge badge-sm badge-outline border-red-200 text-red-400">
-                            {item.connectCount} কানেক্ট
-                          </span>
-                        ) : null}
-                      </span>
-                      <div className="flex items-center gap-24">
-                        <span className="text-gray-800 font-bold text-sm">
-                          ৳ {item.price.toLocaleString("bn-BD")}
-                        </span>
-                        <button
-                          onClick={() => (orderKind === "PACK" ? setPack(null) : setPlan(null))}
-                          className="text-gray-400 hover:text-red-500 transition-colors text-xs font-semibold cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </>
+              )}
+              {/* Selected item row — same shape for packs and plans */}
+              {!loading && item && (
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-800 font-bold text-sm">
+                    {item.nameBn || item.name}
+                    {orderKind === "PACK" && summary?.connects ? (
+                      <span className="ml-2 badge badge-sm badge-outline border-red-200 text-red-400">
+                        {connectCountOf(item)} কানেক্ট
+                      </span>
+                    ) : null}
+                  </span>
+                  <div className="flex items-center gap-24">
+                    <span className="text-gray-800 font-bold text-sm">
+                      ৳ {(item.price || 0).toLocaleString("bn-BD")}
+                    </span>
+                    <button
+                      onClick={() => (orderKind === "PACK" ? setPack(null) : setPlan(null))}
+                      className="text-gray-400 hover:text-red-500 transition-colors text-xs font-semibold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
               )}
               {!loading && ((orderKind === "PLAN" && plans.length === 0) || (orderKind === "PACK" && packs.length === 0)) && (
                 <p className="text-gray-400 text-sm">
@@ -222,8 +225,8 @@ function CheckoutBody() {
 
               <div className="space-y-4">
                 <div className="flex justify-between text-gray-600 text-xs font-medium">
-                  <span>{plan?.nameBn || plan?.name || "—"}</span>
-                  <span>৳ {(plan?.price || 0).toLocaleString("bn-BD")}</span>
+                  <span>{summary?.title || "—"}</span>
+                  <span>৳ {(summary?.price ?? 0).toLocaleString("bn-BD")}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 text-xs font-medium pb-1 border-b border-red-100/60">
                   <span>ডিসকাউন্ট</span>

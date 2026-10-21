@@ -6,8 +6,10 @@ import Link from "next/link";
 import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
 import { authApi } from "@/lib/api";
+import { isValidEmail, forgotErrorMessage } from "@/lib/passwordReset.core.mjs";
 
-// পাসওয়ার্ড ভুলে গেছেন — ইমেইল দিলে রিসেট লিঙ্ক যাবে (৩০ মিনিট মেয়াদি)।
+// Step 1 — একটি ইমেইল ইনপুট + Continue। নিবন্ধিত ইমেইল হলে ৩০ মিনিটের
+// একক-ব্যবহার রিসেট লিঙ্কের ধাপে যাবে; না হলে সার্ভারের স্পষ্ট উত্তর দেখাবে।
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -17,16 +19,16 @@ const ForgotPassword = () => {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!isValidEmail(email)) {
       setError("সঠিক ই-মেইল লিখুন।");
       return;
     }
     setSending(true);
     try {
       await authApi.forgotPassword(email.trim());
-      setSent(true); // অ্যাকাউন্ট থাকুক বা না থাকুক একই নিরপেক্ষ বার্তা (enumeration-প্রতিরোধ)
+      setSent(true); // নিবন্ধিত ইমেইল — লিঙ্ক পাঠানো হয়েছে
     } catch (ex) {
-      setError(ex.message || "অনুরোধ পাঠানো যায়নি। আবার চেষ্টা করুন।");
+      setError(forgotErrorMessage(ex));
     } finally {
       setSending(false);
     }
@@ -98,7 +100,7 @@ const ForgotPassword = () => {
                   className="btn bg-[#f2504d] hover:bg-[#d43f3c] text-white border-none w-full h-12 font-bold"
                 >
                   {sending ? <Loader2 size={18} className="animate-spin" /> : <Mail size={16} />}
-                  {sending ? "পাঠানো হচ্ছে..." : "রিসেট লিঙ্ক পাঠান"}
+                  {sending ? "পাঠানো হচ্ছে..." : "Continue"}
                 </button>
               </form>
 

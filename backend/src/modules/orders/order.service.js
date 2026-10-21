@@ -10,6 +10,7 @@ import { getNextSequence } from "../../models/counter.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { withTransaction } from "../../config/db.js";
 import { emitNewNotification } from "../notifications/notification.service.js";
+import { notifyAdmins } from "../notifications/adminNotification.service.js";
 import { isValidObjectId, randomToken, pick } from "../../utils/helpers.js";
 import { parsePagination, buildPagination, parseSort } from "../../utils/pagination.js";
 import { addConnectCredit } from "../membership/connect.service.js";
@@ -233,6 +234,13 @@ export async function payOrder(userId, id, { paymentMethod = "CARD", transaction
   // পে-লোড সরাসরি DB-ডক থেকে — আসল id সহ, বার্তাও ডকের সাথে হুবহু এক
   if (result) {
     emitNewNotification(paidNotification);
+    notifyAdmins({
+      type: NOTIFICATION_TYPES.NEW_PAYMENT,
+      title: `নতুন পেমেন্ট সম্পন্ন: ৳ ${result.total}`,
+      body: `${result.item?.title || "প্যাকেজ"} অর্ডার সম্পন্ন হয়েছে। ইনভয়েস নং ${result.invoiceNo}।`,
+      data: { kind: "order", id: result.id, invoiceNo: result.invoiceNo, total: result.total },
+      adminCategory: "PAYMENT",
+    }).catch(() => {});
   }
 
   return result;

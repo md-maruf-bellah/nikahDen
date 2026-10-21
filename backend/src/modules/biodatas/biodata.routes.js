@@ -26,6 +26,7 @@ router.get("/likes/received", authenticate, biodataController.likesReceived);
 
 // ---------------- own biodata ----------------
 router.get("/me", authenticate, biodataController.getMine);
+router.get("/me/views", authenticate, biodataController.getMineViews);
 router.get("/me/completion", authenticate, biodataController.getMineCompletion);
 router.post("/", authenticate, validate(biodataSchema), biodataController.createMine);
 router.patch("/me", authenticate, validate(biodataSchema), biodataController.updateMine);
@@ -40,6 +41,10 @@ router.get("/:id/similar", optionalAuth, validate(idParam, "params"), validate(s
 
 router.post("/:id/like", authenticate, validate(idParam, "params"), biodataController.like);
 router.delete("/:id/like", authenticate, validate(idParam, "params"), biodataController.unlike);
+
+// Point-unlock — separate configurable charge for privacy-protected photos
+// (one-time per biodata; a prior paid full view already includes photos).
+router.post("/:id/unlock-photo", authenticate, validate(idParam, "params"), biodataController.unlockPhoto);
 
 // owner / admin photo management
 router.delete(

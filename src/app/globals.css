@@ -1,14 +1,68 @@
 @import "tailwindcss";
 
 @plugin "daisyui";
+@import "daisyui/themes.css";
+
+@theme {
+  --font-sans: var(--font-noto), "Noto Sans Bengali", sans-serif;
+  --font-bengali: var(--font-noto), "Noto Sans Bengali", sans-serif;
+  --font-arabic: var(--font-arabic), "Noto Naskh Arabic", "Amiri", serif;
+  --font-inter: var(--font-latin), "Inter", sans-serif;
+}
 
 :root {
-  --font-noto: "Noto Sans Bengali", sans-serif;
+  --font-bn: var(--font-noto), "Noto Sans Bengali", sans-serif;
+  --font-ar: var(--font-arabic), "Noto Naskh Arabic", "Amiri", serif;
+  --font-en: var(--font-latin), "Inter", system-ui, sans-serif;
 }
 
 html,
 body {
-  font-family: var(--font-noto);
+  font-family: var(--font-noto), "Noto Sans Bengali", sans-serif !important;
   margin: 0;
   padding: 0;
+}
+
+.font-noto {
+  font-family: var(--font-noto), "Noto Sans Bengali", sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+select,
+textarea,
+label {
+  font-family: inherit;
+}
+
+html[lang="en"],
+html[lang="en"] body,
+html[lang="en"] .font-noto {
+  font-family: var(--font-latin), "Inter", system-ui, sans-serif !important;
+}
+
+html[lang="ar"],
+html.lang-ar,
+html[lang="ar"] body,
+html.lang-ar body,
+html[lang="ar"] .font-noto,
+html.lang-ar .font-noto {
+  font-family:
+    var(--font-arabic), "Noto Naskh Arabic", "Amiri", serif !important;
+}
+
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
 }

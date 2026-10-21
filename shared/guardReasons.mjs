@@ -28,6 +28,7 @@ export const PREVIEW_REASONS = Object.freeze({
   LIMIT_REACHED: "LIMIT_REACHED",
   UPGRADE_REQUIRED: "UPGRADE_REQUIRED",
   NO_PACKAGE: "NO_PACKAGE",
+  CROSS_RELIGION_RESTRICTED: "CROSS_RELIGION_RESTRICTED",
 });
 
 /** blocked:true ফ্ল্যাগ (reason null — নীরব দেয়াল, কারণ ফাঁস হয় না) */
@@ -41,6 +42,7 @@ export const GUARD_ERROR_CODES = Object.freeze({
   MESSAGING_UPGRADE_REQUIRED: "MESSAGING_UPGRADE_REQUIRED",
   NO_MESSAGING_PACKAGE: "NO_MESSAGING_PACKAGE",
   BLOCKED: "BLOCKED",
+  CROSS_RELIGION_RESTRICTED: "CROSS_RELIGION_RESTRICTED",
 });
 
 /** অজানা/খালি কারণে নিষ্ক্রিয় বোতাম-টাইটেল — reason:null বা অজানা কোডে (যেমন PENDING) */
@@ -86,6 +88,13 @@ export const GUARD_STATES = Object.freeze([
     button: { iconKey: "ban", text: "মেসেজিং সম্ভব নয়" },
     row: "মেসেজিং সম্ভব নয়",
     // নীরব দেয়াল — কোনো কিউরেটেড নোটিস নয়; guardNoticeFor সার্ভার-মেসেজ/নীরব ফলায় যায়
+    notice: null,
+  },
+  {
+    preview: PREVIEW_REASONS.CROSS_RELIGION_RESTRICTED,
+    error: GUARD_ERROR_CODES.CROSS_RELIGION_RESTRICTED,
+    button: { iconKey: "ban", text: "স্বধর্মীয়দের জন্য সংরক্ষিত" },
+    row: "ভিন্ন ধর্মে যোগাযোগ বন্ধ",
     notice: null,
   },
 ]);

@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { orderApi } from "@/lib/api";
+import { checkoutPathFor, connectCountOf } from "@/lib/connects.core.mjs";
 
 function PaymentBody() {
   const router = useRouter();
@@ -56,7 +57,7 @@ function PaymentBody() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Billing Address</h2>
             <Link
-              href={`/checkout?planId=${order?.item?.refId || ""}`}
+              href={checkoutPathFor(order)}
               className="border border-red-300 text-red-400 hover:bg-red-50 hover:text-red-500 text-xs rounded px-4 py-1.5 transition-colors cursor-pointer"
             >
               পুর্বে ফিরে যান
@@ -138,6 +139,9 @@ function PaymentBody() {
             {order && (
               <p className="text-xs text-gray-400">
                 অর্ডার নং {order.orderNo} • {order.item?.titleBn || order.item?.title}
+                {order.kind === "PACK" && connectCountOf(order.item)
+                  ? ` • ${connectCountOf(order.item)} কানেক্ট`
+                  : ""}
               </p>
             )}
           </div>

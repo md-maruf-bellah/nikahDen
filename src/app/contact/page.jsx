@@ -1,21 +1,22 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Smartphone, Mail, MapPin, Send, Loader2, CircleCheck, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import coupleImg from "./../../../assets/contact/img.png";
 import { contactApi, ApiError } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
 
 const initialForm = { firstName: "", lastName: "", phone: "", email: "", message: "" };
 
 export default function ContactSection() {
+  const { t, isRTL } = useLanguage();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  // স্প্যাম প্রতিরোধ: ফর্ম রেন্ডার হওয়ার সময় মনে রাখা হয় (টাইম-ট্র্যাপ) + লুকানো honeypot ফিল্ড
-  const openedAt = useRef(Date.now());
+  const [openedAt] = useState(() => Date.now());
   const [honeypot, setHoneypot] = useState("");
 
   const set = (key) => (e) => {
@@ -23,12 +24,11 @@ export default function ContactSection() {
     setErrors((er) => ({ ...er, [key]: undefined }));
   };
 
-  // ক্লায়েন্ট-সাইড দ্রুত ভ্যালিডেশন — ব্যাকএন্ড zod আবার যাচাই করে
   const validate = () => {
     const er = {};
-    if (!form.firstName.trim()) er.firstName = "নামের প্রথম অংশ লিখুন";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) er.email = "সঠিক ই-মেইল লিখুন";
-    if (form.message.trim().length < 10) er.message = "বার্তা কমপক্ষে ১০ অক্ষরের হতে হবে";
+    if (!form.firstName.trim()) er.firstName = t("contact.errFirstName", "নামের প্রথম অংশ লিখুন");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) er.email = t("contact.errEmail", "সঠিক ই-মেইল লিখুন");
+    if (form.message.trim().length < 10) er.message = t("contact.errMessage", "বার্তা কমপক্ষে ১০ অক্ষরের হতে হবে");
     setErrors(er);
     return Object.keys(er).length === 0;
   };
@@ -46,20 +46,20 @@ export default function ContactSection() {
         phone: form.phone.trim(),
         email: form.email.trim(),
         message: form.message.trim(),
-        formElapsedMs: Date.now() - openedAt.current,
+        formElapsedMs: Date.now() - openedAt,
         website: honeypot,
       });
       if (res?.duplicate) {
-        setSuccess("আপনার আগের বার্তাটি এখনো পর্যালোচনাধীন — আমরা শিগগিরই যোগাযোগ করব।");
+        setSuccess(t("contact.pendingMsg", "আপনার আগের বার্তাটি এখনো পর্যালোচনাধীন — আমরা শিগগিরই যোগাযোগ করব।"));
       } else {
-        setSuccess("ধন্যবাদ! আপনার বার্তা পৌঁছেছে — আমরা দ্রুত যোগাযোগ করব।");
+        setSuccess(t("contact.successMsg", "ধন্যবাদ! আপনার বার্তা পৌঁছেছে — আমরা দ্রুত যোগাযোগ করব।"));
       }
       setForm(initialForm);
     } catch (err) {
       setError(
-        err instanceof ApiError && err.details?.length
-          ? err.details[0].message
-          : err.message || "বার্তা পাঠানো যায়নি। আবার চেষ্টা করুন।"
+        err instanceof ApiError && err.code === "RATE_LIMITED"
+          ? t("contact.errRateLimit", "একটু অপেক্ষা করে আবার চেষ্টা করুন — খুব বেশি অনুরোধ পাঠানো হয়েছে।")
+          : err.message || t("common.error", "বার্তা পাঠানো যায়নি — আবার চেষ্টা করুন।")
       );
     } finally {
       setSending(false);
@@ -73,9 +73,9 @@ export default function ContactSection() {
     <div className="min-h-screen">
       {/* Top Header Section */}
       <div className="bg-[#ff6b6b] text-white text-center py-10 px-4">
-        <h2 className="text-3xl font-bold mb-2">যোগাযোগ করুন</h2>
+        <h1 className="text-3xl font-bold mb-2">{t("contact.title", "যোগাযোগ করুন")}</h1>
         <p className="text-sm opacity-90 flex justify-center gap-2 items-center">
-          <Link href="/">হোম</Link> <span className="opacity-60">/</span> যোগাযোগ
+          <Link href="/" className="hover:underline">{t("nav.home", "হোম")}</Link> <span className="opacity-60">/</span> {t("contact.breadcrumb", "যোগাযোগ")}
         </p>
       </div>
 
@@ -87,14 +87,14 @@ export default function ContactSection() {
             <div className="mb-4 p-3 rounded-full group-hover:bg-red-50 cursor-pointer transition-colors">
               <Smartphone className="text-[#ff6b6b] w-10 h-10 stroke-1" />
             </div>
-            <p className="font-medium text-lg">+৮৮০ ১৭ XXXX XXXX</p>
+            <p className="font-medium text-lg" dir="ltr">{t("footer.phone", "+৮৮০ ১৭০০০০০০০০")}</p>
           </div>
 
           <div className="flex flex-col items-center text-center group">
             <div className="mb-4 p-3 rounded-full group-hover:bg-red-50 cursor-pointer transition-colors">
               <Mail className="text-[#ff6b6b] w-10 h-10 stroke-1" />
             </div>
-            <p className="font-medium text-lg">nikahdeen@gmail.com</p>
+            <p className="font-medium text-lg">{t("footer.email", "support@nikahdeen.com")}</p>
           </div>
 
           <div className="flex flex-col items-center text-center group">
@@ -102,8 +102,7 @@ export default function ContactSection() {
               <MapPin className="text-[#ff6b6b] w-10 h-10 stroke-1" />
             </div>
             <p className="font-medium text-lg leading-relaxed">
-              ২৬/০২, বনানী-১২১৩,
-              <br /> ঢাকা, বাংলাদেশ
+              {t("footer.address", "ঢাকা, বাংলাদেশ")}
             </p>
           </div>
         </div>
@@ -130,7 +129,6 @@ export default function ContactSection() {
               )}
 
               <form onSubmit={onSubmit} noValidate className="space-y-6">
-                {/* Honeypot — স্ক্রিন-রিডার ও ট্যাব থেকে লুকানো; বট অটো-ফিল করে ফাঁস হয় */}
                 <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", height: 0, overflow: "hidden" }}>
                   <label htmlFor="website">Website</label>
                   <input
@@ -148,7 +146,7 @@ export default function ContactSection() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label py-1">
-                      <span className="label-text text-gray-500 text-xs">নামের প্রথম অংশ *</span>
+                      <span className="label-text text-gray-500 text-xs">{t("contact.firstName", "নামের প্রথম অংশ")} *</span>
                     </label>
                     <input
                       type="text"
@@ -161,7 +159,7 @@ export default function ContactSection() {
                   </div>
                   <div className="form-control">
                     <label className="label py-1">
-                      <span className="label-text text-gray-500 text-xs">নামের শেষ অংশ</span>
+                      <span className="label-text text-gray-500 text-xs">{t("contact.lastName", "নামের শেষ অংশ")}</span>
                     </label>
                     <input
                       type="text"
@@ -176,7 +174,7 @@ export default function ContactSection() {
                 {/* Phone Field */}
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-gray-500 text-xs">ফোন</span>
+                    <span className="label-text text-gray-500 text-xs">{t("contact.phone", "ফোন")}</span>
                   </label>
                   <div className="relative">
                     <input
@@ -186,16 +184,13 @@ export default function ContactSection() {
                       placeholder="+৮৮০ ১৭ XXXX XXXX"
                       className={inputCls("phone")}
                     />
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center">
-                      <span className="text-xl">🇧🇩</span>
-                    </div>
                   </div>
                 </div>
 
                 {/* Email Field */}
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-gray-500 text-xs">ই-মেইল *</span>
+                    <span className="label-text text-gray-500 text-xs">{t("contact.email", "ই-মেইল")} *</span>
                   </label>
                   <input
                     type="email"
@@ -210,13 +205,13 @@ export default function ContactSection() {
                 {/* Message Field */}
                 <div className="form-control">
                   <label className="label py-1">
-                    <span className="label-text text-gray-500 text-xs">আপনার বার্তা *</span>
+                    <span className="label-text text-gray-500 text-xs">{t("contact.message", "আপনার বার্তা")} *</span>
                   </label>
                   <textarea
                     value={form.message}
                     onChange={set("message")}
                     className={`textarea w-full textarea-bordered h-32 focus:border-[#ff6b6b] outline-none ${errors.message ? "border-red-400" : ""}`}
-                    placeholder="বার্তা লিখুন (কমপক্ষে ১০ অক্ষর)..."
+                    placeholder={t("contact.messagePlaceholder", "আপনার বার্তা বিস্তারিত লিখুন...")}
                   />
                   {errors.message && <span className="text-red-500 text-xs mt-1">{errors.message}</span>}
                 </div>
@@ -227,8 +222,8 @@ export default function ContactSection() {
                   disabled={sending}
                   className="btn bg-[#f2504d] hover:bg-[#d43f3c] text-white border-none w-full text-lg font-bold h-12 mt-4"
                 >
-                  {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} />}
-                  {sending ? "পাঠানো হচ্ছে..." : "সাবমিট করুন"}
+                  {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} className={isRTL ? "rotate-180" : ""} />}
+                  {sending ? t("contact.submitting", "পাঠানো হচ্ছে...") : t("contact.submitBtn", "সাবমিট করুন")}
                 </button>
               </form>
             </div>

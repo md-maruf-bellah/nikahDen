@@ -17,13 +17,25 @@ export const oauthEvents = asyncHandler(async (req, res) => {
   return sendSuccess(res, "OAuth event history", data);
 });
 
-// GET /admin/audit/events?action=&limit= — অ্যাডমিন অ্যাকশন অডিট-ট্রেইল (কে/কবে/কী)
+// GET /admin/audit/events?action=&prefix=&limit= — অ্যাডমিন অ্যাকশন অডিট-ট্রেইল (কে/কবে/কী)
 export const auditEvents = asyncHandler(async (req, res) => {
   const data = await adminService.adminAuditHistory({
     action: req.query.action,
+    prefix: req.query.prefix,
     limit: req.query.limit ? parseInt(req.query.limit, 10) : undefined,
   });
   return sendSuccess(res, "Admin audit trail", data);
+});
+
+// GET /admin/guardians?status=&q=&page=&limit= — গার্ডিয়ান-লিংক রিভিউ তালিকা
+export const guardians = asyncHandler(async (req, res) => {
+  const { items, pagination } = await adminService.guardianLinks({
+    status: req.query.status,
+    q: req.query.q,
+    page: req.query.page,
+    limit: req.query.limit,
+  });
+  return sendSuccess(res, "Guardianship links", items, pagination);
 });
 
 // GET /admin/contact/events?ip=&limit= — পারসিস্টেড contact spam-drop হিস্ট্রি

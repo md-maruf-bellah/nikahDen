@@ -18,6 +18,7 @@ import MembershipPlan from "../src/models/membershipPlan.model.js";
 import ConnectPack from "../src/models/connectPack.model.js";
 import Coupon from "../src/models/coupon.model.js";
 import { ROLES, USER_STATUSES, GENDERS, MARITAL_STATUSES, RELIGIONS } from "../src/constants/index.js";
+import { BIODATAS_21 } from "./seed-21-biodatas.js";
 
 const reset = process.argv.includes("--reset");
 
@@ -154,43 +155,42 @@ async function createUserForSample(sample, i) {
 }
 
 async function seedBiodata() {
-  const existing = await Biodata.countDocuments();
-  if (existing > 0) {
-    log(`biodata already present (${existing}) — skipping samples`);
-    return;
-  }
+  for (let i = 0; i < BIODATAS_21.length; i++) {
+    const item = BIODATAS_21[i];
+    const [first, ...rest] = item.name.split(" ");
+    const lastName = rest.join(" ") || "";
+    let user = await User.findOne({ email: item.email });
+    if (!user) {
+      user = await User.create({
+        firstName: first,
+        lastName,
+        email: item.email,
+        passwordHash: "Member@12345",
+        role: ROLES.USER,
+        status: USER_STATUSES.ACTIVE,
+        phone: item.mobile,
+      });
+    }
 
-  for (let i = 0; i < SAMPLES.length; i += 1) {
-    const s = SAMPLES[i];
-    const user = await createUserForSample(s, i);
-    const year = new Date().getFullYear() - s.age;
-    const [first, ...rest] = s.name.split(" ");
-    await Biodata.create({
+    const payload = {
+      ...item,
       user: user._id,
-      gender: s.gender,
-      religion: s.religion,
-      maritalStatus: MARITAL_STATUSES.UNMARRIED,
       firstName: first,
-      lastName: rest.join(" "),
-      birthYear: year,
-      division: s.division,
-      district: s.district,
-      occupation: s.profession,
-      education: s.education,
-      heightText: s.height,
-      skinColor: s.color,
-      mobile: `0181${String(20000000 + i * 173).slice(0, 8)}`,
-      presentAddress: `${s.district}, বাংলাদেশ`,
-      permanentAddress: `${s.district}, বাংলাদেশ`,
-      aboutYourself: `আমি ${s.profession}। সৎ ও ধার্মিক জীবনসঙ্গী খুঁজছি।`,
+      lastName,
+      fullName: item.name,
+      status: "APPROVED",
       agreed: true,
       agreedAt: new Date(),
-      status: "APPROVED",
-      submittedAt: new Date(),
-      approvedAt: new Date(),
-    });
+    };
+
+    const existing = await Biodata.findOne({ $or: [{ user: user._id }, { biodataNo: item.biodataNo }] });
+    if (existing) {
+      await Biodata.updateOne({ _id: existing._id }, { $set: payload });
+    } else {
+      await Biodata.create(payload);
+    }
   }
-  log(`sample biodata: ${SAMPLES.length} approved profiles`);
+  log(`sample biodata: ${BIODATAS_21.length} approved profiles ensured permanently`);
 }
 
 async function main() {

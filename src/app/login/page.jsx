@@ -10,6 +10,7 @@ import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
 import { authApi, tokenStore } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { useSearchParams } from "next/navigation";
 import {
   LOCK_BANGLA_PREFIX,
@@ -22,6 +23,7 @@ import {
 const Login = () => {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const { t, isRTL, language } = useLanguage();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -101,11 +103,11 @@ const Login = () => {
           <div className="flex items-center gap-2 mb-8">
             <Image src={logo} alt="logo" width={40} height={40} />
             <h1 className="text-3xl font-extrabold tracking-tight">
-              নিকাহ্<span className="text-[#FD6969]">দ্বীন</span>
+              {t("common.siteName", "নিকাহ্")}<span className="text-[#FD6969]">{t("common.siteNameHighlight", "দ্বীন")}</span>
             </h1>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-8">লগইন করুন</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">{t("auth.loginTitle", "লগইন করুন")}</h2>
 
           {error && (
             <div className="alert alert-error text-sm py-2 mb-4 shadow-none">
@@ -123,9 +125,9 @@ const Login = () => {
             <div className="relative">
               <label
                 htmlFor="login-email"
-                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
               >
-                ই-মেইল
+                {language === "bn" ? "ই-মেইল" : t("auth.emailLabel", "ই-মেইল")}
               </label>
               <input
                 id="login-email"
@@ -143,9 +145,9 @@ const Login = () => {
             <div className="relative">
               <label
                 htmlFor="login-password"
-                className="absolute -top-2 left-3 bg-white px-1 text-xs text-gray-500 z-10"
+                className={`absolute -top-2 ${isRTL ? "right-3" : "left-3"} bg-white px-1 text-xs text-gray-500 z-10`}
               >
-                পাসওয়ার্ড
+                {language === "bn" ? "পাসওয়ার্ড" : t("auth.passwordLabel", "পাসওয়ার্ড")}
               </label>
               <div className="relative">
                 <input
@@ -161,22 +163,30 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                  aria-label={
+                    language === "bn"
+                      ? showPassword
+                        ? "পাসওয়ার্ড লুকান"
+                        : "পাসওয়ার্ড দেখুন"
+                      : showPassword
+                      ? t("auth.hidePassword", "পাসওয়ার্ড লুকান")
+                      : t("auth.showPassword", "পাসওয়ার্ড দেখুন")
+                  }
                   aria-pressed={showPassword}
                   aria-controls="login-password"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 -translate-y-1/2 text-gray-400`}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
-            <p className="text-right">
+            <p className={isRTL ? "text-left" : "text-right"}>
               <Link
                 href="/email"
                 className="text-sm text-red-500 underline font-semibold"
               >
-                পাসওয়ার্ড ভুলে গেছেন?
+                {t("auth.forgotPassword", "পাসওয়ার্ড ভুলে গেছেন?")}
               </Link>
             </p>
 
@@ -189,43 +199,43 @@ const Login = () => {
               {loading ? (
                 <span className="loading loading-spinner loading-sm"></span>
               ) : (
-                "লগইন করুন"
+                t("auth.loginBtn", "লগইন করুন")
               )}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="divider text-gray-400 text-sm my-8">or</div>
+          <div className="divider text-gray-400 text-sm my-8">{t("auth.orContinueWith", "or")}</div>
 
           {/* Social Logins */}
           <div className="space-y-4">
             <button
               type="button"
               disabled={!oauthAvailable.google}
-              title={oauthAvailable.google ? "গুগল দিয়ে লগইন" : "গুগল লগইন এখনো কনফিগার করা হয়নি"}
+              title={oauthAvailable.google ? "Google" : "Google OAuth"}
               onClick={() => { window.location.href = authApi.oauthStartUrl("google"); }}
               className="btn w-full bg-white border-gray-200 hover:bg-gray-50 text-gray-700 h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FcGoogle size={22} />
-              Sign in with Google
+              {t("auth.googleLogin", "Sign in with Google")}
             </button>
             <button
               type="button"
               disabled={!oauthAvailable.facebook}
-              title={oauthAvailable.facebook ? "ফেসবুক দিয়ে লগইন" : "ফেসবুক লগইন এখনো কনফিগার করা হয়নি"}
+              title={oauthAvailable.facebook ? "Facebook" : "Facebook OAuth"}
               onClick={() => { window.location.href = authApi.oauthStartUrl("facebook"); }}
               className="btn w-full bg-[#1A77F2] hover:bg-[#166fe5] border-none text-white h-12 flex items-center justify-center gap-2 normal-case font-semibold disabled:opacity-50"
             >
               <FaFacebook size={22} />
-              Sign in with Facebook
+              {t("auth.facebookLogin", "Sign in with Facebook")}
             </button>
           </div>
 
           {/* Footer Link */}
           <p className="text-center mt-8 text-sm text-gray-600 font-medium">
-            একাউন্ট নেই?{" "}
+            {t("auth.noAccount", "একাউন্ট নেই?")}{" "}
             <Link href="/register" className="text-red-500 underline font-bold">
-              রেজিস্ট্রেশন করুন
+              {t("auth.createOne", "রেজিস্ট্রেশন করুন")}
             </Link>
           </p>
         </div>

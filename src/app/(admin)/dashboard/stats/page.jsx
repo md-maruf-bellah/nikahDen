@@ -21,241 +21,375 @@ import {
   TrendingUp,
   AlertTriangle,
   CalendarDays,
-  Hourglass,
-  ShieldAlert,
   ShieldCheck,
-  Ban,
-  KeyRound,
+  ShieldAlert,
+  ArrowUpRight,
+  ArrowDownRight,
+  Sparkles,
+  Zap,
+  Activity,
+  Layers,
+  ChevronRight,
   LogIn,
+  KeyRound,
+  Ban,
   X,
-  Ban as BanIcon,
+  Plus,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const bn = (n) => Number(n ?? 0).toLocaleString("bn-BD");
 const taka = (n) => `৳ ${Number(n ?? 0).toLocaleString("bn-BD")}`;
 
-function StatCard({ icon, label, value, tone = "text-red-500", sub }) {
-  return (
-    <div className="card bg-base-100 border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-            {label}
-          </p>
-          <p className="text-2xl font-black mt-1">{value}</p>
-          {sub && <p className="text-[11px] text-gray-400 mt-1">{sub}</p>}
-        </div>
-        <div className={`rounded-xl p-2.5 bg-base-200 ${tone}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SectionTitle({ children }) {
-  return (
-    <h3 className="text-lg font-black tracking-tight mt-2 mb-3">{children}</h3>
-  );
-}
-
-// স্টাফ ইনবক্স টেবিলের তারিখ-স্টাইলের মতো করে ইভেন্ট-টাইম ফরম্যাট
+// Staff-style Bengali time format
 const timeBn = (iso) => {
   try {
     return new Date(iso).toLocaleString("bn-BD", {
-      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch {
     return iso;
   }
 };
 
-// OAuth ইভেন্ট-নাম → বাংলা লেবেল + টোন (কার্ড ও টেবিল দুজায়গায় ব্যবহৃত)
 const OAUTH_EVENT_META = {
-  start: { label: "কনসেন্ট শুরু", tone: "text-sky-600" },
-  start_failed: { label: "শুরু ব্যর্থ", tone: "text-red-600" },
-  provider_denied: { label: "অনুমতি ফিরিয়ে দেওয়া", tone: "text-orange-500" },
-  state_failed: { label: "CSRF state ব্যর্থ", tone: "text-red-600" },
-  exchange_failed: { label: "কোড এক্সচেঞ্জ ব্যর্থ", tone: "text-red-600" },
-  exchange_success: { label: "এক্সচেঞ্জ সফল", tone: "text-green-600" },
-  login_success: { label: "সফল লগইন", tone: "text-green-600" },
-  rate_limited: { label: "রেট-লিমিট (429)", tone: "text-amber-600" },
-  failure_blocked: { label: "ফেইল২ব্যান ব্লক", tone: "text-red-700" },
+  start: { label: "কনসেন্ট শুরু", tone: "badge-info" },
+  start_failed: { label: "শুরু ব্যর্থ", tone: "badge-error" },
+  provider_denied: { label: "অনুমতি ফিরিয়ে দেওয়া", tone: "badge-warning" },
+  state_failed: { label: "CSRF state ব্যর্থ", tone: "badge-error" },
+  exchange_failed: { label: "কোড এক্সচেঞ্জ ব্যর্থ", tone: "badge-error" },
+  exchange_success: { label: "এক্সচেঞ্জ সফল", tone: "badge-success text-white" },
+  login_success: { label: "সফল লগইন", tone: "badge-success text-white" },
+  rate_limited: { label: "রেট-লিমিট (429)", tone: "badge-warning" },
+  failure_blocked: { label: "ফেইল২ব্যান ব্লক", tone: "badge-error text-white" },
 };
 
-function OAuthMonitorSection({ stats, events, eventsLoading, eventsError, reload, eventFilter, setEventFilter, ipFilter, setIpFilter }) {
-  const counts = stats?.oauth?.counts || {};
-  const totalFailed = stats?.oauth?.totalFailed || 0;
-  const totalAttempts = Object.values(counts).reduce((a, b) => a + Number(b || 0), 0);
-  const failureRate = totalAttempts ? Math.round((totalFailed / totalAttempts) * 100) : 0;
+/**
+ * ---------------------------------------------------------------------------
+ * Interactive SVG Revenue Trend Chart (Area + Bar combo)
+ * ---------------------------------------------------------------------------
+ */
+function RevenueTrendChart({ trends, revenueStats }) {
+  const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  const cards = [
-    { icon: <LogIn size={20} />, label: "সফল লগইন (OAuth)", value: bn(counts.login_success + counts.exchange_success), tone: "text-green-600", sub: "login_success + exchange_success" },
-    { icon: <KeyRound size={20} />, label: "ব্যর্থ এক্সচেঞ্জ", value: bn(counts.exchange_failed), tone: "text-red-600", sub: "ভুয়া/পুরনো/রিপ্লে কোড" },
-    { icon: <ShieldAlert size={20} />, label: "State ব্যর্থ (CSRF)", value: bn(counts.state_failed), tone: "text-red-600", sub: "tamper/expired/replay" },
-    { icon: <BanIcon size={20} />, label: "ফেইল২ব্যান ব্লক", value: bn(counts.failure_blocked), tone: "text-red-700", sub: "ব্লকড IP-এর চেষ্টা" },
-    { icon: <ShieldCheck size={20} />, label: "মোট ব্যর্থতা", value: bn(totalFailed), tone: "text-orange-500", sub: `চেষ্টার ${failureRate}% (এই রানে)` },
+  // Generate 7-day array even if backend has missing dates
+  const points = React.useMemo(() => {
+    const list = [];
+    const now = new Date();
+    const rawMap = new Map((trends?.dailyRevenue || []).map((x) => [x._id, x]));
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(now.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const found = rawMap.get(key);
+      const dayName = d.toLocaleDateString("bn-BD", { weekday: "short", day: "numeric" });
+      list.push({
+        date: key,
+        label: dayName,
+        amount: Number(found?.amount || 0),
+        orders: Number(found?.orders || 0),
+      });
+    }
+    return list;
+  }, [trends]);
+
+  const maxAmount = Math.max(...points.map((p) => p.amount), 1000);
+  const chartHeight = 160;
+  const chartWidth = 500;
+  const paddingX = 30;
+  const paddingY = 25;
+  const usableWidth = chartWidth - paddingX * 2;
+  const usableHeight = chartHeight - paddingY * 2;
+
+  // Compute SVG coordinates
+  const coords = points.map((p, idx) => {
+    const x = paddingX + (idx / (points.length - 1)) * usableWidth;
+    const y = chartHeight - paddingY - (p.amount / maxAmount) * usableHeight;
+    return { ...p, x, y };
+  });
+
+  // Build curved path
+  const pathD = coords.reduce((acc, pt, idx, arr) => {
+    if (idx === 0) return `M ${pt.x} ${pt.y}`;
+    const prev = arr[idx - 1];
+    const cp1x = prev.x + (pt.x - prev.x) / 2;
+    const cp1y = prev.y;
+    const cp2x = prev.x + (pt.x - prev.x) / 2;
+    const cp2y = pt.y;
+    return `${acc} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${pt.x} ${pt.y}`;
+  }, "");
+
+  const areaD = `${pathD} L ${coords[coords.length - 1].x} ${chartHeight - paddingY} L ${coords[0].x} ${chartHeight - paddingY} Z`;
+
+  return (
+    <div className="bg-base-100 rounded-3xl p-5 border border-gray-100 dark:border-base-300 shadow-sm flex flex-col justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-base-300">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#fd6969] animate-pulse"></span>
+            <h3 className="font-black text-base text-gray-800 dark:text-gray-100">
+              রেভিনিউ আয় ট্রেন্ড (গত ৭ দিন)
+            </h3>
+          </div>
+          <p className="text-xs text-gray-400 mt-0.5">দৈনিক সফল মেম্বারশিপ ও কানেক্ট প্যাক বিক্রির হিসাব</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-xs text-gray-400 font-semibold">এই সপ্তাহের মোট আয়</p>
+            <p className="text-lg font-black text-[#fd6969]">{taka(revenueStats?.thisWeekBdt)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* SVG Canvas */}
+      <div className="relative my-3">
+        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-44 overflow-visible">
+          <defs>
+            <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#fd6969" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#fd6969" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          <line x1={paddingX} y1={paddingY} x2={chartWidth - paddingX} y2={paddingY} stroke="currentColor" strokeDasharray="3 3" opacity="0.08" />
+          <line x1={paddingX} y1={chartHeight / 2} x2={chartWidth - paddingX} y2={chartHeight / 2} stroke="currentColor" strokeDasharray="3 3" opacity="0.08" />
+          <line x1={paddingX} y1={chartHeight - paddingY} x2={chartWidth - paddingX} y2={chartHeight - paddingY} stroke="currentColor" opacity="0.15" />
+
+          {/* Area fill & smooth stroke */}
+          <path d={areaD} fill="url(#revGrad)" />
+          <path d={pathD} fill="none" stroke="#fd6969" strokeWidth="3" strokeLinecap="round" />
+
+          {/* Data Points */}
+          {coords.map((pt, idx) => (
+            <g key={pt.date} onMouseEnter={() => setHoveredIdx(idx)} onMouseLeave={() => setHoveredIdx(null)} className="cursor-pointer">
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={hoveredIdx === idx ? 6 : 4}
+                fill={hoveredIdx === idx ? "#fd6969" : "#fff"}
+                stroke="#fd6969"
+                strokeWidth="2.5"
+                className="transition-all"
+              />
+              <text
+                x={pt.x}
+                y={chartHeight - 6}
+                textAnchor="middle"
+                fontSize="9"
+                fill="currentColor"
+                opacity={hoveredIdx === idx ? 1 : 0.6}
+                fontWeight={hoveredIdx === idx ? "bold" : "normal"}
+              >
+                {pt.label}
+              </text>
+            </g>
+          ))}
+        </svg>
+
+        {/* Hover Tooltip Popup */}
+        {hoveredIdx !== null && (
+          <div
+            className="absolute -top-1 bg-gray-900 text-white text-[11px] px-3 py-1.5 rounded-xl shadow-xl pointer-events-none transform -translate-x-1/2 transition-all z-20"
+            style={{ left: `${(coords[hoveredIdx].x / chartWidth) * 100}%` }}
+          >
+            <p className="font-bold text-[#fd6969]">{coords[hoveredIdx].label}</p>
+            <p className="font-black text-sm">{taka(coords[hoveredIdx].amount)}</p>
+            <p className="text-[10px] text-gray-300">অর্ডার: {bn(coords[hoveredIdx].orders)} টি</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer stats summary */}
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 dark:border-base-300 text-xs">
+        <div>
+          <span className="text-gray-400 text-[10px] uppercase font-bold">আজকের আয়</span>
+          <p className="font-black text-gray-700 dark:text-gray-200">{taka(revenueStats?.todayBdt)}</p>
+        </div>
+        <div>
+          <span className="text-gray-400 text-[10px] uppercase font-bold">এই মাসের আয়</span>
+          <p className="font-black text-green-600">{taka(revenueStats?.thisMonthBdt)}</p>
+        </div>
+        <div>
+          <span className="text-gray-400 text-[10px] uppercase font-bold">পরিশোধিত অর্ডার</span>
+          <p className="font-black text-purple-600">{bn(revenueStats?.totalPaidOrders)} টি</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Biodata Grooms vs Brides & Status Distribution
+ * ---------------------------------------------------------------------------
+ */
+function BiodataDistributionChart({ biodatas }) {
+  const grooms = Number(biodatas?.grooms || 0);
+  const brides = Number(biodatas?.brides || 0);
+  const totalProfiles = Math.max(grooms + brides, 1);
+  const groomPct = Math.round((grooms / totalProfiles) * 100);
+  const bridePct = 100 - groomPct;
+
+  const approved = Number(biodatas?.approved || 0);
+  const pending = Number(biodatas?.pending || 0);
+  const rejected = Number(biodatas?.rejected || 0);
+  const hidden = Number(biodatas?.hidden || 0);
+  const totalStatus = Math.max(approved + pending + rejected + hidden, 1);
+
+  return (
+    <div className="bg-base-100 rounded-3xl p-5 border border-gray-100 dark:border-base-300 shadow-sm flex flex-col justify-between">
+      <div className="pb-3 border-b border-gray-100 dark:border-base-300">
+        <h3 className="font-black text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <Layers size={18} className="text-[#fd6969]" />
+          বায়োডাটা অনুপাত ও স্ট্যাটাস
+        </h3>
+        <p className="text-xs text-gray-400 mt-0.5">পাত্র-পাত্রীর অনুপাত ও মডারেশন কিউ বিশ্লেষণ</p>
+      </div>
+
+      {/* Visual Ring / Progress Display */}
+      <div className="py-4 space-y-4">
+        {/* Grooms vs Brides bar */}
+        <div>
+          <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+            <span className="text-blue-600 flex items-center gap-1">
+              পাত্র (বর): {bn(grooms)} ({bn(groomPct)}%)
+            </span>
+            <span className="text-rose-500 flex items-center gap-1">
+              পাত্রী (কনে): {bn(brides)} ({bn(bridePct)}%)
+            </span>
+          </div>
+          <div className="w-full h-3 rounded-full bg-base-200 overflow-hidden flex shadow-inner">
+            <div style={{ width: `${groomPct}%` }} className="bg-blue-500 transition-all duration-500" title="পাত্র"></div>
+            <div style={{ width: `${bridePct}%` }} className="bg-[#fd6969] transition-all duration-500" title="পাত্রী"></div>
+          </div>
+        </div>
+
+        {/* Status Distribution Progress Bars */}
+        <div className="space-y-2 pt-2 text-xs">
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1">
+              <span className="flex items-center gap-1 text-green-600 font-bold">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span> অনুমোদিত ও লাইভ
+              </span>
+              <span className="font-bold">{bn(approved)} ({bn(Math.round((approved / totalStatus) * 100))}%)</span>
+            </div>
+            <progress className="progress progress-success w-full h-2" value={approved} max={totalStatus}></progress>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1">
+              <span className="flex items-center gap-1 text-amber-500 font-bold">
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> অপেক্ষমান রিভিউ
+              </span>
+              <span className="font-bold">{bn(pending)} ({bn(Math.round((pending / totalStatus) * 100))}%)</span>
+            </div>
+            <progress className="progress progress-warning w-full h-2" value={pending} max={totalStatus}></progress>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-gray-500 font-semibold mb-1">
+              <span className="flex items-center gap-1 text-purple-600 font-bold">
+                <span className="w-2 h-2 rounded-full bg-purple-500 inline-block"></span> পাবলিক থেকে লুকানো
+              </span>
+              <span className="font-bold">{bn(hidden)} ({bn(Math.round((hidden / totalStatus) * 100))}%)</span>
+            </div>
+            <progress className="progress progress-secondary w-full h-2" value={hidden} max={totalStatus}></progress>
+          </div>
+        </div>
+      </div>
+
+      {/* Total views badge */}
+      <div className="pt-3 border-t border-gray-100 dark:border-base-300 flex items-center justify-between text-xs">
+        <span className="text-gray-400 font-medium flex items-center gap-1">
+          <Eye size={13} /> মোট পাবলিক প্রোফাইল ভিউ:
+        </span>
+        <span className="font-black text-[#fd6969] text-sm">{bn(biodatas?.totalViews)} বার</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ---------------------------------------------------------------------------
+ * Platform Funnel & Social Engagement Funnel
+ * ---------------------------------------------------------------------------
+ */
+function PlatformFunnelChart({ users, biodatas, interests, marriages }) {
+  const steps = [
+    { label: "নিবন্ধিত ইউজার", value: Number(users?.total || 0), icon: <Users size={14} />, color: "bg-blue-500" },
+    { label: "তৈরিকৃত বায়োডাটা", value: Number(biodatas?.total || 0), icon: <FileText size={14} />, color: "bg-purple-500" },
+    { label: "আগ্রহ ও লাইক আদান-প্রদান", value: Number(interests?.sent || 0), icon: <Heart size={14} />, color: "bg-rose-500" },
+    { label: "মিউচুয়াল ম্যাচ (উভয়পক্ষ)", value: Number(interests?.accepted || 0), icon: <HeartHandshake size={14} />, color: "bg-amber-500" },
+    { label: "সম্পন্ন সফল বিবাহ", value: Number(marriages?.total || 0), icon: <Sparkles size={14} />, color: "bg-green-500" },
   ];
 
+  const maxVal = Math.max(...steps.map((s) => s.value), 1);
+
   return (
-    <div className="mt-8">
-      <SectionTitle>OAuth মনিটর (সোশ্যাল লগইন স্বাস্থ্য)</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        {cards.map((card) => (
-          <StatCard key={card.label} {...card} />
-        ))}
+    <div className="bg-base-100 rounded-3xl p-5 border border-gray-100 dark:border-base-300 shadow-sm">
+      <div className="pb-3 border-b border-gray-100 dark:border-base-300 mb-4">
+        <h3 className="font-black text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <Activity size={18} className="text-[#fd6969]" />
+          ম্যাচমেকিং ও কনভার্সন ফানেল
+        </h3>
+        <p className="text-xs text-gray-400 mt-0.5">নিবন্ধন থেকে সফল বিবাহ পর্যন্ত ব্যবহারকারীদের যাত্রা</p>
       </div>
 
-      {/* পারসিস্টেড রিসেন্ট ইভেন্ট (Mongo capped collection — রিস্টার্ট-সহনশীল) */}
-      <div className="mt-4 overflow-x-auto rounded-xl border border-gray-100">
-        <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-base-200/60">
-          <p className="text-xs font-bold text-gray-500 mr-auto">
-            রিসেন্ট ইভেন্ট — সার্ভার রিস্টার্টের পরেও থাকে (সর্বশেষ ২০)
-          </p>
-          {/* ফিল্টার: ইভেন্ট-ধরন + IP — পরিবর্তনেই সার্ভারে নতুন কুয়েরি যায় */}
-          <select
-            className="select select-xs text-xs"
-            value={eventFilter}
-            onChange={(e) => setEventFilter(e.target.value)}
-            aria-label="ইভেন্ট ফিল্টার"
-          >
-            <option value="">সব ইভেন্ট</option>
-            {Object.entries(OAUTH_EVENT_META).map(([value, meta]) => (
-              <option key={value} value={value}>{meta.label}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            className="input input-xs w-32 font-mono text-xs"
-            placeholder="IP ফিল্টার…"
-            value={ipFilter}
-            onChange={(e) => setIpFilter(e.target.value)}
-            aria-label="IP ফিল্টার"
-          />
-          {(eventFilter || ipFilter) && (
-            <button
-              className="btn btn-ghost btn-xs text-gray-400"
-              onClick={() => { setEventFilter(""); setIpFilter(""); }}
-            >
-              <X size={12} /> মুছুন
-            </button>
-          )}
-          <button onClick={reload} className="btn btn-ghost btn-xs gap-1">
-            <RefreshCw size={12} /> রিফ্রেশ
-          </button>
-        </div>
-        <table className="table table-sm">
-          <thead>
-            <tr className="text-[11px] text-gray-400">
-              <th>সময়</th><th>ইভেন্ট</th><th>IP</th><th>প্রোভাইডার</th><th>এরর কোড</th>
-            </tr>
-          </thead>
-          <tbody>
-            {eventsLoading && (
-              <tr><td colSpan={5} className="text-center py-6"><span className="loading loading-spinner loading-sm text-red-400" /></td></tr>
-            )}
-            {!eventsLoading && eventsError && (
-              <tr><td colSpan={5} className="text-center py-6 text-xs text-red-500">{eventsError}</td></tr>
-            )}
-            {!eventsLoading && !eventsError && events.length === 0 && (
-              <tr><td colSpan={5} className="text-center py-6 text-xs text-gray-400">এখনো কোনো OAuth ইভেন্ট নেই</td></tr>
-            )}
-            {!eventsLoading && !eventsError && events.map((ev, i) => {
-              const meta = OAUTH_EVENT_META[ev.event] || { label: ev.event, tone: "text-gray-500" };
-              return (
-                <tr key={`${ev.at}-${i}`} className="text-xs">
-                  <td className="whitespace-nowrap text-gray-400">{timeBn(ev.at)}</td>
-                  <td className={`font-bold ${meta.tone}`}>{meta.label}</td>
-                  <td className="font-mono text-[11px]">{ev.ip || "—"}</td>
-                  <td>{ev.provider || "—"}</td>
-                  <td className="font-mono text-[11px] text-gray-400">{ev.errorCode || "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="space-y-3">
+        {steps.map((s, idx) => {
+          const pct = Math.max(Math.round((s.value / maxVal) * 100), 4);
+          return (
+            <div key={s.label} className="space-y-1">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold flex items-center gap-1.5 text-gray-600 dark:text-gray-300">
+                  <span className={`w-5 h-5 rounded-md text-white flex items-center justify-center ${s.color}`}>
+                    {s.icon}
+                  </span>
+                  {s.label}
+                </span>
+                <span className="font-black text-gray-800 dark:text-gray-100">{bn(s.value)}</span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-base-200 overflow-hidden">
+                <div
+                  style={{ width: `${pct}%` }}
+                  className={`h-full rounded-full ${s.color} transition-all duration-700`}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// Contact spam-drop ইভেন্ট — পারসিস্টেড টেবিল (OAuth মনিটরের নিচে)
-function ContactSpamSection({ events, loading, error, reload }) {
-  const reasonMeta = {
-    honeypot: { label: "Honeypot ফিল্ড", tone: "text-red-600" },
-    time_trap: { label: "অসম্ভব দ্রুত সাবমিট", tone: "text-orange-500" },
-  };
-  return (
-    <div className="mt-8">
-      <SectionTitle>Contact স্প্যাম ডিফেন্স</SectionTitle>
-      <div className="overflow-x-auto rounded-xl border border-gray-100">
-        <div className="flex items-center justify-between px-4 py-2 bg-base-200/60">
-          <p className="text-xs font-bold text-gray-500">
-            স্প্যাম-ড্রপ ইভেন্ট — রিস্টার্টের পরেও থাকে (সর্বশেষ ২০)
-          </p>
-          <button onClick={reload} className="btn btn-ghost btn-xs gap-1">
-            <RefreshCw size={12} /> রিফ্রেশ
-          </button>
-        </div>
-        <table className="table table-sm">
-          <thead>
-            <tr className="text-[11px] text-gray-400">
-              <th>সময়</th><th>কারণ</th><th>IP</th><th>বিস্তারিত</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && (
-              <tr><td colSpan={4} className="text-center py-6"><span className="loading loading-spinner loading-sm text-red-400" /></td></tr>
-            )}
-            {!loading && error && (
-              <tr><td colSpan={4} className="text-center py-6 text-xs text-red-500">{error}</td></tr>
-            )}
-            {!loading && !error && events.length === 0 && (
-              <tr><td colSpan={4} className="text-center py-6 text-xs text-gray-400">এখনো কোনো স্প্যাম ধরা পড়েনি</td></tr>
-            )}
-            {!loading && !error && events.map((ev, i) => {
-              const meta = reasonMeta[ev.reason] || { label: ev.reason || "—", tone: "text-gray-500" };
-              return (
-                <tr key={`${ev.at}-${i}`} className="text-xs">
-                  <td className="whitespace-nowrap text-gray-400">{timeBn(ev.at)}</td>
-                  <td className={`font-bold ${meta.tone}`}>{meta.label}</td>
-                  <td className="font-mono text-[11px]">{ev.ip || "—"}</td>
-                  <td className="font-mono text-[11px] text-gray-400">{ev.detail || "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-const StatsDashboard = () => {
+export default function StatsDashboard({ onNavigateTab }) {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  // OAuth ইভেন্ট-হিস্ট্রি (capped collection) — আলাদা লোড, আলাদা রিফ্রেশ + ফিল্টার
+
+  // OAuth Events
   const [oauthEvents, setOauthEvents] = useState([]);
   const [oauthEventsLoading, setOauthEventsLoading] = useState(true);
   const [oauthEventsError, setOauthEventsError] = useState("");
   const [eventFilter, setEventFilter] = useState("");
   const [ipFilter, setIpFilter] = useState("");
-  const [ipFilterDebounced, setIpFilterDebounced] = useState("");
-  // Contact spam-drop ইভেন্ট — আলাদা লোড
-  const [contactEvents, setContactEvents] = useState([]);
-  const [contactEventsLoading, setContactEventsLoading] = useState(true);
-  const [contactEventsError, setContactEventsError] = useState("");
 
-  const load = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await adminApi.stats();
-      setStats(data);
+      const res = await adminApi.stats();
+      setStats(res);
     } catch (err) {
-      setError(err.message || "স্ট্যাটিসটিক্স লোড করা যায়নি।");
+      setError(err.message || "পরিসংখ্যান লোড করা যায়নি।");
     } finally {
       setLoading(false);
     }
@@ -265,217 +399,307 @@ const StatsDashboard = () => {
     setOauthEventsLoading(true);
     setOauthEventsError("");
     try {
-      const data = await adminApi.oauthEvents({
-        limit: 20,
+      const res = await adminApi.oauthEvents({
         event: eventFilter || undefined,
-        ip: ipFilterDebounced.trim() || undefined,
+        ip: ipFilter.trim() || undefined,
+        limit: 20,
       });
-      setOauthEvents(data?.items || []);
+      setOauthEvents(res?.data || []);
     } catch (err) {
-      setOauthEventsError(err.message || "OAuth ইভেন্ট লোড করা যায়নি।");
+      setOauthEventsError(err.message || "OAuth ইভেন্ট লোড করা যায়নি");
     } finally {
       setOauthEventsLoading(false);
     }
-  }, [eventFilter, ipFilterDebounced]);
-
-  // IP ফিল্টার টাইপিং-এ প্রতি কীপ্রেসে রিকোয়েস্ট না যায় — ৪০০ms ডিবাউন্স
-  useEffect(() => {
-    const t = setTimeout(() => setIpFilterDebounced(ipFilter), 400);
-    return () => clearTimeout(t);
-  }, [ipFilter]);
-
-  const loadContactEvents = useCallback(async () => {
-    setContactEventsLoading(true);
-    setContactEventsError("");
-    try {
-      const data = await adminApi.contactEvents({ limit: 20 });
-      setContactEvents(data?.items || []);
-    } catch (err) {
-      setContactEventsError(err.message || "স্প্যাম ইভেন্ট লোড করা যায়নি।");
-    } finally {
-      setContactEventsLoading(false);
-    }
-  }, []);
+  }, [eventFilter, ipFilter]);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (!cancelled) return load();
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [load]);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (!cancelled) return loadOauthEvents();
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [loadOauthEvents]);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (!cancelled) return loadContactEvents();
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [loadContactEvents]);
+    loadData();
+    loadOauthEvents();
+  }, [loadData, loadOauthEvents]);
 
   if (loading) {
     return (
-      <div className="flex justify-center py-24">
-        <span className="loading loading-spinner loading-lg text-red-400"></span>
+      <div className="text-center py-28">
+        <span className="loading loading-spinner loading-lg text-[#fd6969]"></span>
+        <p className="text-xs text-gray-400 mt-2 font-medium">অ্যাডমিন ড্যাশবোর্ড ডেটা লোড হচ্ছে...</p>
       </div>
     );
   }
 
   if (error || !stats) {
     return (
-      <div className="p-6 text-center">
-        <div className="alert alert-error text-sm inline-flex">
-          <span>{error || "ডেটা পাওয়া যায়নি"}</span>
-        </div>
-        <button onClick={load} className="btn btn-sm btn-outline mt-4 gap-2">
-          <RefreshCw size={14} /> আবার চেষ্টা করুন
+      <div className="p-8 text-center space-y-3">
+        <div className="alert alert-error max-w-md mx-auto text-xs">{error || "ডেটা পাওয়া যায়নি"}</div>
+        <button onClick={loadData} className="btn btn-sm btn-outline gap-2 font-bold">
+          <RefreshCw size={14} /> পুনরায় চেষ্টা করুন
         </button>
       </div>
     );
   }
 
-  // Every aggregate field returned by GET /admin/stats, grouped into sections.
-  // Values come straight from the response — no client-side fabrication.
-  const sections = [
-    {
-      title: "ব্যবহারকারী",
-      cards: [
-        { icon: <Users size={20} />, label: "মোট ইউজার", value: bn(stats?.users?.total) },
-        { icon: <UserCheck size={20} />, label: "সক্রিয়", value: bn(stats?.users?.active), tone: "text-green-600" },
-        { icon: <Users size={20} />, label: "অপেক্ষমান", value: bn(stats?.users?.pending), tone: "text-orange-500" },
-        { icon: <Users size={20} />, label: "নিষ্ক্রিয়", value: bn(stats?.users?.inactive), tone: "text-gray-500" },
-        { icon: <Crown size={20} />, label: "স্টাফ অ্যাকাউন্ট", value: bn(stats?.users?.staff), tone: "text-purple-600" },
-        { icon: <CalendarDays size={20} />, label: "আজকের নতুন", value: bn(stats?.users?.newToday), tone: "text-sky-600" },
-        { icon: <UserPlus size={20} />, label: "নতুন (৭ দিন)", value: bn(stats?.users?.newThisWeek), tone: "text-sky-600" },
-        { icon: <UserPlus size={20} />, label: "নতুন (৩০ দিন)", value: bn(stats?.users?.newThisMonth), tone: "text-indigo-600" },
-      ],
-    },
-    {
-      title: "বায়োডাটা",
-      cards: [
-        { icon: <FileText size={20} />, label: "মোট প্রোফাইল", value: bn(stats?.biodatas?.total) },
-        { icon: <CheckCircle2 size={20} />, label: "অনুমোদিত", value: bn(stats?.biodatas?.approved), tone: "text-green-600" },
-        { icon: <Clock size={20} />, label: "অপেক্ষমান রিভিউ", value: bn(stats?.biodatas?.pending), tone: "text-orange-500" },
-        { icon: <FileText size={20} />, label: "বাতিল", value: bn(stats?.biodatas?.rejected), tone: "text-red-600" },
-        { icon: <EyeOff size={20} />, label: "লুকানো", value: bn(stats?.biodatas?.hidden), tone: "text-gray-500" },
-        { icon: <Users size={20} />, label: "পাত্র", value: bn(stats?.biodatas?.grooms), tone: "text-blue-600" },
-        { icon: <Users size={20} />, label: "পাত্রী", value: bn(stats?.biodatas?.brides), tone: "text-pink-600" },
-        { icon: <Eye size={20} />, label: "মোট প্রোফাইল ভিউ", value: bn(stats?.biodatas?.totalViews), tone: "text-cyan-600" },
-        { icon: <FileText size={20} />, label: "নতুন প্রোফাইল (৭ দিন)", value: bn(stats?.biodatas?.newThisWeek), tone: "text-pink-600" },
-      ],
-    },
-    {
-      title: "আগ্রহ ও ম্যাচ",
-      cards: [
-        { icon: <Heart size={20} />, label: "পাঠানো আগ্রহ", value: bn(stats?.interests?.sent), tone: "text-red-500", sub: "মোট লাইক" },
-        { icon: <HeartHandshake size={20} />, label: "মিউচুয়াল ম্যাচ", value: bn(stats?.interests?.accepted), tone: "text-green-600", sub: "দুই পক্ষের আগ্রহ" },
-        { icon: <TrendingUp size={20} />, label: "নতুন আগ্রহ (৭ দিন)", value: bn(stats?.interests?.newThisWeek), tone: "text-sky-600" },
-      ],
-    },
-    {
-      title: "মেসেজিং",
-      cards: [
-        { icon: <MessageSquare size={20} />, label: "মোট কথোপকথন", value: bn(stats?.messaging?.conversations), tone: "text-purple-600" },
-        { icon: <MessageCircle size={20} />, label: "সক্রিয় কথোপকথন (৭ দিন)", value: bn(stats?.messaging?.activeThisWeek), tone: "text-green-600" },
-        { icon: <Mail size={20} />, label: "অপঠিত বার্তা", value: bn(stats?.messaging?.unreadMessages), tone: "text-orange-500" },
-      ],
-    },
-    {
-      title: "আয় ও মেম্বারশিপ",
-      cards: [
-        { icon: <Wallet size={20} />, label: "মোট আয়", value: taka(stats?.revenue?.revenueBdt), tone: "text-green-700" },
-        { icon: <Wallet size={20} />, label: "আজকের আয়", value: taka(stats?.revenue?.todayBdt), tone: "text-emerald-600" },
-        { icon: <Wallet size={20} />, label: "এই সপ্তাহের আয়", value: taka(stats?.revenue?.thisWeekBdt), tone: "text-emerald-600" },
-        { icon: <Wallet size={20} />, label: "এই মাসের আয়", value: taka(stats?.revenue?.thisMonthBdt), tone: "text-green-600" },
-        { icon: <CreditCard size={20} />, label: "পরিশোধিত অর্ডার", value: bn(stats?.revenue?.totalPaidOrders), tone: "text-sky-600" },
-        { icon: <Crown size={20} />, label: "সক্রিয় সাবস্ক্রিপশন", value: bn(stats?.membership?.activeSubscriptions), tone: "text-purple-600" },
-        { icon: <Hourglass size={20} />, label: "মেয়াদোত্তীর্ণ সাবস্ক্রিপশন", value: bn(stats?.membership?.expiredSubscriptions), tone: "text-gray-500" },
-      ],
-    },
-    {
-      title: "পেমেন্ট",
-      cards: [
-        { icon: <Clock size={20} />, label: "পেন্ডিং পেমেন্ট", value: bn(stats?.payments?.pendingOrders), tone: "text-orange-500", sub: "অর্ডার অপেক্ষমান" },
-        { icon: <AlertTriangle size={20} />, label: "ব্যর্থ পেমেন্ট", value: bn(stats?.payments?.failedOrders), tone: "text-red-600", sub: "অর্ডার ব্যর্থ" },
-      ],
-    },
-    {
-      title: "সাপোর্ট",
-      cards: [
-        {
-          icon: <MessageSquare size={20} />,
-          label: "নতুন বার্তা",
-          value: bn(stats?.support?.newMessages),
-          tone: "text-orange-500",
-          sub: "কন্টাক্ট ফর্ম ইনবক্স",
-        },
-      ],
-    },
-  ];
+  const { users, biodatas, revenue, interests, messaging, payments, membership, marriages, support, oauth, trends } = stats;
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 md:p-6 space-y-6">
+      {/* ===== Hero Greeting & Control Banner ===== */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-3xl bg-gradient-to-r from-[#fd6969]/10 via-base-100 to-base-200 border border-gray-100 dark:border-base-300 shadow-xs">
         <div>
-          <h2 className="text-2xl font-black tracking-tighter">
-            ড্যাশবোর্ড ওভারভিউ
+          <span className="badge badge-sm bg-[#fd6969] text-white border-none font-bold gap-1 mb-1">
+            <Crown size={12} /> অ্যাডমিন কন্ট্রোল সেন্টার
+          </span>
+          <h2 className="text-xl md:text-2xl font-black text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            আসসালামু আলাইকুম, {user?.firstName || "অ্যাডমিন"}!
           </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            সব সংখ্যা লাইভ ডেটাবেস থেকে আসছে
+          <p className="text-xs text-gray-500 mt-0.5">
+            আজ {new Date().toLocaleDateString("bn-BD", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • প্ল্যাটফর্মের সকল লাইভ ডেটা ও পারফরম্যান্স মেট্রিক্স
           </p>
         </div>
-        <button onClick={load} className="btn btn-sm btn-outline gap-2">
-          <RefreshCw size={14} /> রিফ্রেশ
-        </button>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {onNavigateTab && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                onClick={() => onNavigateTab("marriages")}
+                className="btn btn-xs bg-base-100 hover:bg-[#fd6969] hover:text-white border-gray-200 dark:border-base-300 font-bold transition-colors"
+              >
+                💍 বিবাহ রেকর্ড
+              </button>
+              <button
+                onClick={() => onNavigateTab("biodatas")}
+                className="btn btn-xs bg-base-100 hover:bg-[#fd6969] hover:text-white border-gray-200 dark:border-base-300 font-bold transition-colors"
+              >
+                📝 বায়োডাটা রিভিউ ({bn(biodatas?.pending)})
+              </button>
+              <button
+                onClick={() => onNavigateTab("invoices")}
+                className="btn btn-xs bg-base-100 hover:bg-[#fd6969] hover:text-white border-gray-200 dark:border-base-300 font-bold transition-colors"
+              >
+                💳 ইনভয়েস
+              </button>
+            </div>
+          )}
+
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="btn btn-sm btn-outline gap-2 font-bold hover:bg-[#fd6969] hover:border-[#fd6969]"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            রিফ্রেশ
+          </button>
+        </div>
       </div>
 
-      {sections.map((section) => (
-        <React.Fragment key={section.title}>
-          <SectionTitle>{section.title}</SectionTitle>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {section.cards.map((card) => (
-              <StatCard key={card.label} {...card} />
-            ))}
+      {/* ===== 4 Top Primary KPI Cards ===== */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {/* Total Revenue */}
+        <div className="card bg-base-100 border border-gray-100 dark:border-base-300 p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase text-gray-400">সর্বমোট সংগৃহীত আয়</span>
+            <div className="w-8 h-8 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
+              <Wallet size={16} />
+            </div>
           </div>
-        </React.Fragment>
-      ))}
+          <p className="text-2xl font-black text-green-600 mt-2">{taka(revenue?.revenueBdt)}</p>
+          <div className="flex items-center justify-between text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-base-300">
+            <span>আজকের: {taka(revenue?.todayBdt)}</span>
+            <span className="text-green-600 font-bold">এই মাসে {taka(revenue?.thisMonthBdt)}</span>
+          </div>
+        </div>
 
-      {/* OAuth সোশ্যাল লগইনের স্বাস্থ্য — কাউন্টার + পারসিস্টেড রিসেন্ট ইভেন্ট */}
-      <OAuthMonitorSection
-        stats={stats}
-        events={oauthEvents}
-        eventsLoading={oauthEventsLoading}
-        eventsError={oauthEventsError}
-        reload={loadOauthEvents}
-        eventFilter={eventFilter}
-        setEventFilter={setEventFilter}
-        ipFilter={ipFilter}
-        setIpFilter={setIpFilter}
-      />
+        {/* Total Users */}
+        <div className="card bg-base-100 border border-gray-100 dark:border-base-300 p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase text-gray-400">নিবন্ধিত ব্যবহারকারী</span>
+            <div className="w-8 h-8 rounded-xl bg-[#fd6969]/10 text-[#fd6969] flex items-center justify-center">
+              <Users size={16} />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-[#fd6969] mt-2">{bn(users?.total)}</p>
+          <div className="flex items-center justify-between text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-base-300">
+            <span>সক্রিয়: {bn(users?.active)} জন</span>
+            <span className="text-sky-600 font-bold">+ আজ {bn(users?.newToday)} জন</span>
+          </div>
+        </div>
 
-      {/* Contact ফর্মের স্প্যাম-ড্রপ হিস্ট্রি (capped collection — রিস্টার্ট-সহনশীল) */}
-      <ContactSpamSection
-        events={contactEvents}
-        loading={contactEventsLoading}
-        error={contactEventsError}
-        reload={loadContactEvents}
-      />
+        {/* Biodatas */}
+        <div className="card bg-base-100 border border-gray-100 dark:border-base-300 p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase text-gray-400">অনুমোদিত বায়োডাটা</span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <FileText size={16} />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-purple-600 mt-2">{bn(biodatas?.approved)}</p>
+          <div className="flex items-center justify-between text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-base-300">
+            <span>মোট: {bn(biodatas?.total)} টি</span>
+            <span className="text-amber-500 font-bold">অপেক্ষমান {bn(biodatas?.pending)}</span>
+          </div>
+        </div>
+
+        {/* Successful Marriages */}
+        <div className="card bg-base-100 border border-gray-100 dark:border-base-300 p-4 shadow-sm hover:shadow-md transition-all">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-bold uppercase text-gray-400">সফল বিবাহ ও জুটি</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <HeartHandshake size={16} />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-rose-600 mt-2">{bn(marriages?.total)}</p>
+          <div className="flex items-center justify-between text-[11px] text-gray-400 mt-2 pt-2 border-t border-gray-100 dark:border-base-300">
+            <span>যাচাইকৃত: {bn(marriages?.verified)} জুটি</span>
+            <span className="text-purple-600 font-bold">লুকানো ID: {bn(marriages?.hiddenProfiles)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Main Interactive Charts Row ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue Area Chart */}
+        <RevenueTrendChart trends={trends} revenueStats={revenue} />
+
+        {/* Biodata Gender & Status Distribution */}
+        <BiodataDistributionChart biodatas={biodatas} />
+      </div>
+
+      {/* ===== Secondary Row: Conversion Funnel & Social Engagement ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Matchmaking Funnel */}
+        <div className="lg:col-span-2">
+          <PlatformFunnelChart users={users} biodatas={biodatas} interests={interests} marriages={marriages} />
+        </div>
+
+        {/* Messaging & Engagement Stats */}
+        <div className="bg-base-100 rounded-3xl p-5 border border-gray-100 dark:border-base-300 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 className="font-black text-base text-gray-800 dark:text-gray-100 flex items-center gap-2 pb-3 border-b border-gray-100 dark:border-base-300">
+              <MessageSquare size={18} className="text-[#fd6969]" />
+              মেসেজিং ও সামাজিক মিথস্ক্রিয়া
+            </h3>
+
+            <div className="py-4 space-y-3 text-xs">
+              <div className="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-base-300">
+                <span className="text-gray-400">মোট লাইক ও আগ্রহ পাঠানো:</span>
+                <span className="font-bold">{bn(interests?.sent)} বার</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-base-300">
+                <span className="text-gray-400">মিউচুয়াল ম্যাচ (উভয়পক্ষ):</span>
+                <span className="font-black text-green-600">{bn(interests?.accepted)} টি</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-base-300">
+                <span className="text-gray-400">মোট মেসেজিং কথোপকথন:</span>
+                <span className="font-bold">{bn(messaging?.conversations)} টি</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-base-300">
+                <span className="text-gray-400">সক্রিয় কথোপকথন (৭ দিন):</span>
+                <span className="font-bold text-sky-600">{bn(messaging?.activeThisWeek)} টি</span>
+              </div>
+              <div className="flex justify-between items-center py-1.5 border-b border-gray-50 dark:border-base-300">
+                <span className="text-gray-400">সাপোর্ট হেল্পডেস্কে নতুন বার্তা:</span>
+                <span className="badge badge-xs badge-warning font-bold text-white">{bn(support?.newMessages)} টি</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-gray-100 dark:border-base-300">
+            <span className="text-[10px] text-gray-400 font-semibold block mb-1">মেম্বারশিপ প্যাকেজ সাবস্ক্রিপশন:</span>
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-purple-600">সক্রিয়: {bn(membership?.activeSubscriptions)} টি</span>
+              <span className="text-gray-400">মেয়াদোত্তীর্ণ: {bn(membership?.expiredSubscriptions)} টি</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Social Login & OAuth Health Monitor ===== */}
+      <div className="bg-base-100 rounded-3xl p-5 border border-gray-100 dark:border-base-300 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-base-300">
+          <div>
+            <h3 className="font-black text-base text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <ShieldAlert size={18} className="text-[#fd6969]" />
+              নিরাপত্তা ও OAuth সোশ্যাল লগইন মনিটর
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5">Google / OAuth প্রমাণীকরণ অডিট ও ফেইল২ব্যান নিরাপত্তা হিস্ট্রি</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={eventFilter}
+              onChange={(e) => setEventFilter(e.target.value)}
+              className="select select-bordered select-xs bg-base-100 text-xs"
+            >
+              <option value="">সকল ইভেন্ট</option>
+              {Object.entries(OAUTH_EVENT_META).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+            <button onClick={loadOauthEvents} className="btn btn-xs btn-outline gap-1">
+              <RefreshCw size={11} className={oauthEventsLoading ? "animate-spin" : ""} /> রিফ্রেশ
+            </button>
+          </div>
+        </div>
+
+        {/* Mini stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-4 text-xs">
+          <div className="bg-base-200/50 p-2.5 rounded-2xl">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">সফল লগইন</span>
+            <p className="font-black text-green-600 text-base mt-0.5">
+              {bn((oauth?.counts?.login_success || 0) + (oauth?.counts?.exchange_success || 0))}
+            </p>
+          </div>
+          <div className="bg-base-200/50 p-2.5 rounded-2xl">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">ব্যর্থ এক্সচেঞ্জ</span>
+            <p className="font-black text-red-500 text-base mt-0.5">{bn(oauth?.counts?.exchange_failed || 0)}</p>
+          </div>
+          <div className="bg-base-200/50 p-2.5 rounded-2xl">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">CSRF State ত্রুটি</span>
+            <p className="font-black text-orange-500 text-base mt-0.5">{bn(oauth?.counts?.state_failed || 0)}</p>
+          </div>
+          <div className="bg-base-200/50 p-2.5 rounded-2xl">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">ফেইল২ব্যান ব্লক</span>
+            <p className="font-black text-purple-600 text-base mt-0.5">{bn(oauth?.counts?.failure_blocked || 0)}</p>
+          </div>
+        </div>
+
+        {/* OAuth Event Table */}
+        {oauthEventsLoading ? (
+          <div className="text-center py-6">
+            <span className="loading loading-spinner loading-md text-[#fd6969]"></span>
+          </div>
+        ) : oauthEvents.length === 0 ? (
+          <p className="text-center py-4 text-xs text-gray-400">কোনো সাম্প্রতিক OAuth ত্রুটি রেকর্ড নেই।</p>
+        ) : (
+          <div className="overflow-x-auto max-h-56 overflow-y-auto">
+            <table className="table table-xs w-full">
+              <thead className="bg-base-200/60 text-gray-500 font-bold">
+                <tr>
+                  <th>সময়</th>
+                  <th>ইভেন্ট</th>
+                  <th>প্রোভাইডার</th>
+                  <th>IP ঠিকানা</th>
+                  <th>বিবরণ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-base-300">
+                {oauthEvents.map((ev, i) => {
+                  const m = OAUTH_EVENT_META[ev.event] || { label: ev.event, tone: "badge-ghost" };
+                  return (
+                    <tr key={i} className="hover:bg-base-200/20">
+                      <td className="whitespace-nowrap font-medium text-gray-400">{timeBn(ev.at)}</td>
+                      <td>
+                        <span className={`badge badge-xs ${m.tone}`}>{m.label}</span>
+                      </td>
+                      <td className="font-bold text-[11px]">{ev.provider || "google"}</td>
+                      <td className="font-mono text-[10px] text-gray-500">{ev.ip || "—"}</td>
+                      <td className="text-gray-500 truncate max-w-[200px]">{ev.detail || "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default StatsDashboard;
+}

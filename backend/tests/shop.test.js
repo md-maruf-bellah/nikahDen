@@ -163,6 +163,66 @@ describe("MEMBERSHIP / ORDERS / ADMIN", () => {
     });
   });
 
+  describe("connect ledger (purchase-gated)", () => {
+    it("before payment the ledger stays empty — connects only exist after checkout", async () => {
+      const pack = await makePack();
+      const member = await registerUser(request);
+
+      const anon = await request.get("/api/v1/membership/ledger");
+      assert.equal(anon.status, 401);
+
+      const order = (await request.post("/api/v1/orders")
+        .set(auth(member.accessToken))
+        .send({ kind: "PACK", packId: pack.id })).body.data;
+
+      const pending = await request.get("/api/v1/membership/ledger").set(auth(member.accessToken));
+      assert.equal(pending.status, 200);
+      assert.equal(pending.body.pagination.total, 0, "unpaid order must not credit the ledger");
+
+      const me = await request.get("/api/v1/membership/me").set(auth(member.accessToken));
+      assert.equal(me.body.data.connects.balance, 0, "unpaid order must not move the balance");
+
+      // paying flips both: balance +10, one PACK_PURCHASE row
+      const pay = await request.post(`/api/v1/orders/${order.id}/pay`).set(auth(member.accessToken)).send({});
+      assert.equal(pay.status, 200);
+
+      const ledger = await request.get("/api/v1/membership/ledger").set(auth(member.accessToken));
+      assert.equal(ledger.status, 200);
+      assert.equal(ledger.body.pagination.total, 1);
+      const row = ledger.body.data[0];
+      assert.equal(row.type, "PACK_PURCHASE");
+      assert.equal(row.amount, pack.connects);
+      assert.equal(row.balanceAfter, pack.connects);
+      assert.equal(row.order, order.id);
+    });
+
+    it("scopes rows to the caller and filters by type", async () => {
+      const pack = await makePack();
+      const buyer = await registerUser(request);
+      const stranger = await registerUser(request);
+
+      const order = (await request.post("/api/v1/orders")
+        .set(auth(buyer.accessToken))
+        .send({ kind: "PACK", packId: pack.id })).body.data;
+      await request.post(`/api/v1/orders/${order.id}/pay`).set(auth(buyer.accessToken)).send({});
+
+      const mine = await request.get("/api/v1/membership/ledger").set(auth(buyer.accessToken));
+      assert.equal(mine.body.pagination.total, 1);
+      assert.equal(mine.body.pagination.page, 1);
+
+      const theirs = await request.get("/api/v1/membership/ledger").set(auth(stranger.accessToken));
+      assert.equal(theirs.body.pagination.total, 0, "ledger rows never leak across users");
+
+      const hit = await request.get("/api/v1/membership/ledger?type=PACK_PURCHASE").set(auth(buyer.accessToken));
+      assert.equal(hit.body.pagination.total, 1);
+      const miss = await request.get("/api/v1/membership/ledger?type=REFUND").set(auth(buyer.accessToken));
+      assert.equal(miss.body.pagination.total, 0);
+
+      const bad = await request.get("/api/v1/membership/ledger?type=HACK").set(auth(buyer.accessToken));
+      assert.equal(bad.status, 400);
+    });
+  });
+
   describe("order isolation", () => {
     it("users cannot see or pay each other's orders", async () => {
       const plan = await makePlan({ slug: `monthly-${Date.now()}` });

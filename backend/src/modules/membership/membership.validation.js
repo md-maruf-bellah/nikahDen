@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ENUM_ARRAYS } from "../../constants/index.js";
 
 export const idParam = z.object({ id: z.string().min(1) });
 
@@ -6,6 +7,14 @@ export const listQuery = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().optional(),
   isActive: z.enum(["1", "true", "0", "false"]).optional(),
+});
+
+// My connect ledger — only the caller's own rows are ever returned; `type`
+// is an optional narrowing filter (e.g. just PACK_PURCHASE credits).
+export const ledgerQuery = z.object({
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+  type: z.enum(ENUM_ARRAYS.CONNECT_TYPES).optional(),
 });
 
 export const planSchema = z.object({

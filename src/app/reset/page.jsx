@@ -3,14 +3,14 @@ import { Suspense, useState } from "react";
 import { Eye, EyeOff, Loader2, CircleCheck, AlertCircle, Lock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import logo from "./../../../assets/navbar/logo.png";
 import contact from "./../../../assets/contact/img.png";
 import { authApi } from "@/lib/api";
+import { validateResetForm } from "@/lib/passwordReset.core.mjs";
 
 function ResetBody() {
   const params = useSearchParams();
-  const router = useRouter();
   const token = params.get("token") || "";
 
   const [password, setPassword] = useState("");
@@ -39,17 +39,16 @@ function ResetBody() {
       setError("রিসেট টোকেন পাওয়া যায়নি — নতুন লিঙ্কের জন্য আবার অনুরোধ করুন।");
       return;
     }
-    const fe = {};
-    if (password.length < 8) fe.password = "কমপক্ষে ৮ অক্ষরের পাসওয়ার্ড দিন";
-    if (confirm !== password) fe.confirm = "দুটি পাসওয়ার্ড মিলছে না";
+
+    // Step 2 — দুটি ফিল্ড যাচাই (লম্বা/দুর্বল ও মিল না-হওয়া আলাদা মেসেজে)।
+    const { valid, errors: fe } = validateResetForm(password, confirm);
     setFieldErrors(fe);
-    if (Object.keys(fe).length) return;
+    if (!valid) return;
 
     setSaving(true);
     try {
       await authApi.resetPassword(token, password);
-      setDone(true);
-      setTimeout(() => router.push("/login"), 1800);
+      setDone(true); // Step 3 — সফল, টোকেন একবারই ব্যবহার হয়েছে
     } catch (ex) {
       const msg =
         ex.errorCode === "INVALID_RESET_TOKEN"
@@ -83,13 +82,13 @@ function ResetBody() {
           </div>
 
           {done ? (
-            <div className="space-y-4 text-center py-6">
+            <div className="space-y-5 text-center py-6">
               <CircleCheck size={44} className="text-green-500 mx-auto" />
-              <p className="font-bold text-lg">পাসওয়ার্ড পরিবর্তন হয়েছে!</p>
-              <p className="text-sm text-gray-500">নতুন পাসওয়ার্ড দিয়ে লগইন করুন...</p>
-              <div className="flex justify-center">
-                <span className="loading loading-spinner text-[#fd6969]"></span>
-              </div>
+              <p className="font-bold text-lg">Password changed successfully.</p>
+              <p className="text-sm text-gray-500">আপনার নতুন পাসওয়ার্ড দিয়ে লগইন করুন।</p>
+              <Link href="/login" className="btn bg-[#f2504d] hover:bg-[#d43f3c] text-white border-none w-full h-12 font-bold">
+                Back to Login
+              </Link>
             </div>
           ) : (
             <>
@@ -159,7 +158,7 @@ function ResetBody() {
                   className="btn bg-[#f2504d] hover:bg-[#d43f3c] text-white border-none w-full h-12 font-bold"
                 >
                   {saving && <Loader2 size={18} className="animate-spin" />}
-                  {saving ? "সংরক্ষণ হচ্ছে..." : "পাসওয়ার্ড পরিবর্তন করুন"}
+                  {saving ? "Updating..." : "Update Password"}
                 </button>
               </form>
 

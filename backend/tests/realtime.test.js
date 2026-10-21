@@ -8,6 +8,7 @@
  *   - REST মেসেজ পাঠালে প্রাপক message:new + notification:new লাইভ পায়
  *   - প্রেরক নিজের message:new পায় না
  *   - প্রাপক পড়লে প্রেরক message:read পায়; read-all-এ notification:read
+ *   - পয়েন্ট-আনলক ও প্রাইভেসি-পরিবর্তনে খরচ/পরিবর্তন-নোটিফিকেশন লাইভ notification:new
  */
 import { describe, it, before, after, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
@@ -15,7 +16,7 @@ import { createServer } from "node:http";
 import jwt from "jsonwebtoken";
 import { io as Client } from "socket.io-client";
 import mongoose from "mongoose";
-import { startServer, stopServer, clearDb, registerUser, auth } from "./helpers.js";
+import { startServer, stopServer, clearDb, registerUser, createSuperAdmin, createStaff, auth } from "./helpers.js";
 import { initRealtime, closeRealtime } from "../src/realtime/index.js";
 import { notificationEvent } from "../src/modules/notifications/notification.service.js";
 import env from "../src/config/env.js";
@@ -372,5 +373,140 @@ describe("REALTIME (socket.io)", () => {
       [],
       "অনলাইন নয়/জাল বাদ — শুধু বৈধ অনলাইন id",
     );
+  });
+
+  // ---------------------------------------------------------------------
+  // পয়েন্ট-আনলক ও প্রাইভেসি-পরিবর্তন — খরচ/পরিবর্তন লাইভ notification:new
+  // ---------------------------------------------------------------------
+
+  const RT_COMPLETE = {
+    firstName: "Rahima",
+    lastName: "Khatun",
+    gender: "FEMALE",
+    religion: "Islam",
+    maritalStatus: "UNMARRIED",
+    birthYear: 1999,
+    division: "ঢাকা",
+    district: "ঢাকা",
+    occupation: "ডাক্তার",
+    education: "MBBS",
+    mobile: "01712345678",
+    agreed: true,
+    aboutYourself: "আমি একজন ডাক্তার।",
+  };
+  const RT_PHOTO_URL = "https://cdn.test/profiles/rahima.jpg";
+
+  /** Approved biodata (with photo) for an existing member; needs a staff token. */
+  async function rtCreateOwner(memberToken, adminToken) {
+    const create = await request.post("/api/v1/biodatas").set(auth(memberToken)).send({});
+    assert.equal(create.status, 201, JSON.stringify(create.body));
+    const fill = await request
+      .patch("/api/v1/biodatas/me")
+      .set(auth(memberToken))
+      .send({ ...RT_COMPLETE, profileImage: RT_PHOTO_URL });
+    assert.equal(fill.status, 200, JSON.stringify(fill.body));
+    const submit = await request.post("/api/v1/biodatas/me/submit").set(auth(memberToken));
+    assert.equal(submit.status, 200, JSON.stringify(submit.body));
+    const approve = await request
+      .patch(`/api/v1/biodatas/${submit.body.data.id}/status`)
+      .set(auth(adminToken))
+      .send({ status: "APPROVED" });
+    assert.equal(approve.status, 200, JSON.stringify(approve.body));
+    return approve.body.data;
+  }
+
+  /** Buys a 10-connect pack through the real order flow so the viewer can pay. */
+  async function rtGrantConnects(user, adminToken) {
+    await request
+      .post("/api/v1/membership/packs")
+      .set(auth(adminToken))
+      .send({ name: `RT Pack ${Date.now()}-${Math.floor(Math.random() * 1e4)}`, connects: 10, price: 99 });
+    const packs = await request.get("/api/v1/membership/packs").set(auth(user.accessToken));
+    const packId = packs.body.data[0].id;
+    const order = await request.post("/api/v1/orders").set(auth(user.accessToken)).send({ kind: "PACK", packId });
+    assert.equal(order.status, 201, JSON.stringify(order.body));
+    const pay = await request
+      .post(`/api/v1/orders/${order.body.data.id}/pay`)
+      .set(auth(user.accessToken))
+      .send({ paymentMethod: "CARD" });
+    assert.equal(pay.status, 200, JSON.stringify(pay.body));
+  }
+
+  it("পয়েন্ট-আনলক (REST) → প্রাপকের room-এ লাইভ notification:new (SYSTEM, খরচ-সহ)", async () => {
+    await createSuperAdmin();
+    const staff = await createStaff(request);
+    const adminToken = staff.accessToken;
+
+    const owner = await registerUser(request);
+    const biodata = await rtCreateOwner(owner.accessToken, adminToken);
+    // UNLOCK policy — ছবি পয়েন্ট দিয়ে আনলক করতে হবে
+    const pol = await request
+      .put("/api/v1/privacy/me")
+      .set(auth(owner.accessToken))
+      .send({ photoVisibility: "UNLOCK" });
+    assert.equal(pol.status, 200, JSON.stringify(pol.body));
+
+    const viewer = await registerUser(request);
+    await rtGrantConnects(viewer, adminToken);
+
+    const vSock = connect(viewer.accessToken);
+    await waitEvent(vSock, "connected");
+    const notifPromise = waitEvent(vSock, "notification:new");
+
+    const unlock = await request
+      .post(`/api/v1/biodatas/${biodata.id}/unlock-photo`)
+      .set(auth(viewer.accessToken));
+    assert.equal(unlock.status, 200, JSON.stringify(unlock.body));
+    assert.equal(unlock.body.data.alreadyUnlocked, false);
+
+    const liveNotif = await notifPromise;
+    assert.equal(liveNotif.type, "SYSTEM");
+    assert.equal(liveNotif.title, "Connects spent");
+    assert.match(liveNotif.body, /unlock photos/);
+    assert.equal(liveNotif.data?.kind, "biodata");
+    assert.equal(liveNotif.data?.id, biodata.id);
+    assert.ok(liveNotif.id, "আসল DB-id থাকতে হবে (id:null নয়)");
+
+    // payload-id দিয়ে DB-ডক মিলিয়ে দেখা যায় — সত্যিকারের ডকই পাঠানো হয়েছে
+    const Notification = mongoose.model("Notification");
+    const doc = await Notification.findById(liveNotif.id);
+    assert.ok(doc, "payload-id-এ DB-ডক পাওয়া যায়");
+    assert.equal(doc.user.toString(), viewer.user.id, "ডক প্রাপকের (খরচকারী) নামে");
+    assert.equal(doc.title, liveNotif.title);
+  });
+
+  it("প্রাইভেসি পরিবর্তন (REST) → নিজের room-এ লাইভ notification:new; no-op সেভে যায় না", async () => {
+    const me = await registerUser(request);
+    const c = connect(me.accessToken);
+    await waitEvent(c, "connected");
+
+    // (ক) সত্যিকারের পরিবর্তন → লাইভ নোটিফিকেশন
+    const changedPromise = waitEvent(c, "notification:new");
+    const put = await request
+      .put("/api/v1/privacy/me")
+      .set(auth(me.accessToken))
+      .send({ photoVisibility: "MEMBERS", contactVisibility: "MATCHED" });
+    assert.equal(put.status, 200, JSON.stringify(put.body));
+
+    const liveNotif = await changedPromise;
+    assert.equal(liveNotif.type, "SYSTEM");
+    assert.equal(liveNotif.title, "Privacy settings updated");
+    assert.equal(liveNotif.data?.kind, "privacy");
+    assert.equal(liveNotif.data?.photoVisibility, "MEMBERS");
+    assert.equal(liveNotif.data?.contactVisibility, "MATCHED");
+    assert.ok(liveNotif.id, "আসল DB-id থাকতে হবে");
+
+    // (খ) একই মান আবার সেভ (no-op) → নতুন নোটিফিকেশন নয়
+    let noopNotif = null;
+    c.on("notification:new", (n) => {
+      noopNotif = n;
+    });
+    const noop = await request
+      .put("/api/v1/privacy/me")
+      .set(auth(me.accessToken))
+      .send({ photoVisibility: "MEMBERS", contactVisibility: "MATCHED" });
+    assert.equal(noop.status, 200);
+    await sleep(300);
+    assert.equal(noopNotif, null, "একই মানের no-op সেভ নোটিফিকেশন বানায় না");
   });
 });

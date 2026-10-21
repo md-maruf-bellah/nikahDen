@@ -114,6 +114,26 @@ export default function NotificationBell() {
     router.push("/profile?tab=নোটিফিকেশন");
   };
 
+  const handleItemClick = (n) => {
+    setOpen(false);
+    if (!n.isRead && n.id) {
+      notificationApi.read(n.id).catch(() => {});
+      setItems((prev) => prev.map((it) => (it.id === n.id ? { ...it, isRead: true } : it)));
+      setUnread((u) => Math.max(0, u - 1));
+      window.dispatchEvent(new Event("notifications-changed"));
+    }
+    const bioId = n.data?.viewerBiodataId || n.data?.likerBiodataId;
+    if (bioId) {
+      router.push(`/details?id=${bioId}`);
+      return;
+    }
+    if (n.data?.targetTab) {
+      router.push(`/profile?tab=${n.data.targetTab}`);
+      return;
+    }
+    router.push("/profile?tab=নোটিফিকেশন");
+  };
+
   return (
     <div className="relative" ref={boxRef}>
       <button
@@ -152,7 +172,7 @@ export default function NotificationBell() {
             {items.map((n) => (
               <button
                 key={n.id}
-                onClick={goToAll}
+                onClick={() => handleItemClick(n)}
                 className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${
                   n.isRead ? "opacity-60" : ""
                 }`}

@@ -1,16 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { TfiLayoutGrid3Alt } from "react-icons/tfi";
 import { MdTableRows } from "react-icons/md";
 import { FcLikePlaceholder } from "react-icons/fc";
 import { FcLike } from "react-icons/fc";
-import boy from "./../../../assets/member/alem.png";
+import { defaultAvatarFor } from "@/lib/avatar";
 import { biodataApi, tokenStore } from "@/lib/api";
 import StartChatButton from "@/components/StartChatButton";
+import { ProfileCard } from "@/components/landing/ProfileSections";
+import { getReligionMeta } from "@/lib/religiousAdab";
 
 function FilterSelect({ value, onChange, children, className = "" }) {
   return (
@@ -31,12 +33,19 @@ function BiodataGridBody() {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState("grid"); // grid | table
   const [items, setItems] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const sentinelRef = useRef(null);
+
+  // Search mode tabs: "biodataNo" | "all"
+  const [searchTab, setSearchTab] = useState(params.get("biodataNo") ? "biodataNo" : "all");
 
   // filters (initialized from landing SearchBar query params)
+  const [biodataNo, setBiodataNo] = useState(params.get("biodataNo") || "");
   const [gender, setGender] = useState(params.get("gender") || "");
+  const [religion, setReligion] = useState(params.get("religion") || "");
   const [maritalStatus, setMaritalStatus] = useState(params.get("maritalStatus") || "");
   const [ageMin, setAgeMin] = useState(params.get("ageMin") || "");
   const [ageMax, setAgeMax] = useState(params.get("ageMax") || "");
@@ -47,16 +56,22 @@ function BiodataGridBody() {
   const [search, setSearch] = useState(params.get("search") || "");
   const [sortBy, setSortBy] = useState(params.get("sortBy") || "createdAt");
   const [sortOrder, setSortOrder] = useState(params.get("sortOrder") || "desc");
-  const [limit, setLimit] = useState(10);
-  const [page, setPage] = useState(1);
+  const limit = 12;
 
-  const fetchList = useCallback(async () => {
-    setError("");
+  const fetchBiodatas = useCallback(async (pageNum = 1) => {
+    if (pageNum === 1) {
+      setLoading(true);
+      setError("");
+    } else {
+      setLoadingMore(true);
+    }
     try {
       const { data, pagination: pg } = await biodataApi.list({
-        page,
+        page: pageNum,
         limit,
+        biodataNo: biodataNo || undefined,
         gender: gender || undefined,
+        religion: religion || undefined,
         maritalStatus: maritalStatus || undefined,
         ageMin: ageMin || undefined,
         ageMax: ageMax || undefined,
@@ -68,33 +83,65 @@ function BiodataGridBody() {
         sortBy,
         sortOrder,
       });
-      setItems(data || []);
-      setPagination(pg || { page: 1, limit, total: 0, totalPages: 0 });
+
+      setItems((prev) => {
+        if (pageNum === 1) return data || [];
+        const seen = new Set(prev.map((i) => i.id));
+        const added = (data || []).filter((i) => !seen.has(i.id));
+        return [...prev, ...added];
+      });
+      setPagination(pg || { page: pageNum, limit, total: 0, totalPages: 0 });
     } catch (err) {
-      setError(err.message || "বায়োডাটা লোড করা যায়নি।");
-      setItems([]);
+      if (pageNum === 1) {
+        setError(err.message || "বায়োডাটা লোড করা যায়নি।");
+        setItems([]);
+      }
     } finally {
-      setLoading(false);
+      if (pageNum === 1) setLoading(false);
+      else setLoadingMore(false);
     }
-  }, [page, limit, gender, maritalStatus, ageMin, ageMax, district, education, occupation, skinColor, search, sortBy, sortOrder]);
+  }, [limit, biodataNo, gender, religion, maritalStatus, ageMin, ageMax, district, education, occupation, skinColor, search, sortBy, sortOrder]);
 
   useEffect(() => {
     let cancelled = false;
     Promise.resolve().then(() => {
-      if (!cancelled) return fetchList();
+      if (!cancelled) fetchBiodatas(1);
     });
     return () => {
       cancelled = true;
     };
-  }, [fetchList]);
+  }, [fetchBiodatas]);
+
+  const hasMore = pagination.page < pagination.totalPages;
+
+  const loadMore = useCallback(() => {
+    if (loading || loadingMore || !hasMore) return;
+    fetchBiodatas(pagination.page + 1);
+  }, [fetchBiodatas, hasMore, loading, loadingMore, pagination.page]);
+
+  // YouTube-style auto-fetch on scroll near bottom
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loading || loadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: "250px" }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, loadMore]);
 
   const applyFilters = () => {
-    setPage(1);
-    fetchList();
+    fetchBiodatas(1);
   };
 
   const resetFilters = () => {
+    setBiodataNo("");
     setGender("");
+    setReligion("");
     setMaritalStatus("");
     setAgeMin("");
     setAgeMax("");
@@ -103,8 +150,6 @@ function BiodataGridBody() {
     setOccupation("");
     setSkinColor("");
     setSearch("");
-    setPage(1);
-    fetchList();
   };
 
   const toggleLike = async (item) => {
@@ -132,12 +177,6 @@ function BiodataGridBody() {
     Buddhism: "bg-amber-600",
   };
 
-  const pageNumbers = [];
-  const totalPages = pagination.totalPages || 1;
-  const start = Math.max(1, page - 2);
-  const end = Math.min(totalPages, page + 2);
-  for (let i = start; i <= end; i++) pageNumbers.push(i);
-
   return (
     <div className="bg-base-200 min-h-screen">
       {/* Header */}
@@ -157,144 +196,78 @@ function BiodataGridBody() {
       <div className="max-w-7xl mx-auto flex gap-6 p-4 md:p-6">
         {/* Sidebar Desktop */}
         <div className="hidden md:block w-72 bg-base-100 p-5 shadow h-screen sticky top-0 overflow-y-auto card">
-          <h2 className="font-semibold mb-4">আপনি কি খঁজতে চান?</h2>
+          <h2 className="font-semibold text-base mb-3">আপনি কি খুঁজতে চান?</h2>
 
-          <div className="mb-3">
-            <label className="flex gap-3 mb-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={gender === "MALE"}
-                onChange={(e) => setGender(e.target.checked ? "MALE" : "")}
-              />
-              <span>পাত্র</span>
-            </label>
-            <label className="flex gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={gender === "FEMALE"}
-                onChange={(e) => setGender(e.target.checked ? "FEMALE" : "")}
-              />
-              <span>পাত্রী</span>
-            </label>
-          </div>
-
-          <FilterSelect
-            value={maritalStatus}
-            onChange={setMaritalStatus}
-            className="w-full mb-3"
-          >
-            <option value="">বৈবাহিক অবস্থা</option>
-            <option value="UNMARRIED">অবিবাহিত</option>
-            <option value="DIVORCED">তালাকপ্রাপ্ত</option>
-            <option value="WIDOWED">বিধবা/বিপত্নীক</option>
-            <option value="OTHER">অন্যান্য</option>
-          </FilterSelect>
-
-          <label className="text-sm font-medium  mb-1 block">বয়স</label>
-          <div className="flex items-center gap-2 mb-1">
-            <input
-              type="number"
-              min={18}
-              max={90}
-              value={ageMin}
-              onChange={(e) => setAgeMin(e.target.value)}
-              placeholder="১৮"
-              className="input input-bordered input-sm w-1/2"
-            />
-            <span>—</span>
-            <input
-              type="number"
-              min={18}
-              max={90}
-              value={ageMax}
-              onChange={(e) => setAgeMax(e.target.value)}
-              placeholder="৬০"
-              className="input input-bordered input-sm w-1/2"
-            />
-          </div>
-
-          <FilterSelect value={district} onChange={setDistrict} className="w-full mb-3">
-            <option value="">জেলা শহর</option>
-            <option>ঢাকা</option>
-            <option>চট্টগ্রাম</option>
-            <option>খুলনা</option>
-            <option>রাজশাহী</option>
-            <option>সিলেট</option>
-            <option>বরিশাল</option>
-            <option>রংপুর</option>
-            <option>ময়মনসিংহ</option>
-            <option>কক্সবাজার</option>
-            <option>যশোর</option>
-            <option>রাঙ্গামাটি</option>
-            <option>বান্দরবান</option>
-          </FilterSelect>
-
-          <FilterSelect value={education} onChange={setEducation} className="w-full mb-3">
-            <option value="">শিক্ষাগত যোগ্যতা</option>
-            <option>স্নাতক</option>
-            <option>স্নাতকোত্তর</option>
-            <option>এইচ.এস.সি</option>
-            <option>এস.এস.সি</option>
-            <option>দ্বীনি শিক্ষা</option>
-          </FilterSelect>
-
-          <FilterSelect value={occupation} onChange={setOccupation} className="w-full mb-3">
-            <option value="">পেশা</option>
-            <option>ডাক্তার</option>
-            <option>ইঞ্জিনিয়ার</option>
-            <option>শিক্ষক</option>
-            <option>ব্যবসায়ী</option>
-            <option>ব্যাংকার</option>
-            <option>সরকারি চাকরি</option>
-            <option>সফটওয়্যার ইঞ্জিনিয়ার</option>
-          </FilterSelect>
-
-          <FilterSelect value={skinColor} onChange={setSkinColor} className="w-full mb-3">
-            <option value="">গায়ের রং</option>
-            <option>ফর্সা</option>
-            <option>উজ্জ্বল ফর্সা</option>
-            <option>শ্যামলা</option>
-            <option>উজ্জ্বল শ্যামলা</option>
-          </FilterSelect>
-
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="নাম/পেশা/শিক্ষা খুঁজুন..."
-            className="input input-bordered input-sm w-full mb-3"
-          />
-
-          <div className="flex gap-2">
+          {/* 2 Tabs: বায়োডাটা নং ও সব ফিল্টার */}
+          <div className="grid grid-cols-2 gap-1 p-1 bg-base-200/90 rounded-lg mb-4 text-xs font-semibold">
             <button
-              onClick={resetFilters}
-              className="btn btn-outline btn-error btn-sm flex-1"
+              type="button"
+              onClick={() => setSearchTab("biodataNo")}
+              className={`py-2 px-1 text-center rounded-md transition-all font-medium ${
+                searchTab === "biodataNo"
+                  ? "bg-[#ff6b6b] text-white shadow-sm"
+                  : "text-base-content/70 hover:text-base-content"
+              }`}
             >
-              বায়োডাটা মুছুন{" "}
+              বায়োডাটা নং
             </button>
             <button
-              onClick={applyFilters}
-              className="btn bg-[#ff6b6b] text-white btn-sm flex-1"
+              type="button"
+              onClick={() => setSearchTab("all")}
+              className={`py-2 px-1 text-center rounded-md transition-all font-medium ${
+                searchTab === "all"
+                  ? "bg-[#ff6b6b] text-white shadow-sm"
+                  : "text-base-content/70 hover:text-base-content"
+              }`}
             >
-              বায়োডাটা খুজুন{" "}
+              সব ফিল্টার
             </button>
           </div>
-        </div>
 
-        {/* Mobile Drawer */}
-        {open && (
-          <div className="fixed inset-0 bg-black/40 z-50">
-            <div className="bg-white w-72 h-full p-5 overflow-y-auto">
-              <button
-                onClick={() => setOpen(false)}
-                className="btn btn-sm btn-error mb-4"
-              >
-                বন্ধ
-              </button>
+          {searchTab === "biodataNo" ? (
+            /* TAB 1: শুধু বায়োডাটা নম্বর দিয়ে অনুসন্ধান */
+            <div className="space-y-4">
+              <div className="bg-base-200/50 p-3 rounded-lg border border-base-300">
+                <label className="text-xs font-semibold mb-1.5 block opacity-80">
+                  বায়োডাটা নং দিয়ে খুঁজুন
+                </label>
+                <input
+                  value={biodataNo}
+                  onChange={(e) => setBiodataNo(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") applyFilters();
+                  }}
+                  placeholder="যেমন: BD-1001 বা 1001"
+                  className="input input-bordered input-sm w-full font-mono text-sm tracking-wide"
+                />
+                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                  নির্দিষ্ট পাত্র বা পাত্রীর বায়োডাটা নম্বর লিখে সরাসরি খুঁজুন।
+                </p>
+              </div>
 
-              <h2 className="font-semibold mb-4">আপনি কি খঁজতে চান?</h2>
-
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBiodataNo("");
+                    setTimeout(() => fetchBiodatas(1), 50);
+                  }}
+                  className="btn btn-outline btn-error btn-sm flex-1"
+                >
+                  রিসেট
+                </button>
+                <button
+                  type="button"
+                  onClick={applyFilters}
+                  className="btn bg-[#ff6b6b] hover:bg-[#e05a5a] text-white btn-sm flex-1 shadow-sm"
+                >
+                  খুঁজুন
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* TAB 2: সব ফিল্টার দিয়ে অনুসন্ধান */
+            <div>
               <div className="mb-3">
                 <label className="flex gap-3 mb-2 cursor-pointer">
                   <input
@@ -317,6 +290,19 @@ function BiodataGridBody() {
               </div>
 
               <FilterSelect
+                value={religion}
+                onChange={setReligion}
+                className="w-full mb-3"
+              >
+                <option value="">সকল ধর্ম</option>
+                <option value="Islam">ইসলাম</option>
+                <option value="Hinduism">সনাতন (হিন্দু)</option>
+                <option value="Christianity">খ্রিস্টান</option>
+                <option value="Buddhism">বৌদ্ধ</option>
+                <option value="Other">অন্যান্য</option>
+              </FilterSelect>
+
+              <FilterSelect
                 value={maritalStatus}
                 onChange={setMaritalStatus}
                 className="w-full mb-3"
@@ -325,12 +311,15 @@ function BiodataGridBody() {
                 <option value="UNMARRIED">অবিবাহিত</option>
                 <option value="DIVORCED">তালাকপ্রাপ্ত</option>
                 <option value="WIDOWED">বিধবা/বিপত্নীক</option>
+                <option value="OTHER">অন্যান্য</option>
               </FilterSelect>
 
-              <label className="text-sm font-medium  mb-1 block">বয়স</label>
+              <label className="text-sm font-medium mb-1 block">বয়স</label>
               <div className="flex items-center gap-2 mb-3">
                 <input
                   type="number"
+                  min={18}
+                  max={90}
                   value={ageMin}
                   onChange={(e) => setAgeMin(e.target.value)}
                   placeholder="১৮"
@@ -339,6 +328,8 @@ function BiodataGridBody() {
                 <span>—</span>
                 <input
                   type="number"
+                  min={18}
+                  max={90}
                   value={ageMax}
                   onChange={(e) => setAgeMax(e.target.value)}
                   placeholder="৬০"
@@ -356,6 +347,10 @@ function BiodataGridBody() {
                 <option>বরিশাল</option>
                 <option>রংপুর</option>
                 <option>ময়মনসিংহ</option>
+                <option>কক্সবাজার</option>
+                <option>যশোর</option>
+                <option>রাঙ্গামাটি</option>
+                <option>বান্দরবান</option>
               </FilterSelect>
 
               <FilterSelect value={education} onChange={setEducation} className="w-full mb-3">
@@ -364,6 +359,7 @@ function BiodataGridBody() {
                 <option>স্নাতকোত্তর</option>
                 <option>এইচ.এস.সি</option>
                 <option>এস.এস.সি</option>
+                <option>দ্বীনি শিক্ষা</option>
               </FilterSelect>
 
               <FilterSelect value={occupation} onChange={setOccupation} className="w-full mb-3">
@@ -372,6 +368,17 @@ function BiodataGridBody() {
                 <option>ইঞ্জিনিয়ার</option>
                 <option>শিক্ষক</option>
                 <option>ব্যবসায়ী</option>
+                <option>ব্যাংকার</option>
+                <option>সরকারি চাকরি</option>
+                <option>সফটওয়্যার ইঞ্জিনিয়ার</option>
+              </FilterSelect>
+
+              <FilterSelect value={skinColor} onChange={setSkinColor} className="w-full mb-3">
+                <option value="">গায়ের রং</option>
+                <option>ফর্সা</option>
+                <option>উজ্জ্বল ফর্সা</option>
+                <option>শ্যামলা</option>
+                <option>উজ্জ্বল শ্যামলা</option>
               </FilterSelect>
 
               <input
@@ -383,21 +390,234 @@ function BiodataGridBody() {
 
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={resetFilters}
                   className="btn btn-outline btn-error btn-sm flex-1"
                 >
-                  বায়োডাটা মুছুন{" "}
+                  ফিল্টার মুছুন
                 </button>
                 <button
-                  onClick={() => {
-                    setOpen(false);
-                    applyFilters();
-                  }}
-                  className="btn bg-[#ff6b6b] btn-sm flex-1"
+                  type="button"
+                  onClick={applyFilters}
+                  className="btn bg-[#ff6b6b] hover:bg-[#e05a5a] text-white btn-sm flex-1 shadow-sm"
                 >
-                  বায়োডাটা খুজুন{" "}
+                  বায়োডাটা খুঁজুন
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Drawer */}
+        {open && (
+          <div className="fixed inset-0 bg-black/40 z-50">
+            <div className="bg-white w-72 h-full p-5 overflow-y-auto">
+              <button
+                onClick={() => setOpen(false)}
+                className="btn btn-sm btn-error mb-4"
+              >
+                বন্ধ
+              </button>
+
+              <h2 className="font-semibold text-base mb-3">আপনি কি খুঁজতে চান?</h2>
+
+              {/* 2 Tabs: বায়োডাটা নং ও সব ফিল্টার */}
+              <div className="grid grid-cols-2 gap-1 p-1 bg-base-200/90 rounded-lg mb-4 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setSearchTab("biodataNo")}
+                  className={`py-2 px-1 text-center rounded-md transition-all font-medium ${
+                    searchTab === "biodataNo"
+                      ? "bg-[#ff6b6b] text-white shadow-sm"
+                      : "text-base-content/70 hover:text-base-content"
+                  }`}
+                >
+                  বায়োডাটা নং
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchTab("all")}
+                  className={`py-2 px-1 text-center rounded-md transition-all font-medium ${
+                    searchTab === "all"
+                      ? "bg-[#ff6b6b] text-white shadow-sm"
+                      : "text-base-content/70 hover:text-base-content"
+                  }`}
+                >
+                  সব ফিল্টার
+                </button>
+              </div>
+
+              {searchTab === "biodataNo" ? (
+                /* TAB 1: শুধু বায়োডাটা নম্বর দিয়ে অনুসন্ধান */
+                <div className="space-y-4">
+                  <div className="bg-base-200/50 p-3 rounded-lg border border-base-300">
+                    <label className="text-xs font-semibold mb-1.5 block opacity-80">
+                      বায়োডাটা নং দিয়ে খুঁজুন
+                    </label>
+                    <input
+                      value={biodataNo}
+                      onChange={(e) => setBiodataNo(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          setOpen(false);
+                          applyFilters();
+                        }
+                      }}
+                      placeholder="যেমন: BD-1001 বা 1001"
+                      className="input input-bordered input-sm w-full font-mono text-sm tracking-wide"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                      নির্দিষ্ট পাত্র বা পাত্রীর বায়োডাটা নম্বর লিখে সরাসরি খুঁজুন।
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBiodataNo("");
+                        setTimeout(() => fetchBiodatas(1), 50);
+                      }}
+                      className="btn btn-outline btn-error btn-sm flex-1"
+                    >
+                      রিসেট
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        applyFilters();
+                      }}
+                      className="btn bg-[#ff6b6b] hover:bg-[#e05a5a] text-white btn-sm flex-1 shadow-sm"
+                    >
+                      খুঁজুন
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* TAB 2: সব ফিল্টার দিয়ে অনুসন্ধান */
+                <div>
+                  <div className="mb-3">
+                    <label className="flex gap-3 mb-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={gender === "MALE"}
+                        onChange={(e) => setGender(e.target.checked ? "MALE" : "")}
+                      />
+                      <span>পাত্র</span>
+                    </label>
+                    <label className="flex gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={gender === "FEMALE"}
+                        onChange={(e) => setGender(e.target.checked ? "FEMALE" : "")}
+                      />
+                      <span>পাত্রী</span>
+                    </label>
+                  </div>
+
+                  <FilterSelect
+                    value={religion}
+                    onChange={setReligion}
+                    className="w-full mb-3"
+                  >
+                    <option value="">সকল ধর্ম</option>
+                    <option value="Islam">ইসলাম</option>
+                    <option value="Hinduism">সনাতন (হিন্দু)</option>
+                    <option value="Christianity">খ্রিস্টান</option>
+                    <option value="Buddhism">বৌদ্ধ</option>
+                    <option value="Other">অন্যান্য</option>
+                  </FilterSelect>
+
+                  <FilterSelect
+                    value={maritalStatus}
+                    onChange={setMaritalStatus}
+                    className="w-full mb-3"
+                  >
+                    <option value="">বৈবাহিক অবস্থা</option>
+                    <option value="UNMARRIED">অবিবাহিত</option>
+                    <option value="DIVORCED">তালাকপ্রাপ্ত</option>
+                    <option value="WIDOWED">বিধবা/বিপত্নীক</option>
+                    <option value="OTHER">অন্যান্য</option>
+                  </FilterSelect>
+
+                  <label className="text-sm font-medium mb-1 block">বয়স</label>
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="number"
+                      value={ageMin}
+                      onChange={(e) => setAgeMin(e.target.value)}
+                      placeholder="১৮"
+                      className="input input-bordered input-sm w-1/2"
+                    />
+                    <span>—</span>
+                    <input
+                      type="number"
+                      value={ageMax}
+                      onChange={(e) => setAgeMax(e.target.value)}
+                      placeholder="৬০"
+                      className="input input-bordered input-sm w-1/2"
+                    />
+                  </div>
+
+                  <FilterSelect value={district} onChange={setDistrict} className="w-full mb-3">
+                    <option value="">জেলা শহর</option>
+                    <option>ঢাকা</option>
+                    <option>চট্টগ্রাম</option>
+                    <option>খুলনা</option>
+                    <option>রাজশাহী</option>
+                    <option>সিলেট</option>
+                    <option>বরিশাল</option>
+                    <option>রংপুর</option>
+                    <option>ময়মনসিংহ</option>
+                  </FilterSelect>
+
+                  <FilterSelect value={education} onChange={setEducation} className="w-full mb-3">
+                    <option value="">শিক্ষাগত যোগ্যতা</option>
+                    <option>স্নাতক</option>
+                    <option>স্নাতকোত্তর</option>
+                    <option>এইচ.এস.সি</option>
+                    <option>এস.এস.সি</option>
+                  </FilterSelect>
+
+                  <FilterSelect value={occupation} onChange={setOccupation} className="w-full mb-3">
+                    <option value="">পেশা</option>
+                    <option>ডাক্তার</option>
+                    <option>ইঞ্জিনিয়ার</option>
+                    <option>শিক্ষক</option>
+                    <option>ব্যবসায়ী</option>
+                  </FilterSelect>
+
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="নাম/পেশা/শিক্ষা খুঁজুন..."
+                    className="input input-bordered input-sm w-full mb-3"
+                  />
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="btn btn-outline btn-error btn-sm flex-1"
+                    >
+                      ফিল্টার মুছুন
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        applyFilters();
+                      }}
+                      className="btn bg-[#ff6b6b] hover:bg-[#e05a5a] text-white btn-sm flex-1 shadow-sm"
+                    >
+                      বায়োডাটা খুঁজুন
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -480,74 +700,9 @@ function BiodataGridBody() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 cursor-pointer sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
                 {items.map((item) => (
-                  <div key={item.id} className="relative">
-                    <div className="absolute left-2 top-2 z-10">
-                      {religionBadge[item.religion] && (
-                        <span
-                          className={`badge badge-sm text-white ${religionBadge[item.religion]}`}
-                        >
-                          {item.religion}
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute right-2 top-2 z-10">
-                      {item.likedByMe ? (
-                        <FcLike
-                          size={24}
-                          className="cursor-pointer"
-                          onClick={() => toggleLike(item)}
-                        />
-                      ) : (
-                        <FcLikePlaceholder
-                          size={24}
-                          className="cursor-pointer"
-                          onClick={() => toggleLike(item)}
-                        />
-                      )}
-                    </div>
-                    <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
-                      <Image
-                        src={item.profileImage || boy}
-                        alt={item.fullName}
-                        width={400}
-                        height={400}
-                        className="w-full h-full border rounded-tl-xl rounded-tr-xl"
-                      />
-
-                      <div className="card-body items-center text-center p-4">
-                        <h2 className="font-bold text-base truncate w-full">
-                          {item.fullName}
-                        </h2>
-
-                        <div className="text-line-through ">
-                          <div className="flex  justify-around items-center gap-3">
-                            <p>বয়স - {item.age}</p>
-                            <p>লোকেশান - {item.district || item.division}</p>
-                          </div>
-                          <div className="flex  justify-around items-center gap-3">
-                            <p>উচ্চতা - {item.heightText || "—"} </p>
-                            <p>গাত্রবর্ণ - {item.skinColor || "—"}</p>
-                          </div>
-                        </div>
-                        <div className="w-5/6 flex flex-col gap-2">
-                          <Link
-                            href={`/details?id=${item.id}`}
-                            className="btn btn-outline text-xs md:text-base p-2"
-                          >
-                            বায়োডাটা দেখুন
-                          </Link>
-                          <StartChatButton
-                            userId={item.ownerId}
-                            className="btn text-xs md:text-base p-2 border-none bg-red-50 text-[#fd6969] hover:bg-[#fd6969] hover:text-white"
-                          >
-                            মেসেজ পাঠান
-                          </StartChatButton>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <ProfileCard key={item.id} profile={item} />
                 ))}
               </div>
             )
@@ -575,7 +730,7 @@ function BiodataGridBody() {
                     >
                       <td>
                         <Image
-                          src={item.profileImage || boy}
+                          src={item.profileImage || defaultAvatarFor(item.gender, item.religion)}
                           width={50}
                           height={50}
                           alt="profile"
@@ -584,7 +739,15 @@ function BiodataGridBody() {
                       </td>
 
                       <td className="whitespace-nowrap font-medium">
-                        {item.fullName}
+                        <div className="flex items-center gap-2">
+                          <span>{item.fullName}</span>
+                          {item.religion && (
+                            <span className={`badge badge-xs text-[10px] font-semibold border ${getReligionMeta(item.religion).badgeClass}`}>
+                              {getReligionMeta(item.religion).label}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 font-mono mt-0.5">{item.biodataNo}</div>
                       </td>
 
                       <td className="whitespace-nowrap text-sm">
@@ -648,56 +811,35 @@ function BiodataGridBody() {
             </div>
           ) : null}
 
-          {/* Pagination */}
-          {!loading && items.length > 0 && (
-            <div className="flex flex-col items-center gap-2 mt-6 md:mt-8">
-              <p className="text-xs text-gray-400">
-                মোট {pagination.total} টি • পৃষ্ঠা {page}/{totalPages}
+          {/* Infinite Scroll Sentinel and Loaders */}
+          <div ref={sentinelRef} className="h-6 w-full pointer-events-none" />
+
+          {loadingMore && (
+            <div className="flex flex-col items-center justify-center py-6 gap-2">
+              <span className="loading loading-spinner loading-md text-[#ff6b6b]"></span>
+              <p className="text-xs text-gray-500 font-medium animate-pulse">
+                আরও পাত্র-পাত্রী লোড হচ্ছে...
               </p>
-              <div className="join">
-                <button
-                  className="join-item btn btn-sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  «
-                </button>
-                {start > 1 && (
-                  <button className="join-item btn btn-sm" onClick={() => setPage(1)}>
-                    1
-                  </button>
-                )}
-                {start > 2 && <button className="join-item btn btn-sm btn-disabled">…</button>}
-                {pageNumbers.map((n) => (
-                  <button
-                    key={n}
-                    className={`join-item btn btn-sm ${
-                      page === n ? "btn-active" : ""
-                    }`}
-                    onClick={() => setPage(n)}
-                  >
-                    {n}
-                  </button>
-                ))}
-                {end < totalPages - 1 && (
-                  <button className="join-item btn btn-sm btn-disabled">…</button>
-                )}
-                {end < totalPages && (
-                  <button
-                    className="join-item btn btn-sm"
-                    onClick={() => setPage(totalPages)}
-                  >
-                    {totalPages}
-                  </button>
-                )}
-                <button
-                  className="join-item btn btn-sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                >
-                  »
-                </button>
-              </div>
+            </div>
+          )}
+
+          {hasMore && !loadingMore && !loading && (
+            <div className="text-center py-6">
+              <button
+                type="button"
+                onClick={loadMore}
+                className="btn btn-outline btn-sm rounded-full px-6 border-red-300 text-red-500 hover:bg-red-50 hover:border-red-400 gap-2 shadow-sm"
+              >
+                আরও বায়োডাটা দেখুন ({items.length} / {pagination.total})
+              </button>
+            </div>
+          )}
+
+          {!hasMore && items.length > 0 && !loading && (
+            <div className="text-center py-8 border-t border-gray-200/60 mt-6">
+              <p className="text-xs text-gray-400 font-medium">
+                ✓ আপনি সকল উপলব্ধ পাত্র-পাত্রীর তালিকা দেখেছেন (মোট {pagination.total} টি বায়োডাটা)
+              </p>
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import ContactEvent, { CONTACT_EVENT_CAP } from "../../models/contactEvent.model
 import { ApiError } from "../../utils/ApiError.js";
 import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { isValidObjectId } from "../../utils/helpers.js";
+import { notifyAdmins } from "../notifications/adminNotification.service.js";
 
 // ---- স্প্যাম সিগনাল থ্রেশহোল্ড ----
 // ফর্ম রেন্ডার থেকে সাবমিট — মানুষ কমপক্ষে কয়েক সেকেন্ড নেয়; বট/স্ক্রিপ্ট প্রায় সাথে সাথে জমা দেয়।
@@ -55,6 +56,16 @@ export async function createMessage(data) {
   }
   const doc = await ContactMessage.create(data);
   _newCountCache = { value: 0, at: 0 }; // ক্যাশ ভাঙা — ব্যাজ সাথে সাথে বাড়বে
+
+  // Admin Notification: New support message
+  notifyAdmins({
+    type: "NEW_SUPPORT",
+    title: `নতুন সাপোর্ট বার্তা: ${doc.subject || "সাধারণ অনুসন্ধান"}`,
+    body: `${doc.name} (${doc.email}): "${(doc.message || "").slice(0, 80)}..."`,
+    data: { kind: "contact", id: doc._id.toString() },
+    adminCategory: "SUPPORT",
+  }).catch(() => {});
+
   return { id: doc._id.toString(), createdAt: doc.createdAt, status: doc.status, duplicate: false };
 }
 

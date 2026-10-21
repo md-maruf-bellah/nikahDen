@@ -65,9 +65,11 @@ export const changePassword = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  const result = await authService.forgotUserPassword(req.body.email);
-  const devNote = result.dev && !result.delivered ? " (development: reset link printed in server log)" : "";
-  return sendSuccess(res, `If an account exists for this email, a reset link has been sent.${devNote}`);
+  await authService.forgotUserPassword(req.body.email);
+  // ইমেইল নিবন্ধিত হলেই এখান থেকে পরবর্তী ধাপ (লিঙ্ক → /reset)। অনুরোধ
+  // করা ইমেইল অনুপস্থিত হলে service-এই EMAIL_NOT_FOUND ফেলে — আলাদা
+  // "অ্যাকাউন্ট নেই" বার্তা এখানে কখনো অসাফল অনুরোধের সঙ্গে মিলিয়ে যায় না।
+  return sendSuccess(res, "A password reset link has been sent. It expires in 30 minutes.");
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {

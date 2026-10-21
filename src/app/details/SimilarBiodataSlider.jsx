@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { FcLike, FcLikePlaceholder } from "react-icons/fc";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import boy from "./../../../assets/member/alem.png";
+import { defaultAvatarFor } from "@/lib/avatar";
 import StartChatButton from "@/components/StartChatButton";
+import { getReligionMeta } from "@/lib/religiousAdab";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
@@ -53,7 +54,17 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
       >
         {profiles.map((item, index) => (
           <SwiperSlide key={item.id || index}>
-            <div className="relative h-full">
+            <div className="relative h-full overflow-hidden rounded-xl">
+              {/* Left-side Religion Badge */}
+              {item.religion && (
+                <div className="absolute left-2.5 top-2.5 z-10 pointer-events-none">
+                  <span className={`badge badge-sm font-semibold gap-1 px-2 py-1.5 border text-[10px] rounded-full shadow-md ${getReligionMeta(item.religion).badgeClass}`}>
+                    <span>{getReligionMeta(item.religion).icon}</span>
+                    <span>{getReligionMeta(item.religion).label}</span>
+                  </span>
+                </div>
+              )}
+
               {/* Like Button */}
               <button
                 type="button"
@@ -70,7 +81,7 @@ export default function SimilarBiodataSlider({ profiles = [] }) {
               {/* Card */}
               <div className="card border border-primary/30 bg-base-100 shadow hover:shadow-lg transition-all">
                 <Image
-                  src={item.profileImage || boy}
+                  src={item.profileImage || defaultAvatarFor(item.gender, item.religion)}
                   alt={item.fullName || "profile"}
                   width={400}
                   height={300}

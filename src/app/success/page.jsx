@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { orderApi } from "@/lib/api";
+import { connectCountOf } from "@/lib/connects.core.mjs";
 
 function SuccessBody() {
   const params = useSearchParams();
@@ -60,6 +61,11 @@ function SuccessBody() {
             ? `অর্ডার নং ${order.orderNo} • ${order.item?.titleBn || order.item?.title} • ৳${order.total.toLocaleString("bn-BD")}`
             : "Thanks for the upgrade membership"}
         </p>
+        {order?.kind === "PACK" && connectCountOf(order.item) > 0 && (
+          <p className="text-sm font-semibold text-[#ff6b6b] mt-2">
+            {connectCountOf(order.item)} টি কানেক্ট আপনার ব্যালেন্সে যোগ হয়েছে।
+          </p>
+        )}
 
         <div className="flex gap-4 mt-8">
           <Link href="/profile" className="btn bg-[#ff6b6b] border-none text-white">

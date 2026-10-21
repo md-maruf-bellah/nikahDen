@@ -7,8 +7,11 @@ import Subscription from "../../models/subscription.model.js";
 import ContactMessage from "../../models/contactMessage.model.js";
 import * as contactService from "../contacts/contact.service.js";
 import Like from "../../models/like.model.js";
+import Guardian from "../../models/guardian.model.js";
+import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import Conversation from "../../models/conversation.model.js";
 import Message from "../../models/message.model.js";
+import Marriage from "../../models/marriage.model.js";
 import { ORDER_STATUSES, ROLES } from "../../constants/index.js";
 
 const startOfDay = (daysAgo = 0) => {
@@ -73,6 +76,10 @@ export async function dashboardStats() {
     activeSubs,
     expiredSubs,
     contactNew,
+    marriagesTotal,
+    marriagesVerified,
+    marriagesPending,
+    marriagesHidden,
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ status: "ACTIVE" }),
@@ -111,13 +118,39 @@ export async function dashboardStats() {
     Subscription.countDocuments({ status: "ACTIVE", expiresAt: { $gt: now } }),
     Subscription.countDocuments({ status: "EXPIRED" }),
     ContactMessage.countDocuments({ status: "NEW" }),
+    Marriage.countDocuments(),
+    Marriage.countDocuments({ status: { $in: ["VERIFIED", "COMPLETED"] } }),
+    Marriage.countDocuments({ status: "PENDING_VERIFICATION" }),
+    Marriage.countDocuments({ $or: [{ groomHidden: true }, { brideHidden: true }] }),
   ]);
 
   // revenue this week / this month
-  const [weekRev, monthRev, todayRev] = await Promise.all([
+  const sevenDaysAgo = startOfDay(6);
+  const [weekRev, monthRev, todayRev, dailyRevAgg, dailyUserAgg] = await Promise.all([
     revenueSince(weekAgo),
     revenueSince(monthAgo),
     revenueSince(today),
+    Order.aggregate([
+      { $match: { status: ORDER_STATUSES.PAID, paidAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$paidAt" } },
+          amount: { $sum: "$total" },
+          orders: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    User.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
   ]);
 
   const revenue = singleTotal(revenueAgg);
@@ -170,8 +203,18 @@ export async function dashboardStats() {
       expiredSubscriptions: expiredSubs,
     },
     support: { newMessages: contactNew },
+    marriages: {
+      total: marriagesTotal,
+      verified: marriagesVerified,
+      pending: marriagesPending,
+      hiddenProfiles: marriagesHidden,
+    },
     // OAuth সোশ্যাল লগইনের স্বাস্থ্য — ব্যর্য exchange/replay/rate-limit কাউন্টার
     oauth: oauthCountersForAdmin(),
+    trends: {
+      dailyRevenue: dailyRevAgg || [],
+      dailyUsers: dailyUserAgg || [],
+    },
   };
 }
 
@@ -188,9 +231,68 @@ async function revenueSince(since) {
  * ফিল্টার: ?event=exchange_failed&ip=::1&limit=50
  */
 /** অ্যাডমিন অ্যাকশন অডিট-ট্রেইল রিড (adminAudit.service-এর রিড-লজিকের রিফাইনমেন্ট)। */
-export async function adminAuditHistory({ action, limit } = {}) {
+export async function adminAuditHistory({ action, prefix, limit } = {}) {
   const { auditHistory } = await import("./adminAudit.service.js");
-  return auditHistory({ action, limit });
+  return auditHistory({ action, prefix, limit });
+}
+
+/**
+ * Guardian/Family — অ্যাডমিনের জন্য গার্ডিয়ান-লিংক তালিকা (রিভিউ পেজ)।
+ * filter: status (DECLARED|CONSENTED|VERIFIED|REVOKED), q (গার্ডিয়ানের নাম/মোবাইল বা সদস্যের ইমেইল)।
+ */
+export async function guardianLinks({ status, q, page, limit } = {}) {
+  const { page: p, limit: l, skip } = parsePagination({ page, limit });
+  const filter = {};
+  if (status) filter.status = status;
+  if (q && String(q).trim()) {
+    const rx = new RegExp(String(q).trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    // সদস্যের ইমেইল খুঁজতে আগে user id বের করি (guardian মডেলে email নেই)
+    const matchingUsers = await User.find({ $or: [{ email: rx }, { firstName: rx }, { lastName: rx }] })
+      .select("_id")
+      .lean();
+    filter.$or = [
+      { name: rx },
+      { contactPhone: rx },
+      ...(matchingUsers.length ? [{ member: { $in: matchingUsers.map((u) => u._id) } }] : []),
+    ];
+  }
+
+  const [total, docs] = await Promise.all([
+    Guardian.countDocuments(filter),
+    Guardian.find(filter)
+      .populate("member", "firstName lastName email role status")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(l),
+  ]);
+
+  const items = docs.map((d) => {
+    const o = d.toObject();
+    const m = o.member;
+    return {
+      id: o._id.toString(),
+      status: o.status,
+      name: o.name,
+      relation: o.relation,
+      contactPhone: o.contactPhone,
+      contactEmail: o.contactEmail,
+      consentAt: o.consentAt,
+      consentChannel: o.consentChannel,
+      verifiedAt: o.verifiedAt,
+      revokedAt: o.revokedAt,
+      notes: o.notes,
+      createdAt: o.createdAt,
+      member: m?._id
+        ? { id: m._id.toString(), name: `${m.firstName || ""} ${m.lastName || ""}`.trim(), email: m.email, role: m.role, status: m.status }
+        : null,
+      // লিংক-স্টেট: অ্যাডমিন রিভিউয়ের জন্য (হ্যাশ/টোকেন কখনো নয়)
+      linkIssuedAt: o.consentLinkIssuedAt || null,
+      linkExpiresAt: o.consentLinkExpiresAt || null,
+      linkUsedAt: o.consentLinkUsedAt || null,
+    };
+  });
+
+  return { items, pagination: buildPagination(total, p, l) };
 }
 
 export async function oauthEventHistory({ event, ip, limit } = {}) {
@@ -209,14 +311,13 @@ export async function contactSpamHistory({ ip, limit } = {}) {
 
 /** Public landing counters (accounts, grooms, brides, marriages). */
 export async function siteStats() {
-  const [accounts, grooms, brides] = await Promise.all([
+  const [accounts, grooms, brides, verifiedMarriages] = await Promise.all([
     User.countDocuments({ status: "ACTIVE" }),
     Biodata.countDocuments({ status: "APPROVED", gender: "MALE" }),
     Biodata.countDocuments({ status: "APPROVED", gender: "FEMALE" }),
+    Marriage.countDocuments({ status: { $in: ["VERIFIED", "COMPLETED"] } }),
   ]);
-  // Marriages completed — placeholder counter; connect to a future
-  // "marriageConfirmed" event/collection when the feature ships.
-  const marriagesCompleted = 0;
+  const marriagesCompleted = verifiedMarriages;
   return { accounts, grooms, brides, marriagesCompleted };
 }
 

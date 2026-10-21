@@ -6,8 +6,9 @@ import RefreshToken from "../../models/refreshToken.model.js";
 import ResetToken from "../../models/resetToken.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { hashToken, randomToken } from "../../utils/helpers.js";
-import sendMail from "../../utils/emailer.js";
-import { ROLES, USER_STATUSES } from "../../constants/index.js";
+import sendMail, { isMailConfigured } from "../../utils/emailer.js";
+import { ROLES, USER_STATUSES, NOTIFICATION_TYPES } from "../../constants/index.js";
+import { notifyAdmins } from "../notifications/adminNotification.service.js";
 
 const ACCESS = "access";
 const REFRESH = "refresh";
@@ -107,6 +108,15 @@ export async function registerUser(data, meta = {}) {
     role: ROLES.USER,
     status: USER_STATUSES.ACTIVE,
   });
+
+  // Admin Notification: New user registered
+  notifyAdmins({
+    type: NOTIFICATION_TYPES.NEW_USER,
+    title: "নতুন ব্যবহারকারী রেজিস্ট্রেশন করেছেন",
+    body: `${user.firstName} ${user.lastName || ""} (${user.email}) নতুন অ্যাকাউন্ট খুলেছেন।`,
+    data: { kind: "user", id: user._id.toString(), email: user.email },
+    adminCategory: "USER",
+  }).catch(() => {});
 
   return issueSession(user, meta);
 }
@@ -293,8 +303,21 @@ export async function changeUserPassword(
 
 export async function forgotUserPassword(email) {
   const user = await User.findOne({ email: email.toLowerCase() });
-  // Always succeed to avoid leaking which emails exist.
-  if (!user) return { delivered: false, dev: true };
+  // নিবন্ধিত নয় — প্রত্যক্ষ, স্পষ্ট উত্তর (স্পেকের প্রয়োজন)। টোকেন বা ডেলিভারি
+  // যাচাই এখানেই থামে, তাই অন্য অ্যাকাউন্টের পাসওয়ার্ড কখনো রিসেট হয় না।
+  if (!user) {
+    throw ApiError.notFound("No account found with this email address.", "EMAIL_NOT_FOUND");
+  }
+
+  // ইমেইল পাঠানোর কোনো উপায় না থাকলে টোকেন তৈরিই করি না — verify-বাইপাস
+  // নয়, স্পষ্ট ত্রুটি (স্পেক: "report this clearly")।
+  if (!isMailConfigured()) {
+    throw new ApiError(
+      503,
+      "Email service is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and MAIL_FROM to send password-reset links.",
+      "EMAIL_NOT_CONFIGURED",
+    );
+  }
 
   await ResetToken.deleteMany({
     user: user._id,
@@ -311,11 +334,24 @@ export async function forgotUserPassword(email) {
   });
 
   const resetUrl = `${env.CLIENT_URL}/reset?token=${rawToken}`;
-  return sendMail({
+  const result = await sendMail({
     to: user.email,
     subject: "Reset your Nikah Deen password",
     text: `We received a request to reset your password.\n\nClick the link below (valid 30 minutes):\n${resetUrl}\n\nIf you did not request this, you can safely ignore this email.`,
   });
+
+  // ডেলিভারি ব্যর্থ হলে অরান-টোকেন ফেলে দিই (30 মিনিট ধরে জমা থাকবে না) এবং
+  // স্পষ্ট ত্রুটি দিই — নীরবে সফল দেখানো যাবে না।
+  if (!result.delivered) {
+    await ResetToken.deleteMany({ user: user._id, purpose: "PASSWORD_RESET", usedAt: null });
+    throw new ApiError(
+      503,
+      "The reset email could not be sent. Please try again later.",
+      "EMAIL_DELIVERY_FAILED",
+    );
+  }
+
+  return result;
 }
 
 export async function resetUserPassword(token, newPassword) {

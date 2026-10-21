@@ -5,9 +5,10 @@ import Like from "../../models/like.model.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { parsePagination, buildPagination } from "../../utils/pagination.js";
 import { BIODATA_STATUSES } from "../../constants/index.js";
+import { maskBiodataPhotos } from "../privacy/privacy.service.js";
 
 const LIST_PROJECTION =
-  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount status createdAt";
+  "biodataNo fullName gender age religion maritalStatus division district heightText skinColor occupation education profileImage viewCount status user createdAt";
 
 // ---------------------------------------------------------------------------
 // Own preferences
@@ -141,14 +142,16 @@ export async function myMatches(userId, query = {}) {
       return true;
     })
     .map((d) => {
+      const { user, ...rest } = d;
       const { score, reasons } = computeMatchScore(prefs || {}, d);
-      return { ...d, id: d._id.toString(), matchScore: score, matchReasons: reasons, likedByMe: likedSet.has(d._id.toString()) };
+      return { ...rest, id: d._id.toString(), ownerId: user ? user.toString() : null, matchScore: score, matchReasons: reasons, likedByMe: likedSet.has(d._id.toString()) };
     })
     .filter((d) => d.matchScore >= (prefs?.minMatchScore ?? 0))
     .sort((a, b) => b.matchScore - a.matchScore || new Date(b.createdAt) - new Date(a.createdAt));
 
   // total = হার্ড-ফিল্টার পাস করা মোট ক্যান্ডিডেট; pagination সেই সংখ্যার উপর ভিত্তি করে।
   const shown = scored.slice(skip, skip + limit);
+  await maskBiodataPhotos(shown, { id: userId });
   return {
     items: shown,
     pagination: buildPagination(scored.length, page, limit),

@@ -1,9 +1,9 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Link2 } from "lucide-react";
-import { Trash2 } from "lucide-react";
+import { Link2, Trash2, ExternalLink } from "lucide-react";
 import { biodataApi } from "@/lib/api";
+import StartChatButton from "@/components/StartChatButton";
 
 const LikeList = ({ received = false } = {}) => {
   const [selected, setSelected] = useState(null);
@@ -51,8 +51,8 @@ const LikeList = ({ received = false } = {}) => {
           <thead>
             <tr className=" text-lg border-none">
               <th className="bg-transparent font-bold">#</th>
-              <th className="bg-transparent font-bold">বায়োডাটা নং</th>
-              <th className="bg-transparent font-bold">ঠিকানা</th>
+              <th className="bg-transparent font-bold">{received ? "পছন্দকারী" : "বায়োডাটা নং"}</th>
+              <th className="bg-transparent font-bold">{received ? "পছন্দের তারিখ" : "ঠিকানা"}</th>
               <th className="bg-transparent font-bold text-center">অপশন</th>
             </tr>
           </thead>
@@ -74,9 +74,18 @@ const LikeList = ({ received = false } = {}) => {
                 >
                   <td className="rounded-l-lg font-medium">{index + 1}</td>
                   <td className="font-medium">
-                    {received
-                      ? item?.from?.name || "—"
-                      : item?.biodata?.biodataNo || "—"}
+                    {received ? (
+                      <div>
+                        <p className="font-bold">{item?.from?.name || "—"}</p>
+                        {item?.from?.biodata?.biodataNo && (
+                          <span className="text-xs font-mono text-gray-400">
+                            {item.from.biodata.biodataNo}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      item?.biodata?.biodataNo || "—"
+                    )}
                   </td>
                   <td className="max-w-xs md:max-w-none truncate md:whitespace-normal">
                     {received
@@ -88,7 +97,7 @@ const LikeList = ({ received = false } = {}) => {
                       : item?.biodata?.district || item?.biodata?.division || "—"}
                   </td>
                   <td className="rounded-r-lg">
-                    <div className="flex justify-center gap-4">
+                    <div className="flex justify-center items-center gap-2">
                       {!received && item?.biodata ? (
                         <>
                           <Link
@@ -105,9 +114,27 @@ const LikeList = ({ received = false } = {}) => {
                           </button>
                         </>
                       ) : (
-                        <span className="text-xs text-gray-400">
-                          {item?.isMutual ? "পারস্পরিক ম্যাচ" : "নতুন"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {item?.from?.biodata ? (
+                            <Link
+                              href={`/details?id=${item.from.biodata.id}`}
+                              className="btn btn-xs bg-[#fd6969] hover:bg-[#eb5252] text-white border-none gap-1 font-medium"
+                            >
+                              <ExternalLink size={12} />
+                              বায়োডাটা দেখুন
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-gray-400">বায়োডাটা নেই</span>
+                          )}
+                          {item?.from?.id && (
+                            <StartChatButton
+                              userId={item.from.id}
+                              className="btn btn-xs btn-outline border-gray-300 hover:border-[#fd6969] hover:bg-[#fd6969] hover:text-white"
+                            >
+                              মেসেজ
+                            </StartChatButton>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
